@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HOMEWORK_ASSIGNMENTS, MOCK_HOMEWORK_SUBMISSIONS, MOCK_CLASSES } from '@/lib/mock-data';
 import { HomeworkAssignment, HomeworkSubmission } from '@/lib/types';
+import { uploadHomeworkToDriveOnline, DriveUploadResult } from '@/lib/google-drive-service';
 
 export default function HomeworkPage() {
   const [selectedGrade, setSelectedGrade] = useState<number | 'all'>('all');
@@ -110,7 +111,7 @@ export default function HomeworkPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmitHomework = (e: React.FormEvent) => {
+  const handleSubmitHomework = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim() || !studentName.trim() || !selectedFile) {
       alert('Vui lòng nhập Mã học sinh, Họ tên và chọn tệp bài làm hoặc ảnh chụp vở!');
@@ -120,35 +121,57 @@ export default function HomeworkPage() {
     setIsSubmitting(true);
     const chosenClass = MOCK_CLASSES.find(c => c.id === classId) || MOCK_CLASSES[0];
 
-    setTimeout(() => {
-      const newSub: HomeworkSubmission = {
-        id: `hwsub-${Date.now()}`,
-        homeworkId: currentHw.id,
-        homeworkTitle: currentHw.title,
-        studentCode: studentCode.trim().toUpperCase(),
-        studentName: studentName.trim(),
-        classId: chosenClass.id,
+    // Tự động tải lên Google Drive Online của Thầy Trương (hoạt động 24/7 kể cả học sinh ở nhà)
+    let driveFileUrl = imagePreviewUrl || undefined;
+    let driveNoteSuffix = '';
+
+    try {
+      const driveRes = await uploadHomeworkToDriveOnline({
+        file: selectedFile,
+        grade: currentHw.grade,
+        period: currentHw.week || 1,
         className: chosenClass.name,
-        fileType: fileType,
-        fileName: selectedFile.name,
-        fileSize: `${(selectedFile.size / 1024).toFixed(1)} KB`,
-        fileDataUrl: imagePreviewUrl || undefined,
-        note: note.trim(),
-        submittedAt: 'Vừa xong',
-        status: 'submitted',
-      };
+        studentId: studentCode.trim().toUpperCase(),
+        studentName: studentName.trim(),
+        assignmentTitle: currentHw.title,
+        note: note.trim()
+      });
 
-      const updated = [newSub, ...submissionsList];
-      setSubmissionsList(updated);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('truong_homework_submissions', JSON.stringify(updated));
+      if (driveRes.status === 'ok' && driveRes.fileUrl) {
+        driveFileUrl = driveRes.fileUrl;
+        driveNoteSuffix = ` [Đã lưu Google Drive Online: ${driveRes.folderPath}]`;
       }
+    } catch (err) {
+      console.error('Lỗi khi tải lên Google Drive:', err);
+    }
 
-      setSubmissionSuccess(newSub);
-      setIsSubmitting(false);
-      handleRemoveFile();
-      setNote('');
-    }, 600);
+    const newSub: HomeworkSubmission = {
+      id: `hwsub-${Date.now()}`,
+      homeworkId: currentHw.id,
+      homeworkTitle: currentHw.title,
+      studentCode: studentCode.trim().toUpperCase(),
+      studentName: studentName.trim(),
+      classId: chosenClass.id,
+      className: chosenClass.name,
+      fileType: fileType,
+      fileName: selectedFile.name,
+      fileSize: `${(selectedFile.size / 1024).toFixed(1)} KB`,
+      fileDataUrl: driveFileUrl,
+      note: note.trim() + driveNoteSuffix,
+      submittedAt: 'Vừa xong',
+      status: 'submitted',
+    };
+
+    const updated = [newSub, ...submissionsList];
+    setSubmissionsList(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('truong_homework_submissions', JSON.stringify(updated));
+    }
+
+    setSubmissionSuccess(newSub);
+    setIsSubmitting(false);
+    handleRemoveFile();
+    setNote('');
   };
 
   return (

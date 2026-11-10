@@ -37,7 +37,8 @@ import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK
 import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
-import { ShieldAlert, ArrowRight } from 'lucide-react';
+import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw } from 'lucide-react';
+import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
 
 
 export default function TeacherDashboard() {
@@ -51,7 +52,10 @@ export default function TeacherDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [exams, setExams] = useState(MOCK_EXAMS);
   const [notification, setNotification] = useState('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework' | 'reinforcement'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework' | 'reinforcement' | 'drive_config'>('roster');
+  const [gasUrlInput, setGasUrlInput] = useState<string>('');
+  const [connectionStatus, setConnectionStatus] = useState<{ loading: boolean; result?: { success: boolean; message: string; version?: string } }>({ loading: false });
+  const [saveGasMsg, setSaveGasMsg] = useState<string>('');
   const [submissions, setSubmissions] = useState<PracticalSubmission[]>(MOCK_SUBMISSIONS);
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
   const [gradeScore, setGradeScore] = useState<string>('9.5');
@@ -101,6 +105,7 @@ export default function TeacherDashboard() {
           console.error(e);
         }
       }
+      setGasUrlInput(getGasWebAppUrl());
     }
   }, []);
 
@@ -116,6 +121,23 @@ export default function TeacherDashboard() {
     s.studentCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.dob && s.dob.includes(searchTerm))
   );
+
+  
+  const handleSaveGasUrl = () => {
+    setGasWebAppUrl(gasUrlInput);
+    setSaveGasMsg('Đã lưu cấu hình Google Apps Script Web App URL thành công!');
+    setTimeout(() => setSaveGasMsg(''), 4000);
+  };
+
+  const handleTestDriveConnection = async () => {
+    if (!gasUrlInput.trim()) {
+      alert('Vui lòng nhập URL Google Apps Script Web App trước khi kiểm tra!');
+      return;
+    }
+    setConnectionStatus({ loading: true });
+    const res = await testDriveOnlineConnection(gasUrlInput.trim());
+    setConnectionStatus({ loading: false, result: res });
+  };
 
   const toggleLockExam = (examId: string) => {
     setExams(prev => prev.map(e => {
