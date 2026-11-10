@@ -37,7 +37,7 @@ import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK
 import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
-import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw } from 'lucide-react';
+import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw, RotateCw, ZoomIn, ZoomOut, ThumbsUp, Award, Sliders, CheckSquare } from 'lucide-react';
 import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
 
 
@@ -65,6 +65,16 @@ export default function TeacherDashboard() {
   const [gradingHwId, setGradingHwId] = useState<string | null>(null);
   const [hwScore, setHwScore] = useState<string>('10');
   const [hwFeedback, setHwFeedback] = useState<string>('Bài làm rất tốt, trình bày sạch đẹp!');
+  // Trạng thái chấm Rubric Thực hành 3 tiêu chí
+  const [rubricC1, setRubricC1] = useState<number>(5.0); // Kỹ thuật thao tác (tối đa 5đ)
+  const [rubricC2, setRubricC2] = useState<number>(3.0); // Hoàn thiện sản phẩm (tối đa 3đ)
+  const [rubricC3, setRubricC3] = useState<number>(2.0); // Thẩm mỹ & Sáng tạo (tối đa 2đ)
+  // Trạng thái chấm BTVN theo TT22
+  const [hwEvalType, setHwEvalType] = useState<'score' | 'tt22'>('score');
+  const [hwTt22Result, setHwTt22Result] = useState<'Đạt' | 'Chưa đạt'>('Đạt');
+  // Trạng thái xoay và phóng to ảnh chụp vở
+  const [imageRotation, setImageRotation] = useState<number>(0);
+  const [imageZoom, setImageZoom] = useState<number>(1);
   const [rfLessonId, setRfLessonId] = useState<string>(MOCK_IN_CLASS_LESSONS[1].id);
   const [rfResults, setRfResults] = useState<any[]>([]);
 
@@ -158,12 +168,16 @@ export default function TeacherDashboard() {
 
   const handleSaveGrade = (subId: string) => {
     const numScore = parseFloat(gradeScore) || 10;
+    let badgeReward = '';
+    if (numScore >= 9.0) badgeReward = ' • Tặng Huy hiệu Xuất Sắc (EXCELLENT) +100 XP';
+    else if (numScore >= 7.0) badgeReward = ' • Tặng Huy hiệu Chăm Chỉ (HARD_WORK) +50 XP';
+
     const updated = submissions.map(s => {
       if (s.id === subId) {
         return {
           ...s,
           grade: numScore,
-          feedback: gradeComment,
+          feedback: gradeComment + (badgeReward ? ` [Thầy Trương khen:${badgeReward}]` : ''),
           status: 'graded' as const
         };
       }
@@ -174,18 +188,22 @@ export default function TeacherDashboard() {
       localStorage.setItem('truong_practical_submissions', JSON.stringify(updated));
     }
     setGradingSubId(null);
-    setNotification('Đã lưu điểm và nhận xét bài thực hành thành công!');
-    setTimeout(() => setNotification(''), 3000);
+    setNotification(`Đã lưu kết quả thực hành: ${numScore}đ theo Rubric${badgeReward}!`);
+    setTimeout(() => setNotification(''), 4000);
   };
 
   const handleGradeHomework = (subId: string) => {
-    const numScore = parseFloat(hwScore) || 10;
+    const finalFeedback = hwEvalType === 'tt22' 
+      ? `[Đánh giá TT22: ${hwTt22Result}] ${hwFeedback}`
+      : hwFeedback;
+    const numScore = hwEvalType === 'tt22' ? (hwTt22Result === 'Đạt' ? 10 : 5) : (parseFloat(hwScore) || 10);
+
     const updated = homeworkSubs.map(s => {
       if (s.id === subId) {
         return {
           ...s,
           grade: numScore,
-          feedback: hwFeedback,
+          feedback: finalFeedback,
           status: 'graded' as const
         };
       }
@@ -196,8 +214,10 @@ export default function TeacherDashboard() {
       localStorage.setItem('truong_homework_submissions', JSON.stringify(updated));
     }
     setGradingHwId(null);
-    setNotification(`Đã lưu điểm ${numScore}đ và gửi lời phê bài tập về nhà thành công!`);
-    setTimeout(() => setNotification(''), 3000);
+    setNotification(hwEvalType === 'tt22' 
+      ? `Đã lưu đánh giá Thông tư 22: ${hwTt22Result} cho học sinh!`
+      : `Đã lưu điểm ${numScore}đ và gửi lời phê bài tập về nhà thành công!`);
+    setTimeout(() => setNotification(''), 3500);
   };
 
   if (currentUser && currentUser.role === 'student') {
@@ -555,51 +575,154 @@ export default function TeacherDashboard() {
             </div>
           </div>
 
-          {/* FORM CHẤM BÀI NHANH */}
+          {/* FORM CHẤM BÀI THEO RUBRIC 3 TIÊU CHÍ CHUẨN SƯ PHẠM */}
           {gradingSubId && (
-            <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-indigo-950 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600" />
-                  <span>Chấm điểm & Viết nhận xét bài thực hành:</span>
-                </h4>
+            <div className="p-6 rounded-3xl bg-indigo-50/90 border-2 border-indigo-300 space-y-5 animate-in fade-in shadow-md">
+              <div className="flex items-center justify-between border-b border-indigo-200/80 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sliders className="w-5 h-5 text-indigo-700" />
+                  <h4 className="text-sm font-black text-indigo-950 uppercase tracking-wider">
+                    Quy trình chấm Rubric 3 tiêu chí · Thang điểm 10
+                  </h4>
+                </div>
                 <button
                   onClick={() => setGradingSubId(null)}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1 rounded-lg bg-white border border-slate-200"
                 >
                   Đóng lại
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Điểm (thang 10)</label>
+              {/* 3 TIÊU CHÍ RUBRIC */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Tiêu chí 1: Kỹ thuật thao tác */}
+                <div className="p-4 rounded-2xl bg-white border border-indigo-100 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-800">1. Kỹ thuật &amp; Quy trình</span>
+                    <span className="font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">{rubricC1.toFixed(1)} / 5.0đ</span>
+                  </div>
                   <input
-                    type="number"
-                    step="0.5"
+                    type="range"
                     min="0"
-                    max="10"
-                    value={gradeScore}
-                    onChange={(e) => setGradeScore(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-bold"
+                    max="5"
+                    step="0.5"
+                    value={rubricC1}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setRubricC1(v);
+                      setGradeScore((v + rubricC2 + rubricC3).toFixed(1));
+                    }}
+                    className="w-full accent-indigo-600 cursor-pointer"
                   />
+                  <span className="text-[10px] text-slate-500 block">Thao tác phần mềm chuẩn xác, đúng các bước</span>
                 </div>
+
+                {/* Tiêu chí 2: Hoàn thiện sản phẩm */}
+                <div className="p-4 rounded-2xl bg-white border border-indigo-100 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-800">2. Hoàn thiện sản phẩm</span>
+                    <span className="font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">{rubricC2.toFixed(1)} / 3.0đ</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="3"
+                    step="0.5"
+                    value={rubricC2}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setRubricC2(v);
+                      setGradeScore((rubricC1 + v + rubricC3).toFixed(1));
+                    }}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-slate-500 block">Tệp nộp đúng định dạng, đủ nội dung yêu cầu</span>
+                </div>
+
+                {/* Tiêu chí 3: Thẩm mỹ & Sáng tạo */}
+                <div className="p-4 rounded-2xl bg-white border border-indigo-100 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-800">3. Thẩm mỹ &amp; Sáng tạo</span>
+                    <span className="font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">{rubricC3.toFixed(1)} / 2.0đ</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.5"
+                    value={rubricC3}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setRubricC3(v);
+                      setGradeScore((rubricC1 + rubricC2 + v).toFixed(1));
+                    }}
+                    className="w-full accent-purple-600 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-slate-500 block">Bố cục khoa học, tư duy thuật toán tối ưu</span>
+                </div>
+              </div>
+
+              {/* MẪU NHẬN XÉT NHANH (1 CHẠM) */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <ThumbsUp className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Mẫu nhận xét nhanh của Thầy (Nhấp để chọn):</span>
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Thao tác chuẩn xác, đúng quy trình!',
+                    'Công thức tính toán rất tối ưu!',
+                    'Cần chú ý định dạng bảng biểu sạch đẹp hơn.',
+                    'Hoàn thành xuất sắc toàn bộ yêu cầu!',
+                    'Ý tưởng sáng tạo, bố cục rõ ràng.'
+                  ].map((preset, pIdx) => (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      onClick={() => setGradeComment(preset)}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-200 text-[11px] font-semibold transition-all shadow-2xs"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ô NHẬP NHẬN XÉT VÀ LƯU ĐIỂM */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-indigo-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-12 rounded-xl bg-indigo-700 text-white flex flex-col items-center justify-center font-black shadow-xs">
+                    <span className="text-lg leading-none">{gradeScore}</span>
+                    <span className="text-[9px] text-indigo-200">/10đ</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600">
+                    {parseFloat(gradeScore) >= 9.0 ? (
+                      <span className="text-amber-700 font-bold flex items-center gap-1"><Award className="w-3.5 h-3.5" /> Thưởng Huy Hiệu Xuất Sắc</span>
+                    ) : parseFloat(gradeScore) >= 7.0 ? (
+                      <span className="text-blue-700 font-bold">Thưởng Huy Hiệu Chăm Chỉ</span>
+                    ) : (
+                      <span className="text-slate-500">Cần rèn luyện thêm</span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="sm:col-span-2">
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Lời nhận xét của Thầy Trương</label>
                   <input
                     type="text"
                     value={gradeComment}
                     onChange={(e) => setGradeComment(e.target.value)}
-                    placeholder="Nhập nhận xét..."
-                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="Lời nhận xét sư phạm của Thầy..."
+                    className="w-full p-2.5 text-xs rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
                   />
                 </div>
-                <div className="flex items-end">
+
+                <div className="flex items-center">
                   <button
                     onClick={() => handleSaveGrade(gradingSubId)}
-                    className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all"
+                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5"
                   >
-                    Lưu kết quả
+                    <Check className="w-4 h-4" />
+                    <span>Lưu kết quả ({gradeScore}đ)</span>
                   </button>
                 </div>
               </div>
@@ -1127,36 +1250,92 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* MODAL PHÓNG TO ẢNH CHỤP VỞ HỌC SINH */}
+      {/* MODAL SOI BÀI TRỰC QUAN (VISUAL VIEWER: ZOOM + XOAY 90° CHUẨN SƯ PHẠM) */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
-              <span className="font-bold text-sm flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+            <div className="p-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+              <div className="font-bold text-sm flex items-center gap-2">
                 <Camera className="w-4 h-4 text-purple-400" />
-                <span>Xem ảnh chụp trang vở bài tập về nhà của học sinh</span>
-              </span>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
+                <span>Trình soi bài trực quan · Soi ảnh chụp vở ghi của học sinh</span>
+              </div>
+
+              {/* BỘ CÔNG CỤ SOI ẢNH: XOAY + PHÓNG TO / THU NHỎ */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition-all"
+                  title="Xoay 90 độ chiều kim đồng hồ"
+                >
+                  <RotateCw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Xoay {imageRotation}°</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImageZoom((prev) => Math.min(prev + 0.25, 2.5))}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-all"
+                  title="Phóng to ảnh"
+                >
+                  <ZoomIn className="w-3.5 h-3.5 text-blue-400" />
+                  <span>+</span>
+                </button>
+
+                <span className="text-xs font-mono text-slate-400 px-1">
+                  {Math.round(imageZoom * 100)}%
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setImageZoom((prev) => Math.max(prev - 0.25, 0.5))}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-all"
+                  title="Thu nhỏ ảnh"
+                >
+                  <ZoomOut className="w-3.5 h-3.5 text-blue-400" />
+                  <span>-</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setImageRotation(0); setImageZoom(1); }}
+                  className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700"
+                  title="Khôi phục kích thước gốc"
+                >
+                  Gốc
+                </button>
+
+                <button
+                  onClick={() => { setPreviewImage(null); setImageRotation(0); setImageZoom(1); }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 ml-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="p-4 overflow-auto flex items-center justify-center bg-slate-100 min-h-[400px]">
+
+            <div className="p-4 overflow-auto flex items-center justify-center bg-slate-100 min-h-[420px] max-h-[70vh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewImage}
                 alt="Ảnh vở bài tập của học sinh"
-                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-md border border-slate-300"
+                style={{
+                  transform: `rotate(${imageRotation}deg) scale(${imageZoom})`,
+                  transition: 'transform 0.2s ease-in-out'
+                }}
+                className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-lg border border-slate-300"
               />
             </div>
-            <div className="p-3 bg-white border-t border-slate-200 flex justify-end">
+
+            <div className="p-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs text-slate-500">
+                Thầy có thể bấm nút Xoay nếu ảnh chụp bị ngược hoặc Phóng to để đọc nét chữ viết tay của học sinh.
+              </span>
               <button
-                onClick={() => setPreviewImage(null)}
+                onClick={() => { setPreviewImage(null); setImageRotation(0); setImageZoom(1); }}
                 className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs"
               >
-                Đóng
+                Đóng cửa sổ
               </button>
             </div>
           </div>
