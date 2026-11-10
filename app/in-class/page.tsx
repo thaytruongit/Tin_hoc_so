@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Laptop, 
@@ -38,7 +39,8 @@ import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
 import { Lock, Unlock, ShieldAlert } from 'lucide-react';
 import { CognitiveLevel } from '@/lib/types';
 
-export default function InClassPage() {
+function InClassContent() {
+  const searchParams = useSearchParams();
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
   const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(1);
@@ -68,14 +70,34 @@ export default function InClassPage() {
   useEffect(() => {
     const user = getCurrentUser();
     setCurrentUser(user);
+
+    // Đọc URL query parameters: ?grade=...&period=...&tab=...
+    const urlGrade = searchParams.get('grade');
+    const urlPeriod = searchParams.get('period');
+    const urlTab = searchParams.get('tab');
+
+    let initialGrade = 6;
     if (user.role === 'student' && user.studentGrade) {
-      setSelectedGrade(user.studentGrade);
-      setSelectedPeriodNum(1);
-      if (user.studentName) {
-        setStudentAName(user.studentName);
+      initialGrade = user.studentGrade;
+      if (user.studentName) setStudentAName(user.studentName);
+      if (user.partnerName) setStudentBName(user.partnerName);
+    } else if (urlGrade) {
+      const g = parseInt(urlGrade, 10);
+      if ([6, 7, 8, 9].includes(g)) initialGrade = g;
+    }
+    setSelectedGrade(initialGrade);
+
+    if (urlPeriod) {
+      const p = parseInt(urlPeriod, 10);
+      if (p >= 1 && p <= 29) {
+        setSelectedPeriodNum(p);
       }
     }
-  }, []);
+
+    if (urlTab && ['worksheet', 'reinforcement', 'practice', 'slide'].includes(urlTab)) {
+      setActiveTab(urlTab as any);
+    }
+  }, [searchParams]);
 
   const handleSelectGrade = (grade: number) => {
     if (currentUser?.role === 'student' && currentUser.studentGrade !== grade) {
@@ -237,7 +259,14 @@ export default function InClassPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            href={`/subjects?grade=${selectedGrade}&period=${selectedPeriodNum}&section=29periods`}
+            className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 text-xs font-bold transition-all flex items-center gap-2"
+          >
+            <BookOpen className="w-4 h-4 text-amber-400" />
+            <span>Kho học liệu & Tệp Tiết {selectedPeriodNum}</span>
+          </Link>
           <Link
             href="/teacher"
             className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold transition-all flex items-center gap-2"
@@ -1114,5 +1143,13 @@ export default function InClassPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function InClassPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-slate-500">Đang tải hoạt động lớp học...</div>}>
+      <InClassContent />
+    </Suspense>
   );
 }

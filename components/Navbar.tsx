@@ -65,8 +65,8 @@ export default function Navbar() {
   // Cấu trúc Menu chuẩn hệ sinh thái học tập số môn Tin học
   const baseMenus = [
     { href: '/', label: 'Trang chủ', icon: Home },
-    { href: '/in-class', label: 'Củng cố (7 câu)', icon: Sparkles, highlight: true },
-    { href: '/subjects', label: 'Học liệu & Bài giảng', icon: BookOpen },
+    { href: '/in-class', label: 'Hoạt động trên lớp (4 Pha)', icon: Laptop, highlight: true },
+    { href: '/subjects', label: 'Kho học liệu & Thực hành', icon: BookOpen },
     { href: '/homework', label: 'Bài tập về nhà', icon: UploadCloud },
     { href: '/worksheets', label: 'Phiếu học tập', icon: FileText },
     { href: '/exams', label: 'Kiểm tra', icon: ClipboardCheck },

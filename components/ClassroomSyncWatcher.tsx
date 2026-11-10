@@ -187,9 +187,18 @@ export default function ClassroomSyncWatcher() {
             <span className="text-[11px] text-slate-500">
               {state.activeClassName} · {state.lessonTitle}
             </span>
+            {state.phase === 'phase_1_warmup' && (
+              <button
+                onClick={() => router.push(`/in-class?grade=${state.activeGrade}&period=${state.activePeriod}&tab=slide`)}
+                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs"
+              >
+                <span>Xem Slide</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
             {state.phase === 'phase_2_pair' && (
               <button
-                onClick={() => router.push('/in-class')}
+                onClick={() => router.push(`/in-class?grade=${state.activeGrade}&period=${state.activePeriod}&tab=worksheet`)}
                 className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs"
               >
                 <span>Vào Phiếu</span>
@@ -198,7 +207,7 @@ export default function ClassroomSyncWatcher() {
             )}
             {state.phase === 'phase_3_practice' && (
               <button
-                onClick={() => router.push('/in-class')}
+                onClick={() => router.push(`/in-class?grade=${state.activeGrade}&period=${state.activePeriod}&tab=reinforcement`)}
                 className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs"
               >
                 <span>Làm 7 câu</span>
@@ -207,10 +216,10 @@ export default function ClassroomSyncWatcher() {
             )}
             {state.phase === 'phase_4_practical' && (
               <button
-                onClick={() => router.push('/homework')}
+                onClick={() => router.push(`/in-class?grade=${state.activeGrade}&period=${state.activePeriod}&tab=practice`)}
                 className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs"
               >
-                <span>Nộp bài máy</span>
+                <span>Nhiệm vụ máy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
