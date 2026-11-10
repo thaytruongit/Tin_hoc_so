@@ -15,7 +15,8 @@ import {
   Settings, 
   LogIn, 
   LogOut,
-  Laptop
+  Laptop,
+  UploadCloud
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -45,7 +46,7 @@ export default function Navbar() {
   // Cấu trúc 9 Menu chuẩn 100% theo Bảng mục 7 của tệp TK.docx
   const baseMenus = [
     { href: '/', label: 'Trang chủ', icon: Home },
-    { href: '/subjects', label: 'Môn học', icon: BookOpen },
+    { href: '/subjects', label: 'Môn học & Học liệu', icon: BookOpen },
     { href: '/worksheets', label: 'Phiếu học tập', icon: FileText },
     { href: '/exams', label: 'Kiểm tra', icon: ClipboardCheck },
     { href: '/programming', label: 'Luyện lập trình', icon: Code2 },
@@ -102,8 +103,16 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Auth Button */}
+          {/* Nộp bài phòng máy & Auth Button */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/subjects"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-all shadow-2xs"
+            >
+              <UploadCloud className="w-3.5 h-3.5 text-amber-600" />
+              <span>Nộp bài phòng máy</span>
+            </Link>
+
             {role === 'guest' ? (
               <Link
                 href="/login"

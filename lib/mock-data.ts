@@ -1,4 +1,4 @@
-import { ClassItem, Student, Worksheet, Exam, Badge, ExamResult, ProgrammingChallenge } from './types';
+import { ClassItem, Student, Worksheet, Exam, Badge, ExamResult, ProgrammingChallenge, PracticeFile, VideoLecture, PracticalSubmission } from './types';
 
 export const MOCK_CLASSES: ClassItem[] = [
   { id: 'c-6a1', grade: 6, name: 'Lớp 6A1', classCode: '6A1-2026', studentCount: 42 },
@@ -474,3 +474,176 @@ export const MOCK_RECENT_RESULTS: ExamResult[] = [
     isEssayReviewed: true,
   },
 ];
+
+export const MOCK_PRACTICE_FILES: PracticeFile[] = [
+  {
+    id: 'pf-1',
+    title: 'Tiết 6: Địa chỉ tương đối và tuyệt đối trong Excel',
+    grade: 8,
+    fileName: 'Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+    fileSize: '12.9 KB',
+    fileUrl: '/teacher/practice-files/Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+    description: 'Bài tập phân biệt ô tương đối (A1), ô tuyệt đối ($A$1), hỗn hợp và ứng dụng tính bảng lương, bảng tính chiết khấu tự động.',
+    topics: ['Địa chỉ tương đối', 'Địa chỉ tuyệt đối', 'Sao chép công thức', 'Tin học 8'],
+    badge: 'Khối 8 - Thực hành chính thức',
+  },
+  {
+    id: 'pf-2',
+    title: 'Bài tập tổng hợp: Các hàm điều kiện IF, SUMIF, COUNTIF',
+    grade: 7,
+    fileName: 'BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+    fileSize: '7.2 KB',
+    fileUrl: '/teacher/practice-files/BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+    description: 'Thực hành tính bảng điểm học sinh, xét kết quả Đạt/Chưa đạt, xếp loại học lực với IF lồng nhau và thống kê bằng COUNTIF, SUMIF.',
+    topics: ['Hàm IF', 'Hàm COUNTIF', 'Hàm SUMIF', 'Thống kê điểm số'],
+    badge: 'Khối 7 & 8 - Nâng cao',
+  },
+  {
+    id: 'pf-3',
+    title: 'Bảng tính thực hành lớp 8A1 - 8A4 (Tiết 6)',
+    grade: 8,
+    fileName: 'BTTH_Tiet_6_8a14.xlsx',
+    fileSize: '17.5 KB',
+    fileUrl: '/teacher/practice-files/BTTH_Tiet_6_8a14.xlsx',
+    description: 'Tệp mẫu phân chia theo nhóm máy thực hành tại phòng máy Tin học trường THCS Mão Điền.',
+    topics: ['Phòng máy số 1', 'Phòng máy số 2', 'Bài tập nhóm', 'Tin học 8'],
+    badge: 'Khối 8 - Dữ liệu thực',
+  },
+  {
+    id: 'pf-4',
+    title: 'Bản sao chuẩn bị: Địa chỉ tương đối & tuyệt đối',
+    grade: 8,
+    fileName: 'BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+    fileSize: '12.9 KB',
+    fileUrl: '/teacher/practice-files/BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+    description: 'Tệp bài tập cơ bản dành cho học sinh củng cố kỹ năng cố định hàng/cột khi nhân hệ số điểm.',
+    topics: ['Cố định hàng', 'Cố định cột', 'Tin học 8'],
+    badge: 'Khối 8 - Cơ bản',
+  },
+];
+
+export const MOCK_VIDEOS: VideoLecture[] = [
+  {
+    id: 'vid-1',
+    title: 'Mặt trái của mạng xã hội & Kỹ năng an toàn thông tin số',
+    grade: 7,
+    videoUrl: '/teacher/videos/mattrai_mangXH.mp4',
+    duration: '04:12',
+    topic: 'Chủ đề D: Đạo đức, pháp luật và văn hóa ứng xử mạng',
+    description: 'Đoạn phim hoạt hình sinh động phân tích các cạm bẫy lừa đảo mạng, bảo vệ thông tin cá nhân và quy tắc ứng xử thông minh.',
+    keyTakeaways: [
+      'Không chia sẻ mật khẩu và mã OTP cho bất kỳ ai',
+      'Cảnh giác với các đường link lạ và quà tặng ảo',
+      'Giao tiếp lịch sự, không lan truyền tin giả'
+    ],
+    author: 'Thầy Trương IT',
+  },
+  {
+    id: 'vid-2',
+    title: 'Năng lực số (NLS) - Kỹ năng thiết yếu cho học sinh THCS',
+    grade: 6,
+    videoUrl: '/teacher/videos/NLS.mp4',
+    duration: '05:30',
+    topic: 'Chương trình Năng lực số học đường (CV 3456)',
+    description: 'Giới thiệu 5 miền năng lực số cốt lõi và lộ trình rèn luyện kỹ năng số cho học sinh trường THCS Mão Điền.',
+    keyTakeaways: [
+      'Khai thác và quản lý dữ liệu số hiệu quả',
+      'Giao tiếp và cộng tác số an toàn',
+      'Sáng tạo nội dung số và lập trình',
+      'Giải quyết vấn đề bằng công nghệ'
+    ],
+    author: 'Thầy Trương IT',
+  },
+  {
+    id: 'vid-3',
+    title: 'Thực hành 1: Làm quen phần mềm bảng tính Excel & Quy tắc phòng máy',
+    grade: 7,
+    videoUrl: '/teacher/videos/TH1.mp4',
+    duration: '03:45',
+    topic: 'Chủ đề E: Ứng dụng Tin học (Bảng tính điện tử)',
+    description: 'Hướng dẫn các thao tác mở tệp, nhập dữ liệu, cố định địa chỉ ô và lưu bài làm đúng cấu trúc thư mục.',
+    keyTakeaways: [
+      'Quy tắc an toàn thiết bị phòng máy tính',
+      'Nhận biết giao diện Workbook, Sheet, Hàng, Cột và Ô tính',
+      'Cách nhập công thức bắt đầu bằng dấu bằng (=)'
+    ],
+    author: 'Thầy Trương IT',
+  },
+  {
+    id: 'vid-4',
+    title: 'Tích hợp Trí tuệ Nhân tạo (AI) trong học tập và rèn luyện',
+    grade: 8,
+    videoUrl: '/teacher/videos/TichHopAI.mp4',
+    duration: '06:15',
+    topic: 'Khung năng lực Trí tuệ nhân tạo (QĐ 3439/QĐ-BGDĐT)',
+    description: 'Hiểu về nguyên lý hoạt động của AI, cách đặt câu hỏi (Prompt) thông minh và sử dụng AI có trách nhiệm.',
+    keyTakeaways: [
+      'AI là công cụ hỗ trợ tư duy, không thay thế việc học',
+      'Kiểm chứng thông tin do AI cung cấp trước khi sử dụng',
+      'Ứng dụng AI sáng tạo trong giải toán và lập trình'
+    ],
+    author: 'Thầy Trương IT',
+  },
+];
+
+export const MOCK_SUBMISSIONS: PracticalSubmission[] = [
+  {
+    id: 'sub-01',
+    submissionCode: 'SUB-2026-8A1-001',
+    studentCode: 'HS801',
+    studentName: 'Phạm Thu Trang',
+    classId: 'c-8a1',
+    className: 'Lớp 8A1',
+    assignmentTitle: 'Tiết 6: Địa chỉ tương đối và tuyệt đối',
+    fileName: '8A1_HS801_PhamThuTrang_Tiet6.xlsx',
+    fileSize: '14.2 KB',
+    submittedAt: 'Hôm nay lúc 09:15',
+    grade: 10,
+    feedback: 'Bài làm xuất sắc! Sử dụng chính xác địa chỉ $C$2 để tính chiết khấu.',
+    status: 'graded',
+  },
+  {
+    id: 'sub-02',
+    submissionCode: 'SUB-2026-8A1-002',
+    studentCode: 'HS802',
+    studentName: 'Vũ Minh Tuấn',
+    classId: 'c-8a1',
+    className: 'Lớp 8A1',
+    assignmentTitle: 'Tiết 6: Địa chỉ tương đối và tuyệt đối',
+    fileName: '8A1_HS802_VuMinhTuan_Tiet6.xlsx',
+    fileSize: '13.8 KB',
+    submittedAt: 'Hôm nay lúc 09:22',
+    grade: 9.0,
+    feedback: 'Công thức đúng, cần chú ý định dạng dấu phân cách phần nghìn ở cột Thành tiền.',
+    status: 'graded',
+  },
+  {
+    id: 'sub-03',
+    submissionCode: 'SUB-2026-7A1-001',
+    studentCode: 'HS701',
+    studentName: 'Lê Hoàng Dũng',
+    classId: 'c-7a1',
+    className: 'Lớp 7A1',
+    assignmentTitle: 'Bài tập hàm IF, SUMIF, COUNTIF',
+    fileName: '7A1_HS701_LeHoangDung_HamIF.xlsx',
+    fileSize: '16.5 KB',
+    submittedAt: 'Hôm nay lúc 10:05',
+    status: 'submitted',
+  },
+  {
+    id: 'sub-04',
+    submissionCode: 'SUB-2026-6A1-001',
+    studentCode: 'HS601',
+    studentName: 'Nguyễn Văn An',
+    classId: 'c-6a1',
+    className: 'Lớp 6A1',
+    assignmentTitle: 'Thực hành sơ đồ tư duy & Văn bản số',
+    fileName: '6A1_HS601_NguyenVanAn_SoDoTuDuy.docx',
+    fileSize: '84.0 KB',
+    submittedAt: 'Hôm qua lúc 15:40',
+    grade: 9.5,
+    feedback: 'Trình bày sơ đồ tư duy logic, màu sắc trực quan.',
+    status: 'graded',
+  },
+];
+

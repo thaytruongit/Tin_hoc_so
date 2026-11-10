@@ -104,3 +104,45 @@ export interface ProgrammingChallenge {
   initialCode: string;
   xpReward: number;
 }
+
+export interface PracticeFile {
+  id: string;
+  title: string;
+  grade: GradeLevel;
+  fileName: string;
+  fileSize: string;
+  fileUrl: string;
+  description: string;
+  topics: string[];
+  badge: string;
+}
+
+export interface VideoLecture {
+  id: string;
+  title: string;
+  grade: GradeLevel;
+  videoUrl: string;
+  duration: string;
+  topic: string;
+  description: string;
+  keyTakeaways: string[];
+  author: string;
+}
+
+export interface PracticalSubmission {
+  id: string;
+  submissionCode: string;
+  studentId?: string;
+  studentCode: string;
+  studentName: string;
+  classId: string;
+  className: string;
+  assignmentTitle: string;
+  fileName: string;
+  fileSize: string;
+  submittedAt: string;
+  fileDataUrl?: string;
+  grade?: number;
+  feedback?: string;
+  status: 'submitted' | 'graded';
+}
