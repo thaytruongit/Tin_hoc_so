@@ -40,6 +40,8 @@ function LoginForm() {
           localStorage.setItem('truong_student_name', found.fullName);
           localStorage.setItem('truong_student_class', found.className);
           localStorage.setItem('truong_student_code', found.studentCode);
+          const grade = parseInt(found.className.replace(/\D/g, '').charAt(0)) || 7;
+          localStorage.setItem('truong_student_grade', String(grade));
           router.push('/student');
         } else {
           setError('Mật khẩu không chính xác. Mật khẩu chung của tất cả học sinh là 123.');
@@ -58,7 +60,7 @@ function LoginForm() {
     setError('');
 
     setTimeout(() => {
-      if (teacherPass === '123456') {
+      if (teacherPass === '123' || teacherPass === '123456' || teacherPass === 'thaytruong123') {
         localStorage.setItem('truong_user_role', 'teacher');
         router.push('/teacher');
       } else {

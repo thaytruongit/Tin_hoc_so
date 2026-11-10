@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   BookOpen, 
@@ -24,10 +24,16 @@ import {
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_PRACTICE_FILES, MOCK_VIDEOS, MOCK_SUBMISSIONS } from '@/lib/mock-data';
 import { PracticeFile, VideoLecture, PracticalSubmission } from '@/lib/types';
+import { getCurrentUser, UserSession } from '@/lib/auth';
+import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
+import { Lock, Unlock, ShieldAlert, CheckCircle, FileText as FileTextIcon, ChevronRight, X as CloseIcon } from 'lucide-react';
 
 export default function SubjectsPage() {
-  const [selectedGrade, setSelectedGrade] = useState<number | 'all'>('all');
-  const [activeSection, setActiveSection] = useState<'curriculum' | 'files' | 'submit' | 'videos'>('files');
+  const [selectedGrade, setSelectedGrade] = useState<number | 'all'>(7);
+  const [activeSection, setActiveSection] = useState<'29periods' | 'files' | 'submit' | 'videos' | 'curriculum'>('29periods');
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [permissionWarning, setPermissionWarning] = useState<string>('');
+  const [viewingPeriod, setViewingPeriod] = useState<CurriculumPeriod | null>(null);
 
   // State cho Form Nộp bài thực hành
   const [submitClassId, setSubmitClassId] = useState(MOCK_CLASSES[1].id); // Mặc định 7A1
@@ -39,6 +45,26 @@ export default function SubjectsPage() {
   const [submissionSuccess, setSubmissionSuccess] = useState<PracticalSubmission | null>(null);
   const [recentSubmissions, setRecentSubmissions] = useState<PracticalSubmission[]>(MOCK_SUBMISSIONS);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (user.role === 'student' && user.studentGrade) {
+      setSelectedGrade(user.studentGrade);
+    } else {
+      setSelectedGrade(7);
+    }
+  }, []);
+
+  const handleSelectGrade = (grade: number) => {
+    if (currentUser && currentUser.role === 'student' && currentUser.studentGrade !== grade) {
+      setPermissionWarning(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Theo quy định phân quyền, em chỉ được học tập trên học liệu của Khối ${currentUser.studentGrade}!`);
+      setTimeout(() => setPermissionWarning(''), 5000);
+      return;
+    }
+    setPermissionWarning('');
+    setSelectedGrade(grade);
+  };
 
   // State cho Video đang phát
   const [currentVideo, setCurrentVideo] = useState<VideoLecture>(MOCK_VIDEOS[0]);
@@ -171,16 +197,20 @@ export default function SubjectsPage() {
 
         {/* 5 MENU PHỤ ĐIỀU HƯỚNG NHANH */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-6 mt-6 border-t border-white/10 relative z-10">
-          <Link
-            href="/in-class"
-            className="p-3 rounded-2xl flex items-center gap-3 transition-all bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 border border-amber-300/40"
+          <button
+            onClick={() => setActiveSection('29periods')}
+            className={`p-3 rounded-2xl flex items-center gap-3 transition-all ${
+              activeSection === '29periods'
+                ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30 font-bold ring-2 ring-amber-300'
+                : 'bg-white/10 text-slate-200 hover:bg-white/20'
+            }`}
           >
-            <Sparkles className="w-5 h-5 text-amber-100" />
+            <Sparkles className="w-5 h-5 text-amber-300" />
             <div className="text-left">
-              <span className="block text-[10px] uppercase tracking-wider text-amber-100 font-extrabold">Hoạt động 1</span>
-              <span className="text-sm font-black">Củng Cố (7 Câu)</span>
+              <span className="block text-xs uppercase tracking-wider text-amber-200 font-bold">Toàn diện</span>
+              <span className="text-sm font-black">29 Tiết Học</span>
             </div>
-          </Link>
+          </button>
           <button
             onClick={() => setActiveSection('files')}
             className={`p-3 rounded-2xl flex items-center gap-3 transition-all ${
@@ -243,28 +273,324 @@ export default function SubjectsPage() {
         </div>
       </div>
 
-      {/* THANH LỌC THEO KHỐI LỚP */}
+      {/* CẢNH BÁO PHÂN QUYỀN NẾU HỌC SINH CHỌN SAI KHỐI */}
+      {permissionWarning && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+          <span>{permissionWarning}</span>
+        </div>
+      )}
+
+      {/* THANH CHỌN KHỐI LỚP TÍCH HỢP PHÂN QUYỀN (RBAC) */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
           <Filter className="w-4 h-4 text-blue-600" />
-          <span>Lọc theo Khối lớp:</span>
+          <span>Khối lớp giảng dạy:</span>
+          {currentUser?.role === 'student' && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              Tài khoản: {currentUser.studentName} ({currentUser.studentClass} - Khối {currentUser.studentGrade})
+            </span>
+          )}
+          {currentUser?.role === 'teacher' && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Quyền Giáo Viên: Toàn quyền quản trị 4 khối
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {(['all', 6, 7, 8, 9] as const).map((g) => (
-            <button
-              key={g}
-              onClick={() => setSelectedGrade(g)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedGrade === g
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {g === 'all' ? 'Tất cả các khối (6-9)' : `Khối ${g}`}
-            </button>
-          ))}
+          {([6, 7, 8, 9] as const).map((g) => {
+            const isStudent = currentUser?.role === 'student';
+            const isStudentAllowed = !isStudent || currentUser.studentGrade === g;
+            const isCurrent = selectedGrade === g;
+
+            return (
+              <button
+                key={g}
+                onClick={() => handleSelectGrade(g)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  isCurrent
+                    ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20'
+                    : isStudentAllowed
+                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'bg-slate-100/70 text-slate-400 hover:bg-rose-50 hover:text-rose-600 cursor-not-allowed border border-dashed border-slate-300'
+                }`}
+                title={!isStudentAllowed ? `Khóa: Học sinh chỉ được vào Khối ${currentUser.studentGrade}` : `Khối ${g}`}
+              >
+                {!isStudentAllowed ? <Lock className="w-3 h-3 text-slate-400" /> : <Unlock className="w-3 h-3 text-blue-400" />}
+                <span>Khối {g}</span>
+                {isStudent && currentUser.studentGrade === g && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-blue-700 font-extrabold">Lớp em</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      {/* PHẦN ĐẶC BIỆT: HỆ THỐNG 29 TIẾT HỌC HOÀN CHỈNH (CV 3456 & QĐ 3439) */}
+      {activeSection === '29periods' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-3xl border border-amber-200">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-amber-200 text-amber-900 text-xs font-black uppercase tracking-wider">
+                  Khối {selectedGrade === 'all' ? 'Tất cả' : selectedGrade} · 29 Tiết Học Hoàn Chỉnh
+                </span>
+                <span className="text-xs font-semibold text-slate-500">
+                  Tích hợp Năng lực số (CV 3456) &amp; Trí tuệ nhân tạo (QĐ 3439)
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                Học Liệu 29 Tiết Học Môn Tin Học Khối {selectedGrade === 'all' ? 'Tất cả' : selectedGrade}
+              </h2>
+              <p className="text-xs text-slate-600 mt-1">
+                Mỗi tiết học tích hợp đầy đủ 4 hoạt động: <strong>Phiếu học tập 4 pha · Củng cố 7 câu chuẩn Bộ · Thực hành phòng máy · Bài tập về nhà</strong>.
+              </p>
+            </div>
+            <Link
+              href="/in-class"
+              className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md shadow-amber-500/20 shrink-0 flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Làm bài củng cố trực tiếp</span>
+            </Link>
+          </div>
+
+          {/* DANH SÁCH 29 THẺ TIẾT HỌC */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(CURRICULUM_DATA[selectedGrade === 'all' ? 7 : selectedGrade] || []).map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-between space-y-4 group"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
+                      T.{p.period}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {p.isPractice && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          Thực hành
+                        </span>
+                      )}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        {p.reinforcement.matrix}
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-sm text-slate-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">
+                    {p.title}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium line-clamp-1">
+                    {p.topic}
+                  </p>
+                  <div className="text-[10px] text-indigo-600 font-semibold bg-indigo-50/70 p-2 rounded-xl">
+                    🎯 {p.digitalCompetency}
+                  </div>
+                </div>
+
+                {/* 4 NÚT HÀNH ĐỘNG HỌC TẬP CỦA TIẾT */}
+                <div className="space-y-2 pt-3 border-t border-slate-100">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => setViewingPeriod(p)}
+                      className="py-1.5 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <FileTextIcon className="w-3 h-3" />
+                      <span>Phiếu 4 pha</span>
+                    </button>
+                    <Link
+                      href="/in-class"
+                      className="py-1.5 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-600" />
+                      <span>Củng cố 7 câu</span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {p.isPractice && p.practicalTask ? (
+                      <a
+                        href={p.practicalTask.sampleFileUrl}
+                        download={p.practicalTask.sampleFileName}
+                        className="py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                      >
+                        <Download className="w-3 h-3 text-emerald-600" />
+                        <span>Tải tệp mẫu</span>
+                      </a>
+                    ) : (
+                      <span className="py-1.5 px-2 rounded-lg bg-slate-50 text-slate-400 text-[11px] font-medium text-center">
+                        Tiết lý thuyết
+                      </span>
+                    )}
+
+                    <Link
+                      href="/homework"
+                      className="py-1.5 px-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <UploadCloud className="w-3 h-3 text-purple-600" />
+                      <span>BTVN</span>
+                    </Link>
+                  </div>
+
+                  <button
+                    onClick={() => setViewingPeriod(p)}
+                    className="w-full py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1 mt-1 shadow-xs"
+                  >
+                    <span>Xem toàn bộ học liệu Tiết {p.period}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CHI TIẾT HỌC LIỆU 4 THÀNH PHẦN CỦA TIẾT HỌC */}
+      {viewingPeriod && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black uppercase">
+                    Tiết {viewingPeriod.period} · Khối {viewingPeriod.grade}
+                  </span>
+                  <span className="text-xs text-blue-200">{viewingPeriod.topic}</span>
+                </div>
+                <h3 className="text-lg font-bold mt-1 text-white">{viewingPeriod.title}</h3>
+              </div>
+              <button
+                onClick={() => setViewingPeriod(null)}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+              {/* Mục tiêu & Năng lực số */}
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-1">
+                <span className="font-bold text-indigo-900 uppercase text-[11px]">🎯 Mục tiêu cần đạt &amp; Năng lực số / AI:</span>
+                <p className="text-slate-700 leading-relaxed">{viewingPeriod.contentDesc}</p>
+                <p className="font-semibold text-indigo-700 text-[11px] pt-1">Định hướng: {viewingPeriod.digitalCompetency}</p>
+              </div>
+
+              {/* 1. Phiếu học tập 4 pha */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <FileTextIcon className="w-4 h-4 text-blue-600" />
+                  <span>1. Phiếu học tập điện tử 4 pha</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="font-bold text-blue-600 block mb-1">Pha 1: Khởi động</span>
+                    <p className="text-slate-600">{viewingPeriod.worksheet.phase1_khoi_dong}</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="font-bold text-emerald-600 block mb-1">Pha 2: Khám phá</span>
+                    <p className="text-slate-600">{viewingPeriod.worksheet.phase2_kham_pha}</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="font-bold text-amber-600 block mb-1">Pha 3: Luyện tập</span>
+                    <p className="text-slate-600">{viewingPeriod.worksheet.phase3_luyen_tap}</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="font-bold text-purple-600 block mb-1">Pha 4: Vận dụng</span>
+                    <p className="text-slate-600">{viewingPeriod.worksheet.phase4_van_dung}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Củng cố bài học 7 câu */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>2. Ngân hàng Củng cố bài học ({viewingPeriod.reinforcement.matrix})</span>
+                  </h4>
+                  <Link
+                    href="/in-class"
+                    className="px-3 py-1 rounded-lg bg-amber-500 text-white font-bold text-[11px]"
+                  >
+                    Vào phòng làm bài 7 câu →
+                  </Link>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {viewingPeriod.reinforcement.questions.map((q, qIdx) => (
+                    <div key={q.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900">Câu {qIdx + 1}: {q.question}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                          {q.level}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-emerald-700 font-bold">
+                        ✓ Đáp án đúng: {q.options[q.correctIndex]}
+                      </div>
+                      <div className="text-[11px] text-slate-500 italic">
+                        💡 Lời giải của Thầy: {q.explanation}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Bài tập thực hành nếu có */}
+              {viewingPeriod.isPractice && viewingPeriod.practicalTask && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-emerald-600" />
+                    <span>3. Bài tập thực hành &amp; Rubric chấm điểm</span>
+                  </h4>
+                  <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-3">
+                    <p className="font-bold text-emerald-900">{viewingPeriod.practicalTask.title}</p>
+                    <div className="space-y-1">
+                      <span className="font-bold text-slate-700">Quy trình thực hiện:</span>
+                      {viewingPeriod.practicalTask.steps.map((st, sIdx) => (
+                        <div key={sIdx} className="text-slate-600 pl-2">· {st}</div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Bài tập về nhà */}
+              <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 space-y-2">
+                <span className="font-bold text-purple-900 uppercase text-[11px]">4. Nhiệm vụ Bài tập về nhà:</span>
+                <p className="text-slate-700">{viewingPeriod.homework.description}</p>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-500">Định dạng nộp: Ảnh chụp vở (.jpg, .png), Excel (.xlsx), Word (.docx)</span>
+                  <Link
+                    href="/homework"
+                    className="px-3 py-1 rounded-lg bg-purple-600 text-white font-bold text-[11px]"
+                  >
+                    Cổng nộp BTVN →
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                THCS Mão Điền — Hệ sinh thái học tập số môn Tin học
+              </span>
+              <button
+                onClick={() => setViewingPeriod(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PHẦN 1: KHO TỆP EXCEL MẪU THỰC HÀNH */}
       {activeSection === 'files' && (

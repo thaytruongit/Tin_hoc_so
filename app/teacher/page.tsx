@@ -35,9 +35,17 @@ import {
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS, MOCK_HOMEWORK_SUBMISSIONS, MOCK_IN_CLASS_LESSONS } from '@/lib/mock-data';
 import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
+import { getCurrentUser, UserSession } from '@/lib/auth';
+import { CURRICULUM_DATA } from '@/lib/curriculum-data';
+import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 
 export default function TeacherDashboard() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<number | 'all'>('all');
   const [selectedClassId, setSelectedClassId] = useState(MOCK_CLASSES[4].id); // Mặc định 7A10
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,6 +177,43 @@ export default function TeacherDashboard() {
     setNotification(`Đã lưu điểm ${numScore}đ và gửi lời phê bài tập về nhà thành công!`);
     setTimeout(() => setNotification(''), 3000);
   };
+
+  if (currentUser && currentUser.role === 'student') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-lg border border-rose-200">
+          <ShieldAlert className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-black uppercase tracking-wider">
+            Phân quyền bảo mật (RBAC)
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Truy Cập Bị Từ Chối — Quyền Giáo Viên
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
+            Kênh Giáo Viên dành riêng cho <strong>Thầy Trương</strong> để quản trị điểm số và đề thi.<br />
+            Tài khoản của em là <strong>{currentUser.studentName}</strong> ({currentUser.studentClass} - Khối {currentUser.studentGrade}) chỉ có quyền thực hiện học liệu của lớp mình.
+          </p>
+        </div>
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/student"
+            className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
+          >
+            <span>Về không gian học tập Khối {currentUser.studentGrade}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/login?role=teacher"
+            className="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+          >
+            Đăng nhập tài khoản Giáo viên
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">

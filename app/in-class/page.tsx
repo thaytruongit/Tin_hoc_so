@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Laptop, 
@@ -23,17 +23,66 @@ import {
   CheckCheck
 } from 'lucide-react';
 import { MOCK_IN_CLASS_LESSONS, MOCK_CLASSES } from '@/lib/mock-data';
+import { getCurrentUser, UserSession } from '@/lib/auth';
+import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
+import { Lock, Unlock, ShieldAlert } from 'lucide-react';
 import { InClassLesson, ReinforcementQuestion, CognitiveLevel } from '@/lib/types';
 
 export default function InClassPage() {
-  const [selectedLessonId, setSelectedLessonId] = useState<string>(MOCK_IN_CLASS_LESSONS[1].id); // Mặc định Khối 7
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<number>(7);
+  const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(12);
   const [activeTab, setActiveTab] = useState<'reinforcement' | 'practice'>('reinforcement');
+  const [permissionNotice, setPermissionNotice] = useState<string>('');
 
   // Trạng thái làm bài Củng cố
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
-  const currentLesson = MOCK_IN_CLASS_LESSONS.find(l => l.id === selectedLessonId) || MOCK_IN_CLASS_LESSONS[0];
+  // Lấy dữ liệu 29 tiết của khối đang chọn
+  const periodsOfGrade = CURRICULUM_DATA[selectedGrade] || [];
+  const currentPeriod = periodsOfGrade.find(p => p.period === selectedPeriodNum) || periodsOfGrade[0] || {
+    id: 'k7-p12',
+    grade: 7,
+    period: 12,
+    title: 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel',
+    topic: 'Chủ đề E: Ứng dụng tin học',
+    isPractice: true,
+    contentDesc: 'Nắm vững cú pháp và vận dụng hàm điều kiện',
+    digitalCompetency: 'Năng lực số chuẩn GDPT 2018 (CV 3456)',
+    reinforcement: {
+      questionsCount: 7,
+      matrix: '3 Biết - 2 Hiểu - 2 Vận dụng',
+      questions: MOCK_IN_CLASS_LESSONS[1].reinforcementQuestions
+    },
+    practicalTask: MOCK_IN_CLASS_LESSONS[1].practicalTask,
+    worksheet: { title: '', phase1_khoi_dong: '', phase2_kham_pha: '', phase3_luyen_tap: '', phase4_van_dung: '', xpReward: 30, timeLimitMin: 15 },
+    homework: { title: '', description: '', acceptedFormats: ['image', 'xlsx', 'docx'], dueInDays: 7 }
+  };
+
+  const currentQuestions = currentPeriod.reinforcement.questions;
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (user.role === 'student' && user.studentGrade) {
+      setSelectedGrade(user.studentGrade);
+      setSelectedPeriodNum(1);
+    }
+  }, []);
+
+  const handleSelectGrade = (grade: number) => {
+    if (currentUser?.role === 'student' && currentUser.studentGrade !== grade) {
+      setPermissionNotice(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Theo quy định phân quyền, em chỉ được làm bài củng cố của Khối ${currentUser.studentGrade}!`);
+      setTimeout(() => setPermissionNotice(''), 5000);
+      return;
+    }
+    setPermissionNotice('');
+    setSelectedGrade(grade);
+    setSelectedPeriodNum(1);
+    setSelectedAnswers({});
+    setIsSubmitted(false);
+  };
 
   const handleSelectOption = (questionId: string, optionIndex: number) => {
     if (isSubmitted) return;
@@ -45,16 +94,16 @@ export default function InClassPage() {
 
   const handleGradeQuiz = () => {
     const answeredCount = Object.keys(selectedAnswers).length;
-    if (answeredCount < currentLesson.reinforcementQuestions.length) {
-      if (!confirm(`Em mới trả lời ${answeredCount}/${currentLesson.reinforcementQuestions.length} câu. Em có chắc chắn muốn nộp bài củng cố ngay không?`)) {
+    if (answeredCount < currentQuestions.length) {
+      if (!confirm(`Em mới trả lời ${answeredCount}/${currentQuestions.length} câu. Em có chắc chắn muốn nộp bài củng cố ngay không?`)) {
         return;
       }
     }
 
-    const calculatedCorrectCount = currentLesson.reinforcementQuestions.filter(
+    const calculatedCorrectCount = currentQuestions.filter(
       q => selectedAnswers[q.id] === q.correctIndex
     ).length;
-    const calculatedScore = Math.round((calculatedCorrectCount / currentLesson.reinforcementQuestions.length) * 10 * 10) / 10;
+    const calculatedScore = Math.round((calculatedCorrectCount / currentQuestions.length) * 10 * 10) / 10;
 
     // Lưu kết quả vào LocalStorage để đồng bộ vào Kênh Giáo viên
     if (typeof window !== 'undefined') {
@@ -65,15 +114,15 @@ export default function InClassPage() {
 
         const newResult = {
           id: `rf-res-${Date.now()}`,
-          lessonId: currentLesson.id,
-          lessonTitle: currentLesson.lessonTitle,
-          grade: currentLesson.grade,
+          lessonId: currentPeriod.id,
+          lessonTitle: currentPeriod.title,
+          grade: currentPeriod.grade,
           studentName,
           studentCode,
           studentClass,
           score: calculatedScore,
           correctCount: calculatedCorrectCount,
-          totalQuestions: currentLesson.reinforcementQuestions.length,
+          totalQuestions: currentQuestions.length,
           submittedAt: 'Vừa xong'
         };
 
@@ -93,18 +142,18 @@ export default function InClassPage() {
   };
 
   // Tính điểm tổng và điểm theo từng mức độ nhận thức chuẩn Bộ GD&ĐT
-  const correctCount = currentLesson.reinforcementQuestions.filter(
+  const correctCount = currentQuestions.filter(
     q => selectedAnswers[q.id] === q.correctIndex
   ).length;
-  const score = Math.round((correctCount / currentLesson.reinforcementQuestions.length) * 10 * 10) / 10;
+  const score = Math.round((correctCount / currentQuestions.length) * 10 * 10) / 10;
 
-  const countNhanBiet = currentLesson.reinforcementQuestions.filter(q => q.level === 'Nhận biết').length;
-  const countThongHieu = currentLesson.reinforcementQuestions.filter(q => q.level === 'Thông hiểu').length;
-  const countVanDung = currentLesson.reinforcementQuestions.filter(q => q.level === 'Vận dụng').length;
+  const countNhanBiet = currentQuestions.filter(q => q.level === 'Nhận biết').length;
+  const countThongHieu = currentQuestions.filter(q => q.level === 'Thông hiểu').length;
+  const countVanDung = currentQuestions.filter(q => q.level === 'Vận dụng').length;
 
-  const correctNhanBiet = currentLesson.reinforcementQuestions.filter(q => q.level === 'Nhận biết' && selectedAnswers[q.id] === q.correctIndex).length;
-  const correctThongHieu = currentLesson.reinforcementQuestions.filter(q => q.level === 'Thông hiểu' && selectedAnswers[q.id] === q.correctIndex).length;
-  const correctVanDung = currentLesson.reinforcementQuestions.filter(q => q.level === 'Vận dụng' && selectedAnswers[q.id] === q.correctIndex).length;
+  const correctNhanBiet = currentQuestions.filter(q => q.level === 'Nhận biết' && selectedAnswers[q.id] === q.correctIndex).length;
+  const correctThongHieu = currentQuestions.filter(q => q.level === 'Thông hiểu' && selectedAnswers[q.id] === q.correctIndex).length;
+  const correctVanDung = currentQuestions.filter(q => q.level === 'Vận dụng' && selectedAnswers[q.id] === q.correctIndex).length;
 
   const getLevelBadge = (level: CognitiveLevel) => {
     switch (level) {
@@ -145,32 +194,79 @@ export default function InClassPage() {
         </div>
       </div>
 
-      {/* CHỌN BÀI HỌC CỦNG CỐ CỦA 4 KHỐI LỚP */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-          <BookOpen className="w-4 h-4 text-blue-600" />
-          <span>Chọn khối lớp &amp; bài học củng cố:</span>
+      {/* CẢNH BÁO PHÂN QUYỀN NẾU HỌC SINH CHỌN SAI KHỐI */}
+      {permissionNotice && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+          <span>{permissionNotice}</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {MOCK_IN_CLASS_LESSONS.map((lesson) => (
-            <button
-              key={lesson.id}
-              onClick={() => {
-                setSelectedLessonId(lesson.id);
-                handleResetQuiz();
-              }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                selectedLessonId === lesson.id
-                  ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-400/30'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
-                {lesson.grade}
+      )}
+
+      {/* BỘ CHỌN KHỐI LỚP & 29 TIẾT HỌC */}
+      <div className="space-y-3 p-5 rounded-3xl bg-white border border-slate-200 shadow-xs">
+        {/* Hàng 1: Chọn Khối */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+            <BookOpen className="w-4 h-4 text-blue-600" />
+            <span>Chọn khối lớp:</span>
+            {currentUser?.role === 'student' && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                Lớp {currentUser.studentClass} (Khối {currentUser.studentGrade})
               </span>
-              <span>Khối {lesson.grade}: {lesson.lessonTitle.split(':')[0]}</span>
-            </button>
-          ))}
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {([6, 7, 8, 9] as const).map((g) => {
+              const isAllowed = !currentUser || currentUser.role === 'teacher' || currentUser.studentGrade === g;
+              const isCur = selectedGrade === g;
+              return (
+                <button
+                  key={g}
+                  onClick={() => handleSelectGrade(g)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isCur
+                      ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-400/30'
+                      : isAllowed
+                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-slate-100/60 text-slate-400 cursor-not-allowed border border-dashed border-slate-300'
+                  }`}
+                  title={!isAllowed ? `Khóa: Học sinh chỉ được chọn Khối ${currentUser?.studentGrade}` : `Khối ${g}`}
+                >
+                  {!isAllowed ? <Lock className="w-3 h-3 text-slate-400" /> : <Unlock className="w-3 h-3 text-amber-600" />}
+                  <span>Khối {g}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Hàng 2: Chọn trong 29 Tiết học */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+            <span>Chọn tiết học trong phân phối chương trình 29 tiết (Khối {selectedGrade}):</span>
+            <span className="text-[11px] text-amber-700 font-bold">Đang chọn: Tiết {selectedPeriodNum}</span>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
+            {periodsOfGrade.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => {
+                  setSelectedPeriodNum(p.period);
+                  setSelectedAnswers({});
+                  setIsSubmitted(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+                  selectedPeriodNum === p.period
+                    ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/30'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                title={p.title}
+              >
+                <span>T.{p.period}</span>
+                {p.isPractice && <span className="ml-1 text-[9px] text-emerald-300">●</span>}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -208,14 +304,14 @@ export default function InClassPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  Khối {currentLesson.grade} · {currentLesson.topic}
+                  Khối {currentPeriod.grade} · {currentPeriod.topic}
                 </span>
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                   3 Nhận biết · 2 Thông hiểu · 2 Vận dụng
                 </span>
               </div>
               <h2 className="text-xl font-bold text-slate-900 mt-2">
-                {currentLesson.lessonTitle}
+                {currentPeriod.title}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 Em hãy đọc kỹ câu hỏi, chọn phương án đúng nhất và nhấn nút <strong>Nộp bài</strong> ở cuối để xem điểm số &amp; lời giải thích của Thầy.
@@ -247,7 +343,7 @@ export default function InClassPage() {
 
           {/* DANH SÁCH 7 CÂU HỎI TRẮC NGHIỆM */}
           <div className="space-y-5">
-            {currentLesson.reinforcementQuestions.map((q, qIndex) => {
+            {currentQuestions.map((q, qIndex) => {
               const studentChosen = selectedAnswers[q.id];
               const isAnswered = studentChosen !== undefined;
               const isCorrect = isAnswered && studentChosen === q.correctIndex;
@@ -365,28 +461,29 @@ export default function InClassPage() {
       {/* CHỨC NĂNG 2: BÀI TẬP THỰC HÀNH TẠI LỚP (RUBRIC PHÒNG MÁY) */}
       {activeTab === 'practice' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+          {currentPeriod.practicalTask ? (
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
               <div>
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Khối {currentLesson.grade} · Tiết thực hành
+                  Khối {currentPeriod.grade} · Tiết thực hành
                 </span>
                 <h2 className="text-xl font-bold text-slate-900 mt-2">
-                  {currentLesson.practicalTask.title}
+                  {currentPeriod.practicalTask.title}
                 </h2>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {currentLesson.practicalTask.description}
+                  {(currentPeriod.practicalTask as { description?: string }).description || currentPeriod.contentDesc}
                 </p>
               </div>
 
               {/* NÚT TẢI TỆP MẪU THỰC HÀNH */}
               <a
-                href={currentLesson.practicalTask.sampleFileUrl}
-                download={currentLesson.practicalTask.sampleFileName}
+                href={currentPeriod.practicalTask.sampleFileUrl}
+                download={currentPeriod.practicalTask.sampleFileName}
                 className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 shrink-0"
               >
                 <Download className="w-4 h-4" />
-                <span>Tải tệp mẫu ({currentLesson.practicalTask.sampleFileName.split('.').pop()})</span>
+                <span>Tải tệp mẫu ({currentPeriod.practicalTask.sampleFileName.split('.').pop()})</span>
               </a>
             </div>
 
@@ -398,7 +495,7 @@ export default function InClassPage() {
               </h3>
 
               <div className="space-y-2.5">
-                {currentLesson.practicalTask.steps.map((step, sIdx) => (
+                {currentPeriod.practicalTask.steps.map((step, sIdx) => (
                   <div
                     key={sIdx}
                     className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-start gap-3 text-xs text-slate-700"
@@ -429,7 +526,7 @@ export default function InClassPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {currentLesson.practicalTask.rubric.map((r, rIdx) => (
+                    {currentPeriod.practicalTask.rubric.map((r, rIdx) => (
                       <tr key={rIdx} className="hover:bg-slate-50/80">
                         <td className="py-3 px-4 font-semibold text-slate-900">
                           {r.criterion}
@@ -463,6 +560,23 @@ export default function InClassPage() {
               </Link>
             </div>
           </div>
+          ) : (
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <BookOpen className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold text-lg text-slate-900">Tiết {currentPeriod.period}: Tiết Học Lý Thuyết</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Tiết học này tập trung vào kiến thức lý thuyết nền tảng và thảo luận. Em hãy chuyển sang tab <strong>Củng cố bài học (7 câu)</strong> để hoàn thành nhiệm vụ của tiết học này nhé!
+              </p>
+              <button
+                onClick={() => setActiveTab('reinforcement')}
+                className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-xs shadow-sm hover:bg-amber-600"
+              >
+                Chuyển sang Củng cố bài học (7 câu)
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
