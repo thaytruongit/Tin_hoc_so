@@ -11,7 +11,6 @@ import {
   UploadCloud, 
   Sparkles, 
   Award, 
-  BarChart3, 
   Layers, 
   Check, 
   X, 
@@ -32,7 +31,6 @@ export default function InClassPage() {
   // Trạng thái làm bài Củng cố
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const [showTeacherProjector, setShowTeacherProjector] = useState<boolean>(false);
 
   const currentLesson = MOCK_IN_CLASS_LESSONS.find(l => l.id === selectedLessonId) || MOCK_IN_CLASS_LESSONS[0];
 
@@ -91,21 +89,6 @@ export default function InClassPage() {
           <p className="text-xs sm:text-sm text-slate-300">
             Dành riêng cho giờ học lý thuyết & thực hành tại phòng máy: Củng cố 7 câu hỏi phân hóa và thực hành theo Rubric.
           </p>
-        </div>
-
-        {/* NÚT CHUYỂN CHẾ ĐỘ MÁY CHIẾU CHO GV */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowTeacherProjector(!showTeacherProjector)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
-              showTeacherProjector
-                ? 'bg-amber-400 text-slate-900 ring-2 ring-amber-300'
-                : 'bg-white/10 text-white hover:bg-white/20 border border-white/15'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>{showTeacherProjector ? 'Tắt chiếu thống kê lớp' : 'Chế độ Máy chiếu (GV)'}</span>
-          </button>
         </div>
       </div>
 
@@ -195,54 +178,6 @@ export default function InClassPage() {
               </div>
             )}
           </div>
-
-          {/* CHẾ ĐỘ MÁY CHIẾU GIÁO VIÊN (LIVE POLL STATS) */}
-          {showTeacherProjector && (
-            <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl space-y-4 animate-in slide-in-from-top-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <Monitor className="w-5 h-5 text-amber-400" />
-                  <h3 className="font-bold text-sm text-amber-300 uppercase tracking-wider">
-                    Chế độ Máy Chiếu Giáo Viên · Thống Kê Phản Hồi Trực Tiếp Của Cả Lớp
-                  </h3>
-                </div>
-                <span className="text-xs text-slate-400">
-                  Dữ liệu phòng máy cập nhật tự động
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentLesson.reinforcementQuestions.map((q, idx) => (
-                  <div key={q.id} className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/60 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-300">Câu {idx + 1}</span>
-                      {getLevelBadge(q.level)}
-                    </div>
-                    <p className="text-[11px] text-slate-400 line-clamp-2">{q.question}</p>
-                    <div className="grid grid-cols-4 gap-1.5 pt-1 text-center font-mono">
-                      {(['A', 'B', 'C', 'D'] as const).map((opt, optIdx) => {
-                        const count = q.stats ? q.stats[opt] : 0;
-                        const isCorrect = optIdx === q.correctIndex;
-                        return (
-                          <div
-                            key={opt}
-                            className={`p-1.5 rounded-xl border ${
-                              isCorrect
-                                ? 'bg-emerald-950/70 border-emerald-500 text-emerald-300 font-bold'
-                                : 'bg-slate-900 border-slate-700 text-slate-400'
-                            }`}
-                          >
-                            <span className="block text-[10px] text-slate-500">{opt}</span>
-                            <span className="text-xs font-bold">{count} em</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* DANH SÁCH 7 CÂU HỎI TRẮC NGHIỆM */}
           <div className="space-y-5">
