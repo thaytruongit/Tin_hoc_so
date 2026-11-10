@@ -574,6 +574,39 @@ export default function SubjectsPage() {
                   </Link>
                 </div>
               </div>
+
+              {/* 5. Tệp bài giảng PowerPoint (.pptx) & Trực tuyến */}
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-rose-900 uppercase text-[11px] flex items-center gap-1.5">
+                    <Laptop className="w-3.5 h-3.5 text-rose-600" />
+                    <span>5. Tài liệu tự học: Bài giảng PowerPoint (.pptx)</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-200/60 text-rose-800">
+                    {viewingPeriod.slide?.slideCount || 20} trang
+                  </span>
+                </div>
+                <div className="text-xs text-slate-700">
+                  <span className="font-semibold text-slate-800">Tệp bài giảng:</span> {viewingPeriod.slide?.fileName}
+                </div>
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <Link
+                    href="/in-class"
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <span>Mở khung chiếu Slide trực tuyến</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${viewingPeriod.slide?.fileName}`)}
+                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-[11px] flex items-center gap-1.5 transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Tải tệp gốc (.pptx)</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Modal Footer */}

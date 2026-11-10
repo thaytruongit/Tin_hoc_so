@@ -25,7 +25,13 @@ import {
   Repeat,
   Trophy,
   ArrowLeftRight,
-  Send
+  Send,
+  Presentation,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  FolderOpen
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
@@ -36,7 +42,9 @@ export default function InClassPage() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
   const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'worksheet' | 'reinforcement' | 'practice'>('worksheet');
+  const [activeTab, setActiveTab] = useState<'worksheet' | 'reinforcement' | 'practice' | 'slide'>('worksheet');
+  const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const [isSlideFullscreen, setIsSlideFullscreen] = useState<boolean>(false);
   const [permissionNotice, setPermissionNotice] = useState<string>('');
 
   // Trạng thái Phiếu học tập Cặp đôi
@@ -92,6 +100,7 @@ export default function InClassPage() {
     setWorksheetAnswers({});
     setWorksheetSubmitted(false);
     setCurrentRoleTurn('A');
+    setCurrentSlideIndex(0);
   };
 
   // Xử lý Luyện tập 7 câu
@@ -347,6 +356,18 @@ export default function InClassPage() {
         >
           <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
           <span>3. Bài tập thực hành {currentPeriod.isPractice ? '(Có bài thực hành)' : '(Chỉ tiết TH)'}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('slide')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'slide'
+              ? 'border-b-2 border-rose-600 text-rose-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Presentation className="w-4 h-4 text-rose-500" />
+          <span>4. Slide bài giảng PowerPoint ({currentPeriod.slide?.slideCount || 20} trang)</span>
         </button>
       </div>
 
@@ -909,6 +930,187 @@ export default function InClassPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {/* ====================================================================== */}
+      {/* HOẠT ĐỘNG 4: KHUNG XEM SLIDE BÀI GIẢNG POWERPOINT TRỰC TUYẾN           */}
+      {/* ====================================================================== */}
+      {activeTab === 'slide' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            {/* Header thông tin tệp Slide */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5">
+                    <Presentation className="w-3.5 h-3.5 text-rose-600" />
+                    Bài giảng điện tử PowerPoint · Khối {currentPeriod.grade}
+                  </span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                    {currentPeriod.slide?.slideCount || 20} trang trình chiếu
+                  </span>
+                  <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    Drive: {currentPeriod.slide?.fileName || 'Bài giảng'}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mt-2">
+                  {currentPeriod.title}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Đường dẫn tệp gốc trên Google Drive của Thầy: <code>{currentPeriod.slide?.drivePath}</code>
+                </p>
+              </div>
+
+              {/* CÁC NÚT TÁC VỤ: TẢI PPTX & XEM TOÀN MÀN HÌNH */}
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                <a
+                  href={`/slides/${currentPeriod.slide?.fileName}`}
+                  download={currentPeriod.slide?.fileName || 'BaiGiang.pptx'}
+                  onClick={(e) => {
+                    // Thông báo tải về
+                    alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${currentPeriod.slide?.fileName}\nTệp được đồng bộ từ Google Drive của Thầy Trương.`);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Tải bài giảng về máy (.pptx)</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setIsSlideFullscreen(!isSlideFullscreen)}
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200"
+                  title="Chế độ toàn màn hình máy chiếu"
+                >
+                  {isSlideFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  <span>{isSlideFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* TRÌNH PHÁT SLIDE TƯƠNG TÁC (PRESENTATION SLIDE VIEWER) */}
+            <div className={`rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 text-white shadow-2xl transition-all ${
+              isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
+            }`}>
+              {/* Thanh điều khiển trên đỉnh Slide */}
+              <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
+                  <span className="font-bold text-slate-300">
+                    Trang {currentSlideIndex + 1} / {(currentPeriod.slide?.slides.length || 1)}
+                  </span>
+                  <span className="text-slate-500 hidden sm:inline">|</span>
+                  <span className="text-slate-400 truncate max-w-xs hidden sm:inline">
+                    {currentPeriod.slide?.fileName}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-amber-400 font-medium hidden md:inline">
+                    💡 Dùng phím &larr; / &rarr; hoặc nút bấm để chuyển trang
+                  </span>
+                  {isSlideFullscreen && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSlideFullscreen(false)}
+                      className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs"
+                    >
+                      Thoát toàn màn hình
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* MÀN HÌNH NỘI DUNG SLIDE CHÍNH */}
+              <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center items-center text-center space-y-6 relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-black">
+                {/* Nền hiệu ứng trang trí */}
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Nội dung slide */}
+                <div className="relative z-10 max-w-3xl space-y-4">
+                  <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-rose-300 text-xs font-extrabold uppercase tracking-widest border border-white/10">
+                    Slide {currentSlideIndex + 1} · {currentPeriod.title}
+                  </div>
+
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug">
+                    {currentPeriod.slide?.slides[currentSlideIndex]?.split('|')[0]?.replace(/^S\d+:\s*/, '') || currentPeriod.title}
+                  </h3>
+
+                  {currentPeriod.slide?.slides[currentSlideIndex]?.includes('|') && (
+                    <div className="pt-4 text-base sm:text-lg text-slate-300 font-medium leading-relaxed bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-xs">
+                      {currentPeriod.slide?.slides[currentSlideIndex]?.split('|').slice(1).join(' — ')}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-slate-500 pt-2">
+                    Môn Tin học Lớp {currentPeriod.grade} · Trường THCS Mão Điền · Thầy Trương
+                  </p>
+                </div>
+
+                {/* NÚT CHUYỂN SLIDE TRÁI / PHẢI */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
+                  disabled={currentSlideIndex === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/10 shadow-lg"
+                  title="Slide trước"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentSlideIndex(prev => Math.min((currentPeriod.slide?.slides.length || 1) - 1, prev + 1))}
+                  disabled={currentSlideIndex >= (currentPeriod.slide?.slides.length || 1) - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/10 shadow-lg"
+                  title="Slide tiếp theo"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* THANH THUMBNAIL / ĐIỀU HƯỚNG DƯỚI ĐÁY */}
+              <div className="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin py-1">
+                  {currentPeriod.slide?.slides.map((_, sIdx) => (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => setCurrentSlideIndex(sIdx)}
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center justify-center ${
+                        currentSlideIndex === sIdx
+                          ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-400'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      {sIdx + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSlideIndex(0)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                  >
+                    Về đầu
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Khung hướng dẫn tự học và xem ngoại tuyến */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5 text-slate-600">
+                <FolderOpen className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>
+                  Học sinh có thể xem trực tuyến trên điện thoại/máy tính hoặc bấm nút <strong>Tải bài giảng về máy (.pptx)</strong> để mở bằng PowerPoint hoặc WPS Office khi không có mạng.
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -39,6 +39,15 @@ export interface CurriculumPeriod {
   isPractice: boolean;
   contentDesc: string;
   digitalCompetency: string; // Năng lực số CV 3456 / AI 3439
+  slide?: {
+    fileName: string;
+    drivePath: string;
+    folder: string;
+    slideCount: number;
+    slides: string[];
+    downloadUrl?: string;
+    embedUrl?: string;
+  };
   worksheet: {
     title: string;
     phase1_khoi_dong: string;
