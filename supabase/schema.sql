@@ -1,139 +1,196 @@
 -- ============================================================================
--- TRUONG DIGITAL CLASSROOM - HỆ SINH THÁI GIÁO DỤC SỐ MÔN TIN HỌC THCS (6-7-8-9)
--- Kiến trúc: Next.js + Supabase (PostgreSQL)
--- Cấu hình: 1A (Tin 6-9) - 2A (Lớp trực tiếp) - 3A (Next+Supabase) - 4A (Tài khoản GV cấp) - 5C (LMS + Gamification)
+-- DỰ ÁN: THAYTRUONGIT-THCS MÃO ĐIỀN
+-- Hệ sinh thái giáo dục số & Cổng học tập môn Tin học THCS (Khối 6, 7, 8, 9)
+-- BẢN ĐẶC TẢ CƠ SỞ DỮ LIỆU ĐẦY ĐỦ 18 BẢNG THEO TỆP THIẾT KẾ TK.DOCX (MỤC 8)
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 1. BẢNG LỚP HỌC (classes)
-CREATE TABLE IF NOT EXISTS public.classes (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  grade       INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
-  name        TEXT NOT NULL,            -- Ví dụ: 6A1, 7A2, 8A1, 9A3
-  class_code  TEXT NOT NULL UNIQUE,     -- Mã tham gia nhanh, ví dụ: 6A1-2026
-  school_year TEXT NOT NULL DEFAULT '2025-2026',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 2. BẢNG HỌC SINH (students) - Đăng nhập bằng Mã HS + Mật khẩu do GV cấp (4A)
-CREATE TABLE IF NOT EXISTS public.students (
+-- 1. BẢNG USERS (Tài khoản)
+CREATE TABLE IF NOT EXISTS public.users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  class_id      UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
-  student_code  TEXT NOT NULL UNIQUE,   -- Ví dụ: HS6001, HS9023
+  username      TEXT NOT NULL UNIQUE,
   full_name     TEXT NOT NULL,
-  gender        TEXT DEFAULT 'Nam',
-  birthday      DATE,
-  password_hash TEXT NOT NULL DEFAULT '123456', -- Mật khẩu mặc định hoặc hash
-  avatar_url    TEXT DEFAULT '/images/avatars/student_default.png',
-  total_xp      INT NOT NULL DEFAULT 0,
-  level         INT NOT NULL DEFAULT 1,
+  role          TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('admin', 'teacher', 'student', 'parent')),
+  password_hash TEXT NOT NULL DEFAULT '123456',
+  avatar_url    TEXT DEFAULT '/images/avatar_default.png',
+  phone         TEXT,
   is_active     BOOLEAN NOT NULL DEFAULT TRUE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_students_class ON public.students(class_id);
-CREATE INDEX IF NOT EXISTS idx_students_code ON public.students(student_code);
-
--- 3. BẢNG BÀI HỌC THEO KHỐI LỚP (lessons)
-CREATE TABLE IF NOT EXISTS public.lessons (
+-- 2. BẢNG CLASSES (Danh sách lớp)
+CREATE TABLE IF NOT EXISTS public.classes (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   grade       INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
-  semester    INT NOT NULL DEFAULT 1 CHECK (semester IN (1, 2)),
-  period_num  INT NOT NULL,             -- Tiết phân phối chương trình: 1, 2, 3...
-  title       TEXT NOT NULL,            -- Tiêu đề bài học
-  topic       TEXT NOT NULL DEFAULT '', -- Chủ đề (A, B, C, D, E, F theo CT 2018)
-  description TEXT DEFAULT '',
+  name        TEXT NOT NULL,            -- 6A1, 7A1, 8A1, 9A1
+  class_code  TEXT NOT NULL UNIQUE,     -- 6A1-2026
+  school_year TEXT NOT NULL DEFAULT '2025-2026',
+  teacher_id  UUID REFERENCES public.users(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 3. BẢNG STUDENTS (Hồ sơ học sinh)
+CREATE TABLE IF NOT EXISTS public.students (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
+  student_code  TEXT NOT NULL UNIQUE,   -- HS601, HS901
+  full_name     TEXT NOT NULL,
+  gender        TEXT DEFAULT 'Nam',
+  birthday      DATE,
+  total_xp      INT NOT NULL DEFAULT 0,
+  level         INT NOT NULL DEFAULT 1,
+  streak_days   INT NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 4. BẢNG CLASS_MEMBERS (Học sinh thuộc lớp)
+CREATE TABLE IF NOT EXISTS public.class_members (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  class_id    UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
+  student_id  UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  joined_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(class_id, student_id)
+);
+
+-- 5. BẢNG SUBJECTS (Môn học)
+CREATE TABLE IF NOT EXISTS public.subjects (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code        TEXT NOT NULL UNIQUE,     -- TIN6, TIN7, TIN8, TIN9, PROG_CPP, PROG_PY
+  name        TEXT NOT NULL,
+  grade       INT CHECK (grade IN (6, 7, 8, 9)),
+  description TEXT DEFAULT ''
+);
+
+-- 6. BẢNG LESSONS (Bài học)
+CREATE TABLE IF NOT EXISTS public.lessons (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id  UUID REFERENCES public.subjects(id) ON DELETE CASCADE,
+  grade       INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  period_num  INT NOT NULL,             -- Tiết phân phối chương trình: Tiết 1, 2...
+  title       TEXT NOT NULL,            -- Bài 1: Thông tin và dữ liệu
+  topic       TEXT NOT NULL,            -- Chủ đề A, B, C, D, E, F
   content_md  TEXT DEFAULT '',
   video_url   TEXT DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_lessons_grade ON public.lessons(grade, semester, period_num);
+-- 7. BẢNG QUESTIONS (Ngân hàng câu hỏi)
+CREATE TABLE IF NOT EXISTS public.questions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id    UUID REFERENCES public.subjects(id),
+  grade         INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  topic         TEXT NOT NULL,
+  level         TEXT NOT NULL DEFAULT 'Nhận biết' CHECK (level IN ('Nhận biết', 'Thông hiểu', 'Vận dụng', 'Vận dụng cao')),
+  q_type        TEXT NOT NULL DEFAULT 'mcq' CHECK (q_type IN ('mcq', 'boolean', 'fill', 'essay', 'drag_drop')),
+  content       TEXT NOT NULL,
+  explanation   TEXT DEFAULT '',
+  points        NUMERIC(4,2) NOT NULL DEFAULT 1.0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- 4. BẢNG PHIẾU HỌC TẬP ĐIỆN TỬ (worksheets)
+-- 8. BẢNG QUESTION_OPTIONS (Các phương án trả lời)
+CREATE TABLE IF NOT EXISTS public.question_options (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id   UUID NOT NULL REFERENCES public.questions(id) ON DELETE CASCADE,
+  option_key    TEXT NOT NULL,          -- A, B, C, D hoặc 1, 2
+  option_text   TEXT NOT NULL,
+  is_correct    BOOLEAN NOT NULL DEFAULT FALSE,
+  order_num     INT NOT NULL DEFAULT 1
+);
+
+-- 9. BẢNG WORKSHEETS (Phiếu học tập điện tử 4 pha)
 CREATE TABLE IF NOT EXISTS public.worksheets (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  lesson_id   UUID REFERENCES public.lessons(id) ON DELETE SET NULL,
+  lesson_id   UUID REFERENCES public.lessons(id),
   grade       INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
   title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  phase       TEXT NOT NULL DEFAULT 'Luyện tập', -- Khởi động, Khám phá, Luyện tập, Vận dụng
-  time_limit  INT NOT NULL DEFAULT 15,           -- Phút làm bài
-  questions   JSONB NOT NULL DEFAULT '[]'::jsonb, -- Danh sách câu hỏi
-  status      TEXT NOT NULL DEFAULT 'published', -- draft, published, closed
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  phase       TEXT NOT NULL DEFAULT 'Luyện tập' CHECK (phase IN ('Khởi động', 'Khám phá', 'Luyện tập', 'Vận dụng')),
+  time_limit  INT NOT NULL DEFAULT 15,
+  xp_reward   INT NOT NULL DEFAULT 30,
+  status      TEXT NOT NULL DEFAULT 'published',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. BẢNG KẾT QUẢ PHIẾU HỌC TẬP (worksheet_submissions)
-CREATE TABLE IF NOT EXISTS public.worksheet_submissions (
+-- 10. BẢNG ASSIGNMENTS (Nhiệm vụ được giao)
+CREATE TABLE IF NOT EXISTS public.assignments (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  worksheet_id  UUID NOT NULL REFERENCES public.worksheets(id) ON DELETE CASCADE,
-  student_id    UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-  answers       JSONB NOT NULL DEFAULT '{}'::jsonb,
-  score         NUMERIC(4,2) NOT NULL DEFAULT 0,
-  max_score     NUMERIC(4,2) NOT NULL DEFAULT 10,
-  xp_earned     INT NOT NULL DEFAULT 0,
-  teacher_note  TEXT DEFAULT '',
-  submitted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (worksheet_id, student_id)
+  class_id      UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
+  item_type     TEXT NOT NULL CHECK (item_type IN ('worksheet', 'exam', 'practice')),
+  item_id       UUID NOT NULL,
+  due_date      TIMESTAMPTZ,
+  is_locked     BOOLEAN NOT NULL DEFAULT FALSE,
+  assigned_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 6. BẢNG NGÂN HÀNG ĐỀ KIỂM TRA (exams)
+-- 11. BẢNG EXAMS (Đề kiểm tra)
 CREATE TABLE IF NOT EXISTS public.exams (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   grade             INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
-  exam_type         TEXT NOT NULL DEFAULT 'regular', -- regular (thường xuyên), midterm (giữa kỳ), final (cuối kỳ)
+  exam_type         TEXT NOT NULL DEFAULT 'thường xuyên' CHECK (exam_type IN ('thường xuyên', 'giữa kỳ', 'cuối kỳ')),
   title             TEXT NOT NULL,
   duration_minutes  INT NOT NULL DEFAULT 45,
-  is_published      BOOLEAN NOT NULL DEFAULT FALSE,
   is_locked         BOOLEAN NOT NULL DEFAULT FALSE,
-  access_code       TEXT DEFAULT '',                 -- Mã đề thi bí mật nếu cần
-  questions         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  questions_json    JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 7. BẢNG KẾT QUẢ BÀI THI (exam_attempts)
+-- 12. BẢNG EXAM_ATTEMPTS (Lượt làm bài)
 CREATE TABLE IF NOT EXISTS public.exam_attempts (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   exam_id         UUID NOT NULL REFERENCES public.exams(id) ON DELETE CASCADE,
   student_id      UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-  answers         JSONB NOT NULL DEFAULT '{}'::jsonb,
-  score_mcq       NUMERIC(4,2) NOT NULL DEFAULT 0,
-  score_essay     NUMERIC(4,2) NOT NULL DEFAULT 0,
-  total_score     NUMERIC(4,2) NOT NULL DEFAULT 0,
-  tab_switches    INT NOT NULL DEFAULT 0,            -- Đếm số lần rời khỏi màn hình làm bài
+  start_time      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  submit_time     TIMESTAMPTZ,
+  tab_switches    INT NOT NULL DEFAULT 0,
   duration_sec    INT NOT NULL DEFAULT 0,
-  status          TEXT NOT NULL DEFAULT 'completed', -- completed, reviewed
-  submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  status          TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'graded'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_exam_attempts_student ON public.exam_attempts(student_id);
-CREATE INDEX IF NOT EXISTS idx_exam_attempts_exam ON public.exam_attempts(exam_id);
+-- 13. BẢNG ANSWERS (Câu trả lời chi tiết của học sinh)
+CREATE TABLE IF NOT EXISTS public.answers (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  attempt_id    UUID NOT NULL REFERENCES public.exam_attempts(id) ON DELETE CASCADE,
+  question_id   UUID NOT NULL REFERENCES public.questions(id),
+  answer_text   TEXT NOT NULL,
+  is_correct    BOOLEAN,
+  earned_points NUMERIC(4,2) DEFAULT 0
+);
 
--- 8. BẢNG HUY HIỆU GAMIFICATION (badges)
+-- 14. BẢNG GRADES (Điểm số chính thức)
+CREATE TABLE IF NOT EXISTS public.grades (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id    UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  item_type     TEXT NOT NULL CHECK (item_type IN ('worksheet', 'exam')),
+  item_id       UUID NOT NULL,
+  score         NUMERIC(4,2) NOT NULL DEFAULT 0,
+  max_score     NUMERIC(4,2) NOT NULL DEFAULT 10,
+  teacher_note  TEXT DEFAULT '',
+  graded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 15. BẢNG BADGES (Danh sách huy hiệu)
 CREATE TABLE IF NOT EXISTS public.badges (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code        TEXT NOT NULL UNIQUE,      -- Ví dụ: EXCELLENT_TEST, STREAK_3, CODE_MASTER
-  name        TEXT NOT NULL,             -- Ví dụ: Chiến Binh Điểm 10
+  code        TEXT NOT NULL UNIQUE,     -- EXCELLENT, HARD_WORK, CREATIVE, TEAM_PLAYER
+  name        TEXT NOT NULL,            -- Huy hiệu xuất sắc, Chiến binh chăm chỉ, Nhà sáng tạo, Đồng đội tích cực
+  category    TEXT NOT NULL,
   description TEXT NOT NULL,
-  icon_name   TEXT NOT NULL DEFAULT 'trophy',
-  color       TEXT NOT NULL DEFAULT 'amber',
+  icon_name   TEXT NOT NULL,
   xp_bonus    INT NOT NULL DEFAULT 50
 );
 
--- 9. BẢNG HUY HIỆU CỦA HỌC SINH (student_badges)
+-- 16. BẢNG STUDENT_BADGES (Huy hiệu học sinh đã đạt)
 CREATE TABLE IF NOT EXISTS public.student_badges (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id  UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
   badge_id    UUID NOT NULL REFERENCES public.badges(id) ON DELETE CASCADE,
   earned_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (student_id, badge_id)
+  UNIQUE(student_id, badge_id)
 );
 
--- 10. BẢNG LỊCH SỬ ĐIỂM KINH NGHIỆM XP (xp_history)
-CREATE TABLE IF NOT EXISTS public.xp_history (
+-- 17. BẢNG XP_TRANSACTIONS (Lịch sử điểm kinh nghiệm - Lưu riêng với điểm thi)
+CREATE TABLE IF NOT EXISTS public.xp_transactions (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id  UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
   amount      INT NOT NULL,
@@ -141,17 +198,20 @@ CREATE TABLE IF NOT EXISTS public.xp_history (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_xp_history_student ON public.xp_history(student_id);
+-- 18. BẢNG NOTIFICATIONS (Thông báo)
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES public.users(id),
+  title       TEXT NOT NULL,
+  content     TEXT NOT NULL,
+  is_read     BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- ----------------------------------------------------------------------------
--- DỮ LIỆU KHỞI TẠO MẪU (SEED DATA)
--- ----------------------------------------------------------------------------
-
--- Huy hiệu mặc định
-INSERT INTO public.badges (code, name, description, icon_name, color, xp_bonus) VALUES
-('PERFECT_10', 'Chiến Binh Điểm 10', 'Đạt điểm 10 tuyệt đối trong bài kiểm tra Tin học', 'award', 'amber', 100),
-('HARD_WORK', 'Chăm Chỉ Cần Cù', 'Hoàn thành 5 phiếu học tập liên tiếp đúng hạn', 'flame', 'orange', 50),
-('SPEEDY', 'Thần Tốc Trả Lời', 'Hoàn thành bài trắc nghiệm dưới 5 phút với độ chính xác > 90%', 'zap', 'yellow', 60),
-('CODE_PRO', 'Lập Trình Viên Trẻ', 'Hoàn thành xuất sắc bài thực hành lập trình', 'code', 'emerald', 80),
-('TEAM_HERO', 'Đồng Đội Xuất Sắc', 'Hỗ trợ nhóm hoàn thành xuất sắc nhiệm vụ học tập', 'users', 'blue', 70)
+-- DỮ LIỆU KHỞI TẠO 4 HUY HIỆU THEO TỆP TK.DOCX
+INSERT INTO public.badges (code, name, category, description, icon_name, xp_bonus) VALUES
+('EXCELLENT', 'Huy hiệu Xuất Sắc', 'Học tập', 'Đạt kết quả xuất sắc (từ 9.0 đến 10.0) trong các bài kiểm tra Tin học', 'Trophy', 100),
+('HARD_WORK', 'Chiến Binh Chăm Chỉ', 'Thi đua', 'Hoàn thành nhiệm vụ phiếu học tập liên tục đúng hạn và đầy đủ', 'Flame', 70),
+('CREATIVE', 'Nhà Sáng Tạo', 'Năng lực', 'Có sản phẩm bài tập hoặc thuật toán/cách giải sáng tạo độc đáo', 'Lightbulb', 80),
+('TEAM_PLAYER', 'Đồng Đội Tích Cực', 'Tập thể', 'Tích cực tham gia và hỗ trợ hoạt động nhóm trong giờ thực hành máy tính', 'Users', 60)
 ON CONFLICT (code) DO NOTHING;

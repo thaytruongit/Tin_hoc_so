@@ -19,6 +19,11 @@ export interface Student {
   totalXp: number;
   level: number;
   streakDays: number;
+  completedTasks: number;
+  averageGrade: number; // Điểm học tập chính thức
+  progressScore: number; // Điểm tiến bộ
+  codeScore: number;     // Điểm lập trình
+  contributionScore: number; // Điểm đóng góp
   badgesCount: number;
 }
 
@@ -37,6 +42,7 @@ export interface Worksheet {
   grade: GradeLevel;
   title: string;
   topic: string;
+  phase: 'Khởi động' | 'Khám phá' | 'Luyện tập' | 'Vận dụng';
   periodNum: number;
   timeLimitMin: number;
   questions: Question[];
@@ -58,9 +64,10 @@ export interface Exam {
 
 export interface Badge {
   id: string;
-  code: string;
+  code: 'EXCELLENT' | 'HARD_WORK' | 'CREATIVE' | 'TEAM_PLAYER';
   name: string;
   description: string;
+  category: string;
   icon: string;
   color: string;
   xpBonus: number;
@@ -80,4 +87,20 @@ export interface ExamResult {
   tabSwitches: number;
   submittedAt: string;
   xpEarned: number;
+  isEssayReviewed?: boolean;
+}
+
+export interface ProgrammingChallenge {
+  id: string;
+  language: 'C++' | 'Python';
+  title: string;
+  gradeLevel: 'Khối 8' | 'Khối 9' | 'Bồi dưỡng HSG';
+  difficulty: 'Cơ bản' | 'Trung bình' | 'Nâng cao';
+  description: string;
+  inputFormat: string;
+  outputFormat: string;
+  sampleInput: string;
+  sampleOutput: string;
+  initialCode: string;
+  xpReward: number;
 }

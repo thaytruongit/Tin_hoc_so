@@ -1,81 +1,131 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Laptop, 
+  Home, 
   BookOpen, 
   FileText, 
   ClipboardCheck, 
-  Award, 
+  Code2, 
+  Trophy, 
+  BarChart3, 
   UserCheck, 
-  GraduationCap, 
-  LogIn
+  Settings, 
+  LogIn, 
+  LogOut,
+  Laptop
 } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [role, setRole] = useState<'student' | 'teacher' | 'guest'>('guest');
+  const [userName, setUserName] = useState('');
 
-  const navLinks = [
-    { href: '/', label: 'Trang chủ', icon: Laptop },
-    { href: '/subjects', label: 'Môn học (6-9)', icon: BookOpen },
+  useEffect(() => {
+    const savedRole = localStorage.getItem('truong_user_role') as 'student' | 'teacher' | null;
+    const name = localStorage.getItem('truong_student_name') || 'Thầy Trương';
+    if (savedRole) {
+      setRole(savedRole);
+      setUserName(name);
+    }
+  }, [pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('truong_user_role');
+    localStorage.removeItem('truong_student_id');
+    localStorage.removeItem('truong_student_name');
+    localStorage.removeItem('truong_student_class');
+    setRole('guest');
+    router.push('/');
+  };
+
+  // Cấu trúc 9 Menu chuẩn 100% theo Bảng mục 7 của tệp TK.docx
+  const baseMenus = [
+    { href: '/', label: 'Trang chủ', icon: Home },
+    { href: '/subjects', label: 'Môn học', icon: BookOpen },
     { href: '/worksheets', label: 'Phiếu học tập', icon: FileText },
     { href: '/exams', label: 'Kiểm tra', icon: ClipboardCheck },
-    { href: '/achievements', label: 'Bảng vàng & XP', icon: Award },
-    { href: '/student', label: 'Học sinh', icon: GraduationCap },
-    { href: '/teacher', label: 'Giáo viên', icon: UserCheck },
+    { href: '/programming', label: 'Luyện lập trình', icon: Code2 },
+    { href: '/achievements', label: 'Thành tích', icon: Trophy },
+    { href: '/results', label: 'Kết quả học tập', icon: BarChart3 },
   ];
 
+  // Chỉ hiển thị Giáo viên & Quản trị cho tài khoản GV/Admin (Học sinh không nhìn thấy)
+  const teacherMenus = [
+    { href: '/teacher', label: 'Giáo viên', icon: UserCheck },
+    { href: '/admin', label: 'Quản trị', icon: Settings },
+  ];
+
+  const displayMenus = role === 'teacher' ? [...baseMenus, ...teacherMenus] : baseMenus;
+
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-slate-200 shadow-sm">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+          {/* Logo chuẩn tên dự án theo TK.docx */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
               <Laptop className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-lg text-slate-900 tracking-tight block">
-                TRUONG <span className="text-blue-600">CLASSROOM</span>
+              <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight block">
+                THAYTRUONGIT<span className="text-blue-600">-THCS MÃO ĐIỀN</span>
               </span>
-              <span className="text-xs text-slate-500 block -mt-1 font-medium">
-                Tin học THCS Mão Điền
+              <span className="text-[10px] text-slate-500 block -mt-1 font-semibold uppercase tracking-wider">
+                Hệ sinh thái học tập số môn Tin học
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
+          <nav className="hidden xl:flex items-center gap-1">
+            {displayMenus.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
+                      ? 'bg-blue-50 text-blue-700 font-bold shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  {link.label}
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{link.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Action / Auth Button */}
+          {/* Auth Button */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Đăng nhập</span>
-            </Link>
+            {role === 'guest' ? (
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Đăng nhập</span>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-block text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                  {role === 'teacher' ? '👨‍🏫 Thầy Trương' : `🎓 ${userName}`}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title="Đăng xuất"
+                  className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
