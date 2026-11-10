@@ -25,8 +25,15 @@ import {
   MessageSquare,
   GraduationCap
 } from 'lucide-react';
-import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS } from '@/lib/mock-data';
-import { PracticalSubmission } from '@/lib/types';
+import { 
+  Camera, 
+  Image as ImageIcon, 
+  ExternalLink, 
+  X 
+} from 'lucide-react';
+import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS, MOCK_HOMEWORK_SUBMISSIONS } from '@/lib/mock-data';
+import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
+
 
 export default function TeacherDashboard() {
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<number | 'all'>('all');
@@ -34,11 +41,16 @@ export default function TeacherDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [exams, setExams] = useState(MOCK_EXAMS);
   const [notification, setNotification] = useState('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework'>('roster');
   const [submissions, setSubmissions] = useState<PracticalSubmission[]>(MOCK_SUBMISSIONS);
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
   const [gradeScore, setGradeScore] = useState<string>('9.5');
   const [gradeComment, setGradeComment] = useState<string>('Bài làm tốt, sử dụng công thức chính xác!');
+  const [homeworkSubs, setHomeworkSubs] = useState<HomeworkSubmission[]>(MOCK_HOMEWORK_SUBMISSIONS);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [gradingHwId, setGradingHwId] = useState<string | null>(null);
+  const [hwScore, setHwScore] = useState<string>('10');
+  const [hwFeedback, setHwFeedback] = useState<string>('Bài làm rất tốt, trình bày sạch đẹp!');
 
   // Tải danh sách bài nộp từ localStorage nếu có
   useEffect(() => {
@@ -49,6 +61,18 @@ export default function TeacherDashboard() {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setSubmissions(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const savedHw = localStorage.getItem('truong_homework_submissions');
+      if (savedHw) {
+        try {
+          const parsedHw = JSON.parse(savedHw);
+          if (Array.isArray(parsedHw) && parsedHw.length > 0) {
+            setHomeworkSubs(parsedHw);
           }
         } catch (e) {
           console.error(e);
@@ -106,6 +130,28 @@ export default function TeacherDashboard() {
     }
     setGradingSubId(null);
     setNotification('Đã lưu điểm và nhận xét bài thực hành thành công!');
+    setTimeout(() => setNotification(''), 3000);
+  };
+
+  const handleGradeHomework = (subId: string) => {
+    const numScore = parseFloat(hwScore) || 10;
+    const updated = homeworkSubs.map(s => {
+      if (s.id === subId) {
+        return {
+          ...s,
+          grade: numScore,
+          feedback: hwFeedback,
+          status: 'graded' as const
+        };
+      }
+      return s;
+    });
+    setHomeworkSubs(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('truong_homework_submissions', JSON.stringify(updated));
+    }
+    setGradingHwId(null);
+    setNotification(`Đã lưu điểm ${numScore}đ và gửi lời phê bài tập về nhà thành công!`);
     setTimeout(() => setNotification(''), 3000);
   };
 
@@ -224,6 +270,17 @@ export default function TeacherDashboard() {
         >
           <UploadCloud className="w-4 h-4 text-amber-500" />
           <span>Bài thực hành phòng máy ({submissions.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('homework')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'homework'
+              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Camera className="w-4 h-4 text-purple-600" />
+          <span>Bài tập về nhà ({homeworkSubs.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('live_monitor')}
@@ -662,6 +719,202 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {/* TAB 5: BÀI TẬP VỀ NHÀ (ẢNH CHỤP VỞ / EXCEL / WORD) */}
+      {activeTab === 'homework' && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-purple-600" />
+                <span>Chấm bài tập về nhà học sinh (Ảnh chụp vở, Excel, Word)</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Xem trực tiếp ảnh chụp trang vở của học sinh phóng to và nhận xét, cho điểm thang 10.
+              </p>
+            </div>
+            <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+              Tổng số bài đã nộp: {homeworkSubs.length} bài
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Học sinh</th>
+                  <th className="py-3 px-4">Lớp</th>
+                  <th className="py-3 px-4">Bài tập</th>
+                  <th className="py-3 px-4">Tệp nộp & Xem</th>
+                  <th className="py-3 px-4">Ghi chú HS</th>
+                  <th className="py-3 px-4">Thời gian</th>
+                  <th className="py-3 px-4">Điểm số</th>
+                  <th className="py-3 px-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {homeworkSubs.map((sub) => (
+                  <tr key={sub.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      <div>{sub.studentName}</div>
+                      <div className="font-mono text-[11px] text-slate-400 font-normal">{sub.studentCode}</div>
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-700">{sub.className}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-700 max-w-xs truncate" title={sub.homeworkTitle}>
+                      {sub.homeworkTitle}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        {sub.fileType === 'image' && (
+                          <button
+                            onClick={() => setPreviewImage(sub.fileDataUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80')}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-semibold"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5" />
+                            <span>Xem ảnh vở</span>
+                          </button>
+                        )}
+                        {sub.fileType === 'xlsx' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            <span>{sub.fileName}</span>
+                          </span>
+                        )}
+                        {sub.fileType === 'docx' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>{sub.fileName}</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500 italic max-w-[200px] truncate" title={sub.note || ''}>
+                      {sub.note || '—'}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-400">{sub.submittedAt}</td>
+                    <td className="py-3.5 px-4">
+                      {sub.status === 'graded' ? (
+                        <span className="font-extrabold text-sm text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                          {sub.grade} đ
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px]">
+                          Chờ chấm
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => {
+                          setGradingHwId(sub.id);
+                          setHwScore(sub.grade ? String(sub.grade) : '10');
+                          setHwFeedback(sub.feedback || 'Bài làm rất tốt, trình bày sạch đẹp!');
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold border border-blue-200"
+                      >
+                        {sub.status === 'graded' ? 'Chấm lại' : 'Chấm điểm'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Form chấm điểm bài tập về nhà */}
+          {gradingHwId && (
+            <div className="p-5 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-sm text-blue-900 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <span>Chấm bài tập về nhà của học sinh</span>
+                </h4>
+                <button
+                  onClick={() => setGradingHwId(null)}
+                  className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  ✕ Đóng
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Điểm số (Thang điểm 10):</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    max="10"
+                    value={hwScore}
+                    onChange={(e) => setHwScore(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold text-sm bg-white"
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Lời phê / Nhận xét của Thầy Trương:</label>
+                  <input
+                    type="text"
+                    value={hwFeedback}
+                    onChange={(e) => setHwFeedback(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setGradingHwId(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs bg-white hover:bg-slate-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => handleGradeHomework(gradingHwId)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Lưu điểm & Gửi lời phê cho học sinh</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL PHÓNG TO ẢNH CHỤP VỞ HỌC SINH */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <span className="font-bold text-sm flex items-center gap-2">
+                <Camera className="w-4 h-4 text-purple-400" />
+                <span>Xem ảnh chụp trang vở bài tập về nhà của học sinh</span>
+              </span>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto flex items-center justify-center bg-slate-100 min-h-[400px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewImage}
+                alt="Ảnh vở bài tập của học sinh"
+                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-md border border-slate-300"
+              />
+            </div>
+            <div className="p-3 bg-white border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

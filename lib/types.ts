@@ -147,3 +147,65 @@ export interface PracticalSubmission {
   feedback?: string;
   status: 'submitted' | 'graded';
 }
+
+export type CognitiveLevel = 'Nhận biết' | 'Thông hiểu' | 'Vận dụng';
+
+export interface ReinforcementQuestion {
+  id: string;
+  level: CognitiveLevel;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  stats?: { A: number; B: number; C: number; D: number };
+}
+
+export interface InClassLesson {
+  id: string;
+  grade: GradeLevel;
+  lessonTitle: string;
+  topic: string;
+  period: number;
+  reinforcementQuestions: ReinforcementQuestion[];
+  practicalTask: {
+    title: string;
+    description: string;
+    steps: string[];
+    sampleFileName: string;
+    sampleFileUrl: string;
+    rubric: { criterion: string; maxPoints: number; note: string }[];
+  };
+}
+
+export interface HomeworkAssignment {
+  id: string;
+  grade: GradeLevel;
+  title: string;
+  week: number;
+  deadline: string;
+  description: string;
+  requirements: string[];
+  acceptedTypes: ('image' | 'xlsx' | 'docx')[];
+  sampleAttachmentUrl?: string;
+  xpReward: number;
+}
+
+export interface HomeworkSubmission {
+  id: string;
+  homeworkId: string;
+  homeworkTitle: string;
+  studentId?: string;
+  studentCode: string;
+  studentName: string;
+  classId: string;
+  className: string;
+  fileType: 'image' | 'xlsx' | 'docx' | 'other';
+  fileName: string;
+  fileSize: string;
+  fileDataUrl?: string;
+  note?: string;
+  submittedAt: string;
+  grade?: number;
+  feedback?: string;
+  status: 'submitted' | 'graded';
+}

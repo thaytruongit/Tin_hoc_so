@@ -1,4 +1,4 @@
-import { ClassItem, Student, Worksheet, Exam, Badge, ExamResult, ProgrammingChallenge, PracticeFile, VideoLecture, PracticalSubmission } from './types';
+import { ClassItem, Student, Worksheet, Exam, Badge, ExamResult, ProgrammingChallenge, PracticeFile, VideoLecture, PracticalSubmission, CognitiveLevel, ReinforcementQuestion, InClassLesson, HomeworkAssignment, HomeworkSubmission } from './types';
 
 export const MOCK_CLASSES: ClassItem[] = [
   {
@@ -13368,3 +13368,344 @@ export const MOCK_SUBMISSIONS: PracticalSubmission[] = [
   },
 ];
 
+
+
+export const MOCK_IN_CLASS_LESSONS: InClassLesson[] = [
+  {
+    id: 'lesson-701',
+    grade: 7,
+    lessonTitle: 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel',
+    topic: 'Chủ đề E: Ứng dụng tin học (Bảng tính điện tử)',
+    period: 12,
+    reinforcementQuestions: [
+      {
+        id: 'rq-701-1',
+        level: 'Nhận biết',
+        question: 'Ký tự nào bắt buộc phải gõ đầu tiên khi bắt đầu nhập một công thức hoặc hàm trong Excel?',
+        options: ['Dấu cộng (+)', 'Dấu bằng (=)', 'Dấu hai chấm (:)', 'Dấu thăng (#)'],
+        correctIndex: 1,
+        explanation: 'Mọi công thức và hàm tính toán trong bảng tính Excel đều phải bắt đầu bằng dấu bằng (=).',
+        stats: { A: 2, B: 38, C: 1, D: 0 }
+      },
+      {
+        id: 'rq-701-2',
+        level: 'Nhận biết',
+        question: 'Cú pháp chuẩn của hàm điều kiện IF trong Excel là gì?',
+        options: [
+          '=IF(value_if_true, value_if_false, logical_test)',
+          '=IF(logical_test, [value_if_true], [value_if_false])',
+          '=IF(condition = true, result)',
+          '=IF(range, criteria)'
+        ],
+        correctIndex: 1,
+        explanation: 'Cú pháp hàm IF gồm 3 đối số: điều kiện kiểm tra (logical_test), giá trị khi đúng, và giá trị khi sai.',
+        stats: { A: 4, B: 35, C: 2, D: 0 }
+      },
+      {
+        id: 'rq-701-3',
+        level: 'Nhận biết',
+        question: 'Ký hiệu nào được dùng để cố định hàng hoặc cột khi tạo địa chỉ ô tuyệt đối trong Excel?',
+        options: ['Ký hiệu phần trăm (%)', 'Ký hiệu đô la ($)', 'Ký hiệu và (&)', 'Ký hiệu sao (*)'],
+        correctIndex: 1,
+        explanation: 'Ký hiệu $ được đặt trước tên cột hoặc chỉ số hàng (ví dụ: $A$1) để tạo địa chỉ tuyệt đối.',
+        stats: { A: 1, B: 39, C: 1, D: 0 }
+      },
+      {
+        id: 'rq-701-4',
+        level: 'Thông hiểu',
+        question: 'Giả sử ô A1 có giá trị là 8.5. Khi thực hiện công thức =IF(A1>=5, "Đạt", "Chưa đạt"), kết quả trả về tại ô tính là gì?',
+        options: ['8.5', 'Đạt', 'Chưa đạt', 'TRUE'],
+        correctIndex: 1,
+        explanation: 'Vì A1 = 8.5 thỏa mãn điều kiện A1 >= 5 nên hàm trả về giá trị khi đúng là chuỗi chữ "Đạt".',
+        stats: { A: 0, B: 39, C: 2, D: 0 }
+      },
+      {
+        id: 'rq-701-5',
+        level: 'Thông hiểu',
+        question: 'Hàm nào sau đây dùng để đếm số ô thỏa mãn một điều kiện cho trước trong bảng tính?',
+        options: ['Hàm COUNT', 'Hàm COUNTA', 'Hàm COUNTIF', 'Hàm SUMIF'],
+        correctIndex: 2,
+        explanation: 'Hàm COUNTIF dùng để đếm có điều kiện (=COUNTIF(range, criteria)), còn COUNT chỉ đếm các ô chứa số.',
+        stats: { A: 5, B: 2, C: 34, D: 0 }
+      },
+      {
+        id: 'rq-701-6',
+        level: 'Vận dụng',
+        question: 'Để tính tổng thành tiền của riêng các thiết bị thuộc "Phòng máy 1" trong cột B (từ B5:B15) với cột thành tiền F5:F15, em dùng công thức nào?',
+        options: [
+          '=SUM(F5:F15)',
+          '=COUNTIF(B5:B15, "Phòng máy 1")',
+          '=SUMIF(B5:B15, "Phòng máy 1", F5:F15)',
+          '=IF(B5="Phòng máy 1", SUM(F5:F15), 0)'
+        ],
+        correctIndex: 2,
+        explanation: 'Cú pháp =SUMIF(vùng_chứa_điều_kiện, điều_kiện, vùng_tính_tổng) là chuẩn xác nhất để tính tổng theo điều kiện.',
+        stats: { A: 1, B: 3, C: 36, D: 1 }
+      },
+      {
+        id: 'rq-701-7',
+        level: 'Vận dụng',
+        question: 'Tại ô D5 có công thức =$B$2*C5. Khi sao chép công thức này sang ô D6, công thức tại ô D6 sẽ tự động chuyển thành gì?',
+        options: [
+          '=$B$3*C6',
+          '=$B$2*C6',
+          '=B2*C6',
+          '=$B$2*D6'
+        ],
+        correctIndex: 1,
+        explanation: 'Vì ô B2 có địa chỉ tuyệt đối ($B$2) nên không đổi khi sao chép, còn C5 là địa chỉ tương đối nên chuyển thành C6.',
+        stats: { A: 6, B: 32, C: 2, D: 1 }
+      }
+    ],
+    practicalTask: {
+      title: 'Bài thực hành: Xây dựng bảng tính theo dõi kết quả học tập & thống kê học lực',
+      description: 'Học sinh sử dụng tệp mẫu Excel có sẵn, áp dụng hàm IF để xét kết quả Đạt/Chưa đạt và hàm COUNTIF để thống kê số lượng học sinh giỏi của lớp.',
+      steps: [
+        'Bước 1: Bấm nút "Tải tệp mẫu (.xlsx)" bên dưới và mở bằng phần mềm Microsoft Excel.',
+        'Bước 2: Tại cột Điểm TB (cột G), nhập công thức tính điểm trung bình môn: =AVERAGE(E5:F5).',
+        'Bước 3: Tại cột Kết quả (cột H), sử dụng hàm IF: =IF(G5>=5, "Đạt", "Chưa đạt").',
+        'Bước 4: Tại cột Xếp loại (cột I), dùng hàm IF lồng nhau để phân loại học sinh (>=8: Giỏi, >=6.5: Khá, >=5: Trung bình, còn lại: Yếu).',
+        'Bước 5: Chuyển sang Sheet "Ham_COUNTIF", dùng hàm COUNTIF đếm số lượng học sinh đạt loại Giỏi.',
+        'Bước 6: Lưu tệp với tên: [Lớp]_[MãHS]_[HọTên]_BaiThucHanh12.xlsx và bấm nút "Nộp bài trực tiếp".'
+      ],
+      sampleFileName: 'BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+      sampleFileUrl: '/teacher/practice-files/BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+      rubric: [
+        { criterion: 'Định dạng bảng tính (tiêu đề, kẻ khung, căn giữa, định dạng số thập phân)', maxPoints: 2, note: 'Bảng rõ ràng, khoa học' },
+        { criterion: 'Công thức hàm AVERAGE và hàm IF xét Đạt / Chưa đạt', maxPoints: 3, note: 'Kết quả chính xác 100%' },
+        { criterion: 'Công thức hàm IF lồng xếp loại và hàm COUNTIF thống kê', maxPoints: 3, note: 'Áp dụng logic đúng' },
+        { criterion: 'Lưu tệp đúng quy cách và nộp bài đúng hạn trong tiết học', maxPoints: 2, note: 'Nộp bài trước khi hết giờ' }
+      ]
+    }
+  },
+  {
+    id: 'lesson-801',
+    grade: 8,
+    lessonTitle: 'Tiết 6: Địa chỉ tương đối và địa chỉ tuyệt đối trong tính toán bảng tính',
+    topic: 'Chủ đề E: Ứng dụng Tin học (Bảng tính điện tử nâng cao)',
+    period: 6,
+    reinforcementQuestions: [
+      {
+        id: 'rq-801-1',
+        level: 'Nhận biết',
+        question: 'Địa chỉ nào sau đây là địa chỉ tương đối trong Excel?',
+        options: ['$A$1', '$A1', 'A$1', 'A1'],
+        correctIndex: 3,
+        explanation: 'Địa chỉ tương đối là địa chỉ không có ký hiệu $ trước tên cột và chỉ số hàng (ví dụ: A1).',
+        stats: { A: 1, B: 2, C: 1, D: 43 }
+      },
+      {
+        id: 'rq-801-2',
+        level: 'Nhận biết',
+        question: 'Phím tắt nào trên bàn phím dùng để chuyển đổi nhanh giữa các dạng địa chỉ ô trong Excel?',
+        options: ['Phím F2', 'Phím F4', 'Phím F5', 'Phím F9'],
+        correctIndex: 1,
+        explanation: 'Nhấn phím F4 khi đang chọn địa chỉ ô sẽ tự động đổi qua lại giữa A1 -> $A$1 -> A$1 -> $A1.',
+        stats: { A: 3, B: 41, C: 2, D: 1 }
+      },
+      {
+        id: 'rq-801-3',
+        level: 'Nhận biết',
+        question: 'Địa chỉ ô $C5 được gọi là địa chỉ loại gì?',
+        options: ['Địa chỉ tương đối', 'Địa chỉ tuyệt đối', 'Địa chỉ hỗn hợp (cố định cột C)', 'Địa chỉ hỗn hợp (cố định hàng 5)'],
+        correctIndex: 2,
+        explanation: 'Địa chỉ $C5 có dấu $ đứng trước chữ C nên là địa chỉ hỗn hợp cố định cột C, hàng 5 tự do thay đổi.',
+        stats: { A: 1, B: 4, C: 40, D: 2 }
+      },
+      {
+        id: 'rq-801-4',
+        level: 'Thông hiểu',
+        question: 'Tại sao khi tính bảng lương với mức thưởng chung cố định ở ô B1, ta phải dùng địa chỉ $B$1 thay vì B1?',
+        options: [
+          'Để máy tính tính toán nhanh hơn',
+          'Để khi sao chép công thức cho các nhân viên khác, ô B1 không bị thay đổi',
+          'Để bảo vệ ô B1 không bị xóa nhầm',
+          'Excel bắt buộc mọi công thức nhân đều phải có $'
+        ],
+        correctIndex: 1,
+        explanation: 'Dùng địa chỉ tuyệt đối $B$1 để khi kéo sao chép công thức xuống dưới, ô tham chiếu tới tiền thưởng vẫn giữ nguyên ở ô B1.',
+        stats: { A: 0, B: 45, C: 2, D: 0 }
+      },
+      {
+        id: 'rq-801-5',
+        level: 'Thông hiểu',
+        question: 'Tại ô C3 có công thức =A$2*B3. Khi sao chép sang ô D3, công thức sẽ thành gì?',
+        options: ['=B$2*C3', '=A$2*C3', '=B$3*C3', '=A$3*B3'],
+        correctIndex: 0,
+        explanation: 'Vì cột A là tương đối nên khi sang cột D (tăng 1 cột) chuyển thành B. Hàng $2 cố định. Cột B tương đối chuyển thành C.',
+        stats: { A: 36, B: 6, C: 3, D: 2 }
+      },
+      {
+        id: 'rq-801-6',
+        level: 'Vận dụng',
+        question: 'Một bảng tính cần nhân hệ số thuế VAT (ô $F$1 = 10%) cho từng mặt hàng từ dòng 5 đến dòng 20. Công thức tại ô E5 tính tiền thuế là gì?',
+        options: ['=D5*F1', '=D5*$F$1', '=$D$5*F1', '=$D$5*$F$1'],
+        correctIndex: 1,
+        explanation: 'Tiền hàng ở ô D5 thay đổi theo từng dòng (tương đối), còn thuế VAT ở ô F1 cố định cho cả bảng nên dùng $F$1.',
+        stats: { A: 3, B: 42, C: 1, D: 1 }
+      },
+      {
+        id: 'rq-801-7',
+        level: 'Vận dụng',
+        question: 'Khi sao chép công thức =$A1+B$1 từ ô C2 xuống ô C4, công thức tại ô C4 sẽ là gì?',
+        options: ['=$A3+B$1', '=$A1+B$1', '=$A3+C$1', '=$A1+B$3'],
+        correctIndex: 0,
+        explanation: 'Từ C2 xuống C4 là tăng 2 hàng. Cột A cố định ($A), hàng 1 tăng 2 thành hàng 3 ($A3). Cột B giữ nguyên, hàng 1 cố định (B$1). Kết quả: =$A3+B$1.',
+        stats: { A: 35, B: 5, C: 4, D: 3 }
+      }
+    ],
+    practicalTask: {
+      title: 'Bài thực hành: Áp dụng địa chỉ tương đối & tuyệt đối tính hóa đơn bán hàng',
+      description: 'Học sinh mở tệp thực hành Tiết 6, cố định ô tỷ lệ giảm giá ($C$2) để tính thành tiền chiết khấu tự động cho tất cả các nhóm máy.',
+      steps: [
+        'Bước 1: Bấm tải tệp Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx.',
+        'Bước 2: Xác định ô chứa tỷ lệ chiết khấu cố định ($C$2).',
+        'Bước 3: Nhập công thức tính tiền giảm giá: =Thành_tiền * $C$2.',
+        'Bước 4: Sử dụng Fill Handle (kéo góc dưới bên phải) để sao chép công thức cho toàn bộ danh sách.',
+        'Bước 5: Kiểm tra lại các ô sau khi sao chép xem ô $C$2 có bị dịch chuyển không.',
+        'Bước 6: Lưu tệp và nộp trực tiếp tại phòng máy.'
+      ],
+      sampleFileName: 'Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+      sampleFileUrl: '/teacher/practice-files/Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+      rubric: [
+        { criterion: 'Xác định đúng ô cần cố định tuyệt đối ($C$2)', maxPoints: 3, note: 'Hiểu bản chất địa chỉ ô' },
+        { criterion: 'Viết công thức tính chiết khấu và sao chép tự động', maxPoints: 4, note: 'Kết quả chính xác toàn bộ cột' },
+        { criterion: 'Định dạng tiền tệ VNĐ có dấu phân cách hàng nghìn', maxPoints: 2, note: 'Thẩm mỹ bảng tính' },
+        { criterion: 'Lưu đúng cú pháp và nộp trước khi hết tiết', maxPoints: 1, note: 'Kỷ luật phòng máy' }
+      ]
+    }
+  }
+];
+
+export const MOCK_HOMEWORK_ASSIGNMENTS: HomeworkAssignment[] = [
+  {
+    id: 'hw-701',
+    grade: 7,
+    title: 'BTVN Tuần 8: Bài tập ứng dụng hàm IF & Vẽ sơ đồ phân loại học lực',
+    week: 8,
+    deadline: '21:00 Chủ Nhật tuần này',
+    description: 'Học sinh củng cố kiến thức về hàm IF lồng nhau và các hàm thống kê bằng cách hoàn thành bài tập ra vở ghi hoặc trên máy tính.',
+    requirements: [
+      'Cách 1 (Khuyên dùng): Làm bài ra vở bài tập Tin học, dùng điện thoại chụp ảnh thật rõ nét rồi tải ảnh lên nộp.',
+      'Cách 2: Làm trực tiếp vào tệp Excel (.xlsx) hoặc soạn thảo tệp Word (.docx) rồi tải tệp lên nộp.',
+      'Yêu cầu ghi rõ: Họ tên, Lớp, Ngày làm bài trên đầu trang vở/tệp bài làm.'
+    ],
+    acceptedTypes: ['image', 'xlsx', 'docx'],
+    xpReward: 50
+  },
+  {
+    id: 'hw-801',
+    grade: 8,
+    title: 'BTVN Tuần 8: Viết thuật toán tìm số lớn nhất & Thực hành cố định địa chỉ ô',
+    week: 8,
+    deadline: '21:00 Chủ Nhật tuần này',
+    description: 'Vẽ sơ đồ khối thuật toán tìm giá trị lớn nhất của 3 số a, b, c ra vở và hoàn thành bài tập tính toán trên Excel.',
+    requirements: [
+      'Chụp ảnh sơ đồ khối vẽ trong vở ghi (yêu cầu hình vẽ rõ ràng, có mũi tên luồng điều khiển).',
+      'Hoặc gửi tệp Excel/Word lời giải bài tập thuật toán.',
+      'Điểm cộng (+20 XP) cho bài làm có chữ viết sạch đẹp, phân tích đúng các trường hợp so sánh.'
+    ],
+    acceptedTypes: ['image', 'xlsx', 'docx'],
+    xpReward: 60
+  },
+  {
+    id: 'hw-601',
+    grade: 6,
+    title: 'BTVN Tuần 8: Vẽ sơ đồ tư duy chủ đề Các thiết bị vào - ra của máy tính',
+    week: 8,
+    deadline: '21:00 Chủ Nhật tuần này',
+    description: 'Sử dụng giấy A4 hoặc trang vở bài tập, vẽ sơ đồ tư duy phân loại các thiết bị vào (bàn phím, chuột, micro...) và thiết bị ra (màn hình, máy in, loa...).',
+    requirements: [
+      'Vẽ bằng bút màu, có nhánh chính và nhánh phụ sinh động.',
+      'Chụp ảnh toàn bộ trang vẽ thật nét, đủ ánh sáng và tải ảnh lên mục Nộp bài về nhà.'
+    ],
+    acceptedTypes: ['image', 'docx'],
+    xpReward: 50
+  },
+  {
+    id: 'hw-901',
+    grade: 9,
+    title: 'BTVN Tuần 8: Phân tích tình huống bản quyền phần mềm & An toàn mật khẩu',
+    week: 8,
+    deadline: '21:00 Chủ Nhật tuần này',
+    description: 'Trả lời 3 câu hỏi tình huống về việc sử dụng phần mềm không có bản quyền và cách thiết lập mật khẩu mạnh trên không gian số.',
+    requirements: [
+      'Làm ra vở bài tập và chụp ảnh nộp, hoặc gõ văn bản Word (.docx) nộp lên hệ thống.',
+      'Nêu ít nhất 3 biện pháp phòng tránh mã độc tống tiền (Ransomware).'
+    ],
+    acceptedTypes: ['image', 'docx', 'xlsx'],
+    xpReward: 50
+  }
+];
+
+export const MOCK_HOMEWORK_SUBMISSIONS: HomeworkSubmission[] = [
+  {
+    id: 'hwsub-01',
+    homeworkId: 'hw-701',
+    homeworkTitle: 'BTVN Tuần 8: Bài tập ứng dụng hàm IF & Vẽ sơ đồ',
+    studentCode: '7A1101',
+    studentName: 'Lê Thị Bảo An',
+    classId: 'c-7a11',
+    className: 'Lớp 7A11',
+    fileType: 'image',
+    fileName: '7A11_LeThiBaoAn_VoBaiTap_Tuan8.jpg',
+    fileSize: '1.8 MB',
+    fileDataUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    note: 'Thưa Thầy, em đã vẽ sơ đồ phân nhánh hàm IF và làm xong 2 bài tập trong vở ạ.',
+    submittedAt: 'Hôm qua lúc 20:15',
+    grade: 10,
+    feedback: 'Vở ghi chép rất sạch đẹp, sơ đồ tư duy màu sắc trực quan, công thức hàm IF chính xác 100%!',
+    status: 'graded'
+  },
+  {
+    id: 'hwsub-02',
+    homeworkId: 'hw-701',
+    homeworkTitle: 'BTVN Tuần 8: Bài tập ứng dụng hàm IF & Vẽ sơ đồ',
+    studentCode: '7A1102',
+    studentName: 'Lê Danh Tuấn Anh',
+    classId: 'c-7a11',
+    className: 'Lớp 7A11',
+    fileType: 'xlsx',
+    fileName: '7A11_LeDanhTuanAnh_BaiTapHamIF.xlsx',
+    fileSize: '18.4 KB',
+    note: 'Em nộp tệp Excel bài tập về nhà Thầy giao ạ.',
+    submittedAt: 'Hôm nay lúc 08:30',
+    grade: 9.0,
+    feedback: 'Bài làm tốt, chú ý định dạng căn giữa cho cột Xếp loại.',
+    status: 'graded'
+  },
+  {
+    id: 'hwsub-03',
+    homeworkId: 'hw-801',
+    homeworkTitle: 'BTVN Tuần 8: Viết thuật toán tìm số lớn nhất',
+    studentCode: '8A1101',
+    studentName: 'Lê Hoài An',
+    classId: 'c-8a11',
+    className: 'Lớp 8A11',
+    fileType: 'image',
+    fileName: '8A11_LeHoaiAn_SoDoKhoi_ThuatToan.jpg',
+    fileSize: '2.4 MB',
+    fileDataUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80',
+    note: 'Em chụp bằng điện thoại của mẹ, Thầy xem giúp em sơ đồ rẽ nhánh đã chuẩn chưa ạ.',
+    submittedAt: 'Hôm nay lúc 10:15',
+    status: 'submitted'
+  },
+  {
+    id: 'hwsub-04',
+    homeworkId: 'hw-601',
+    homeworkTitle: 'BTVN Tuần 8: Vẽ sơ đồ tư duy thiết bị vào - ra',
+    studentCode: '6A1001',
+    studentName: 'Lê Thị Hoài An',
+    classId: 'c-6a10',
+    className: 'Lớp 6A10',
+    fileType: 'image',
+    fileName: '6A10_LeThiHoaiAn_SoDoTuDuy.png',
+    fileSize: '1.2 MB',
+    fileDataUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80',
+    note: 'Em tô màu các thiết bị vào màu xanh lá, thiết bị ra màu cam ạ.',
+    submittedAt: 'Hôm qua lúc 19:40',
+    grade: 9.5,
+    feedback: 'Sáng tạo và rất dễ nhớ! Thầy khen ngợi tinh thần học tập của em.',
+    status: 'graded'
+  }
+];

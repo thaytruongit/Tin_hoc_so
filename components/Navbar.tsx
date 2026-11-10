@@ -43,15 +43,17 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // Cấu trúc 9 Menu chuẩn 100% theo Bảng mục 7 của tệp TK.docx
+  // Cấu trúc Menu chuẩn hệ sinh thái học tập số môn Tin học
   const baseMenus = [
     { href: '/', label: 'Trang chủ', icon: Home },
-    { href: '/subjects', label: 'Môn học & Học liệu', icon: BookOpen },
+    { href: '/subjects', label: 'Học liệu & Bài giảng', icon: BookOpen },
+    { href: '/in-class', label: 'Học tại lớp', icon: Laptop },
+    { href: '/homework', label: 'Bài tập về nhà', icon: UploadCloud },
     { href: '/worksheets', label: 'Phiếu học tập', icon: FileText },
     { href: '/exams', label: 'Kiểm tra', icon: ClipboardCheck },
-    { href: '/programming', label: 'Luyện lập trình', icon: Code2 },
+    { href: '/programming', label: 'Luyện code', icon: Code2 },
     { href: '/achievements', label: 'Thành tích', icon: Trophy },
-    { href: '/results', label: 'Kết quả học tập', icon: BarChart3 },
+    { href: '/results', label: 'Kết quả', icon: BarChart3 },
   ];
 
   // Chỉ hiển thị Giáo viên & Quản trị cho tài khoản GV/Admin (Học sinh không nhìn thấy)
