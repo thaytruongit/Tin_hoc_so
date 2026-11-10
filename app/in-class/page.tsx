@@ -20,46 +20,41 @@ import {
   AlertCircle,
   ArrowRight,
   Filter,
-  CheckCheck
+  CheckCheck,
+  Users,
+  Repeat,
+  Trophy,
+  ArrowLeftRight,
+  Send
 } from 'lucide-react';
-import { MOCK_IN_CLASS_LESSONS, MOCK_CLASSES } from '@/lib/mock-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
 import { Lock, Unlock, ShieldAlert } from 'lucide-react';
-import { InClassLesson, ReinforcementQuestion, CognitiveLevel } from '@/lib/types';
+import { CognitiveLevel } from '@/lib/types';
 
 export default function InClassPage() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
-  const [selectedGrade, setSelectedGrade] = useState<number>(7);
-  const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(12);
-  const [activeTab, setActiveTab] = useState<'reinforcement' | 'practice'>('reinforcement');
+  const [selectedGrade, setSelectedGrade] = useState<number>(6);
+  const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<'worksheet' | 'reinforcement' | 'practice'>('worksheet');
   const [permissionNotice, setPermissionNotice] = useState<string>('');
 
-  // Trạng thái làm bài Củng cố
+  // Trạng thái Phiếu học tập Cặp đôi
+  const [pairComputerNum, setPairComputerNum] = useState<string>('Máy 08 - Phòng Tin học 1');
+  const [studentAName, setStudentAName] = useState<string>('Nguyễn Văn An');
+  const [studentBName, setStudentBName] = useState<string>('Trần Thị Mai');
+  const [currentRoleTurn, setCurrentRoleTurn] = useState<'A' | 'B'>('A'); // A: Bạn A cầm chuột, B: Bạn B cầm chuột
+  const [worksheetAnswers, setWorksheetAnswers] = useState<Record<string, string>>({});
+  const [worksheetSubmitted, setWorksheetSubmitted] = useState<boolean>(false);
+  const [showRoleSwapModal, setShowRoleSwapModal] = useState<boolean>(false);
+
+  // Trạng thái làm bài Luyện tập (7 câu trắc nghiệm)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
   // Lấy dữ liệu 29 tiết của khối đang chọn
   const periodsOfGrade = CURRICULUM_DATA[selectedGrade] || [];
-  const currentPeriod = periodsOfGrade.find(p => p.period === selectedPeriodNum) || periodsOfGrade[0] || {
-    id: 'k7-p12',
-    grade: 7,
-    period: 12,
-    title: 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel',
-    topic: 'Chủ đề E: Ứng dụng tin học',
-    isPractice: true,
-    contentDesc: 'Nắm vững cú pháp và vận dụng hàm điều kiện',
-    digitalCompetency: 'Năng lực số chuẩn GDPT 2018 (CV 3456)',
-    reinforcement: {
-      questionsCount: 7,
-      matrix: '3 Biết - 2 Hiểu - 2 Vận dụng',
-      questions: MOCK_IN_CLASS_LESSONS[1].reinforcementQuestions
-    },
-    practicalTask: MOCK_IN_CLASS_LESSONS[1].practicalTask,
-    worksheet: { title: '', phase1_khoi_dong: '', phase2_kham_pha: '', phase3_luyen_tap: '', phase4_van_dung: '', xpReward: 30, timeLimitMin: 15 },
-    homework: { title: '', description: '', acceptedFormats: ['image', 'xlsx', 'docx'], dueInDays: 7 }
-  };
-
+  const currentPeriod = periodsOfGrade.find(p => p.period === selectedPeriodNum) || periodsOfGrade[0];
   const currentQuestions = currentPeriod.reinforcement.questions;
 
   useEffect(() => {
@@ -68,12 +63,15 @@ export default function InClassPage() {
     if (user.role === 'student' && user.studentGrade) {
       setSelectedGrade(user.studentGrade);
       setSelectedPeriodNum(1);
+      if (user.studentName) {
+        setStudentAName(user.studentName);
+      }
     }
   }, []);
 
   const handleSelectGrade = (grade: number) => {
     if (currentUser?.role === 'student' && currentUser.studentGrade !== grade) {
-      setPermissionNotice(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Theo quy định phân quyền, em chỉ được làm bài củng cố của Khối ${currentUser.studentGrade}!`);
+      setPermissionNotice(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Theo quy định phân quyền, em chỉ được làm bài của Khối ${currentUser.studentGrade}!`);
       setTimeout(() => setPermissionNotice(''), 5000);
       return;
     }
@@ -82,8 +80,21 @@ export default function InClassPage() {
     setSelectedPeriodNum(1);
     setSelectedAnswers({});
     setIsSubmitted(false);
+    setWorksheetAnswers({});
+    setWorksheetSubmitted(false);
+    setCurrentRoleTurn('A');
   };
 
+  const handleSelectPeriod = (periodNum: number) => {
+    setSelectedPeriodNum(periodNum);
+    setSelectedAnswers({});
+    setIsSubmitted(false);
+    setWorksheetAnswers({});
+    setWorksheetSubmitted(false);
+    setCurrentRoleTurn('A');
+  };
+
+  // Xử lý Luyện tập 7 câu
   const handleSelectOption = (questionId: string, optionIndex: number) => {
     if (isSubmitted) return;
     setSelectedAnswers(prev => ({
@@ -95,7 +106,7 @@ export default function InClassPage() {
   const handleGradeQuiz = () => {
     const answeredCount = Object.keys(selectedAnswers).length;
     if (answeredCount < currentQuestions.length) {
-      if (!confirm(`Em mới trả lời ${answeredCount}/${currentQuestions.length} câu. Em có chắc chắn muốn nộp bài củng cố ngay không?`)) {
+      if (!confirm(`Em mới trả lời ${answeredCount}/${currentQuestions.length} câu. Em có chắc chắn muốn nộp bài Luyện tập ngay không?`)) {
         return;
       }
     }
@@ -108,12 +119,12 @@ export default function InClassPage() {
     // Lưu kết quả vào LocalStorage để đồng bộ vào Kênh Giáo viên
     if (typeof window !== 'undefined') {
       try {
-        const studentName = localStorage.getItem('truong_student_name') || 'Lê Thị Bảo An';
-        const studentCode = localStorage.getItem('truong_student_code') || '7A1101';
-        const studentClass = localStorage.getItem('truong_student_class') || 'Lớp 7A11';
+        const studentName = currentUser?.studentName || studentAName || 'Nguyễn Văn An';
+        const studentCode = currentUser?.studentCode || '6A1001';
+        const studentClass = currentUser?.studentClass || `Lớp ${selectedGrade}A10`;
 
         const newResult = {
-          id: `rf-res-${Date.now()}`,
+          id: `practice-res-${Date.now()}`,
           lessonId: currentPeriod.id,
           lessonTitle: currentPeriod.title,
           grade: currentPeriod.grade,
@@ -141,7 +152,41 @@ export default function InClassPage() {
     setIsSubmitted(false);
   };
 
-  // Tính điểm tổng và điểm theo từng mức độ nhận thức chuẩn Bộ GD&ĐT
+  // Xử lý Phiếu học tập Cặp đôi
+  const handleSwapRole = () => {
+    setCurrentRoleTurn(prev => (prev === 'A' ? 'B' : 'A'));
+    setShowRoleSwapModal(true);
+    setTimeout(() => setShowRoleSwapModal(false), 3000);
+  };
+
+  const handleSubmitWorksheet = () => {
+    if (worksheetSubmitted) return;
+    setWorksheetSubmitted(true);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const newSubmission = {
+          id: `ws-sub-${Date.now()}`,
+          periodId: currentPeriod.id,
+          periodTitle: currentPeriod.title,
+          computerNumber: pairComputerNum,
+          studentAName,
+          studentBName,
+          grade: currentPeriod.grade,
+          className: currentUser?.studentClass || `Lớp ${selectedGrade}A10`,
+          score: 10,
+          xpEarned: currentPeriod.worksheet.xpReward || 50,
+          submittedAt: 'Vừa xong'
+        };
+        const existing = JSON.parse(localStorage.getItem('truong_worksheet_submissions') || '[]');
+        localStorage.setItem('truong_worksheet_submissions', JSON.stringify([newSubmission, ...existing]));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  // Tính điểm trắc nghiệm
   const correctCount = currentQuestions.filter(
     q => selectedAnswers[q.id] === q.correctIndex
   ).length;
@@ -173,13 +218,13 @@ export default function InClassPage() {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Hoạt Động 1 Trực Tiếp Trên Lớp · THCS Mão Điền
+            Học Liệu Số 29 Tiết Chuẩn GDPT 2018 · THCS Mão Điền
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Củng Cố Bài Học &amp; Thực Hành Tại Lớp
+            Hoạt Động Trực Tiếp Trên Lớp
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Dành cho giờ học trên lớp: <strong>7 câu hỏi trắc nghiệm</strong> phân hóa chuẩn Bộ GD&amp;ĐT (3 Nhận biết, 2 Thông hiểu, 2 Vận dụng) và bài tập thực hành theo Rubric.
+            Chất liệu hữu cơ 100% bám sát SGK Kết nối tri thức: <strong>Phiếu học tập cặp đôi</strong>, <strong>Luyện tập 7 câu chuẩn Bộ</strong> và <strong>Bài tập thực hành</strong> theo Rubric.
           </p>
         </div>
 
@@ -244,17 +289,13 @@ export default function InClassPage() {
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>Chọn tiết học trong phân phối chương trình 29 tiết (Khối {selectedGrade}):</span>
-            <span className="text-[11px] text-amber-700 font-bold">Đang chọn: Tiết {selectedPeriodNum}</span>
+            <span className="text-[11px] text-amber-700 font-bold">Đang chọn: Tiết {selectedPeriodNum} {currentPeriod.isPractice ? '(Thực hành)' : '(Lý thuyết)'}</span>
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
             {periodsOfGrade.map((p) => (
               <button
                 key={p.id}
-                onClick={() => {
-                  setSelectedPeriodNum(p.period);
-                  setSelectedAnswers({});
-                  setIsSubmitted(false);
-                }}
+                onClick={() => handleSelectPeriod(p.period)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
                   selectedPeriodNum === p.period
                     ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/30'
@@ -263,15 +304,27 @@ export default function InClassPage() {
                 title={p.title}
               >
                 <span>T.{p.period}</span>
-                {p.isPractice && <span className="ml-1 text-[9px] text-emerald-300">●</span>}
+                {p.isPractice && <span className="ml-1 text-[9px] text-emerald-400 font-black">● TH</span>}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* TABS CHỨC NĂNG */}
-      <div className="flex border-b border-slate-200 gap-6 text-sm font-bold flex-wrap">
+      {/* TABS 3 HOẠT ĐỘNG TRỰC TIẾP TRÊN LỚP */}
+      <div className="flex border-b border-slate-200 gap-4 sm:gap-8 text-sm font-bold flex-wrap">
+        <button
+          onClick={() => setActiveTab('worksheet')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'worksheet'
+              ? 'border-b-2 border-indigo-600 text-indigo-700 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Users className="w-4 h-4 text-indigo-600" />
+          <span>1. Phiếu học tập (Khám phá cặp đôi)</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('reinforcement')}
           className={`pb-3 flex items-center gap-2 transition-all ${
@@ -281,23 +334,289 @@ export default function InClassPage() {
           }`}
         >
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Hoạt động 1: Củng cố bài học (7 câu trắc nghiệm chuẩn Bộ)</span>
+          <span>2. Luyện tập (7 câu chuẩn Bộ)</span>
         </button>
 
         <button
           onClick={() => setActiveTab('practice')}
           className={`pb-3 flex items-center gap-2 transition-all ${
             activeTab === 'practice'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
+              ? 'border-b-2 border-emerald-600 text-emerald-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-          <span>Hoạt động 2: Bài tập thực hành tại lớp (Rubric phòng máy)</span>
+          <span>3. Bài tập thực hành {currentPeriod.isPractice ? '(Có bài thực hành)' : '(Chỉ tiết TH)'}</span>
         </button>
       </div>
 
-      {/* CHỨC NĂNG 1: CỦNG CỐ BÀI HỌC (7 CÂU HỎI TRẮC NGHIỆM) */}
+      {/* ====================================================================== */}
+      {/* HOẠT ĐỘNG 1: PHIẾU HỌC TẬP KHÁM PHÁ CẶP ĐÔI (2 HS/MÁY)                  */}
+      {/* ====================================================================== */}
+      {activeTab === 'worksheet' && (
+        <div className="space-y-6">
+          {/* HEADER PHIẾU CẶP ĐÔI */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Khối {currentPeriod.grade} · Tiết {currentPeriod.period}
+                  </span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Cặp đôi 2 học sinh / 1 máy tính
+                  </span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                    +{currentPeriod.worksheet.xpReward || 50} XP chia đều
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mt-2">
+                  {currentPeriod.worksheet.title}
+                </h2>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Mục tiêu: {currentPeriod.contentDesc}
+                </p>
+              </div>
+
+              {/* TRẠNG THÁI NỘP BÀI CẶP ĐÔI */}
+              {worksheetSubmitted && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center gap-3 text-emerald-800 animate-in fade-in shrink-0">
+                  <Trophy className="w-8 h-8 text-amber-500 shrink-0" />
+                  <div>
+                    <div className="text-xs font-bold text-emerald-900">HOÀN THÀNH PHIẾU CẶP ĐÔI!</div>
+                    <div className="text-[11px] text-emerald-700 font-semibold">+50 XP đã cộng vào tài khoản {studentAName} &amp; {studentBName}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* KHUNG THÔNG TIN PHÂN VAI CẶP ĐÔI */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div>
+                <span className="text-slate-500 font-medium">Vị trí phòng máy:</span>
+                <input
+                  type="text"
+                  value={pairComputerNum}
+                  onChange={e => setPairComputerNum(e.target.value)}
+                  disabled={worksheetSubmitted}
+                  className="mt-1 w-full p-2 rounded-xl bg-white border border-slate-200 font-bold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Học sinh 1 (Bạn A):</span>
+                  {currentRoleTurn === 'A' && (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">Đang thao tác máy 🖱️</span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={studentAName}
+                  onChange={e => setStudentAName(e.target.value)}
+                  disabled={worksheetSubmitted}
+                  className="mt-1 w-full p-2 rounded-xl bg-white border border-slate-200 font-bold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Học sinh 2 (Bạn B):</span>
+                  {currentRoleTurn === 'B' && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">Đang thao tác máy 🖱️</span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={studentBName}
+                  onChange={e => setStudentBName(e.target.value)}
+                  disabled={worksheetSubmitted}
+                  className="mt-1 w-full p-2 rounded-xl bg-white border border-slate-200 font-bold text-slate-800"
+                />
+              </div>
+            </div>
+
+            {/* NÚT TÍN HIỆU ĐỔI VAI */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs text-slate-500">
+                Lượt điều khiển: <strong>{currentRoleTurn === 'A' ? studentAName : studentBName}</strong> đang cầm chuột và bàn phím.
+              </span>
+              <button
+                type="button"
+                onClick={handleSwapRole}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>🔔 Tín hiệu Chuông Đổi Vai (Hoán đổi vị trí)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* POPUP THÔNG BÁO ĐỔI VAI */}
+          {showRoleSwapModal && (
+            <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-900 text-xs font-bold flex items-center gap-3 animate-in bounce-in shadow-md">
+              <Repeat className="w-6 h-6 text-amber-600 animate-spin" />
+              <div>
+                <div className="text-sm font-black">🔔 ĐÃ PHÁT TÍN HIỆU ĐỔI VAI!</div>
+                <div>Hai bạn hãy hoán đổi vị trí chuột và bàn phím cho nhau để cùng đóng góp nhé!</div>
+              </div>
+            </div>
+          )}
+
+          {/* CHẶNG 1: THÁM TỬ TÌM KIẾM (TÌNH HUỐNG DẪN NHẬP & KHO TỪ) */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-xl bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
+                1
+              </span>
+              <h3 className="font-bold text-sm text-slate-900">
+                Chặng 1: Thám tử Dữ liệu &amp; Tình huống khởi động ({currentRoleTurn === 'A' ? `${studentAName} thao tác` : `${studentBName} thao tác`})
+              </h3>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs text-slate-700 space-y-2">
+              <p className="font-bold text-blue-900">Tình huống khám phá tại trường THCS Mão Điền:</p>
+              <p className="leading-relaxed">{currentPeriod.worksheet.phase1_khoi_dong}</p>
+            </div>
+
+            {/* NGÂN HÀNG TỪ KHÓA SGK */}
+            {currentPeriod.worksheet.wordBank && currentPeriod.worksheet.wordBank.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <span className="text-xs font-bold text-slate-700">Kho thẻ từ khóa bám sát SGK bài học:</span>
+                <div className="flex flex-wrap gap-2">
+                  {currentPeriod.worksheet.wordBank.map((w, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold shadow-2xs"
+                    >
+                      {w}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* CHẶNG 2: ĐIỀN KHUYẾT & NỐI CẶP KIẾN THỨC CỐT LÕI */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center">
+                2
+              </span>
+              <h3 className="font-bold text-sm text-slate-900">
+                Chặng 2: Nối Cặp Kiến Thức &amp; Điền Khuyết SGK ({currentRoleTurn === 'B' ? `${studentBName} thao tác` : `${studentAName} thao tác`})
+              </h3>
+            </div>
+
+            {/* DANH SÁCH ĐIỀN KHUYẾT */}
+            {currentPeriod.worksheet.fillBlanks && currentPeriod.worksheet.fillBlanks.length > 0 && (
+              <div className="space-y-3">
+                <span className="text-xs font-bold text-slate-700">Điền từ thích hợp vào chỗ trống:</span>
+                {currentPeriod.worksheet.fillBlanks.map((fb, idx) => (
+                  <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                    <p className="text-slate-800 leading-relaxed font-medium">
+                      <strong>Câu {idx + 1}:</strong> {fb.statement}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="Gõ từ khóa còn thiếu..."
+                        disabled={worksheetSubmitted}
+                        value={worksheetAnswers[`fb_${idx}`] || ''}
+                        onChange={e => setWorksheetAnswers(prev => ({ ...prev, [`fb_${idx}`]: e.target.value }))}
+                        className="p-2.5 rounded-xl bg-white border border-slate-300 text-xs w-full max-w-sm font-semibold"
+                      />
+                      {worksheetSubmitted && (
+                        <span className="text-emerald-700 font-bold">
+                          Đáp án đúng: {fb.correctAnswer}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* DANH SÁCH NỐI CẶP */}
+            {currentPeriod.worksheet.matchingPairs && currentPeriod.worksheet.matchingPairs.length > 0 && (
+              <div className="space-y-3 pt-3">
+                <span className="text-xs font-bold text-slate-700">Nối cặp khái niệm với giải thích tương ứng:</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {currentPeriod.worksheet.matchingPairs.map((m, idx) => (
+                    <div key={idx} className="p-3.5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-1.5 text-xs">
+                      <div className="font-bold text-indigo-900 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-lg bg-indigo-200 text-indigo-800 text-[10px] flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <span>{m.left}</span>
+                      </div>
+                      <p className="text-slate-600 pl-7 leading-relaxed">{m.right}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* CHẶNG 3: ĐỒNG LÒNG TÁC CHIẾN & NỘP BÀI */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">
+                3
+              </span>
+              <h3 className="font-bold text-sm text-slate-900">
+                Chặng 3: Thảo Luận Cặp Đôi &amp; Đồng Lòng Nộp Bài (Cả hai bạn cùng phối hợp)
+              </h3>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+              <p className="font-bold text-slate-800">Câu hỏi thảo luận cặp đôi:</p>
+              <p className="text-slate-600 leading-relaxed">
+                {currentPeriod.worksheet.discussionPrompt || currentPeriod.worksheet.phase4_van_dung}
+              </p>
+              <textarea
+                rows={3}
+                placeholder="Hai bạn cùng bàn bạc và ghi lại kết luận chung của cặp đôi vào đây..."
+                disabled={worksheetSubmitted}
+                value={worksheetAnswers['discussion'] || ''}
+                onChange={e => setWorksheetAnswers(prev => ({ ...prev, discussion: e.target.value }))}
+                className="w-full p-3 rounded-2xl bg-white border border-slate-300 text-xs font-normal"
+              />
+            </div>
+
+            {/* NÚT NỘP PHIẾU */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-xs text-slate-500">
+                {worksheetSubmitted 
+                  ? '✅ Phiếu học tập đã được lưu vào hệ thống thành công!' 
+                  : 'Cả hai bạn hãy kiểm tra lại bài làm trước khi bấm nộp nhé.'}
+              </span>
+              {!worksheetSubmitted ? (
+                <button
+                  type="button"
+                  onClick={handleSubmitWorksheet}
+                  className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Xác nhận cả hai bạn đã đồng thuận &amp; Nộp bài (+50 XP)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setWorksheetSubmitted(false)}
+                  className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+                >
+                  Chỉnh sửa lại phiếu
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================== */}
+      {/* HOẠT ĐỘNG 2: LUYỆN TẬP (7 CÂU HỎI TRẮC NGHIỆM CHUẨN BỘ)                */}
+      {/* ====================================================================== */}
       {activeTab === 'reinforcement' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -311,10 +630,10 @@ export default function InClassPage() {
                 </span>
               </div>
               <h2 className="text-xl font-bold text-slate-900 mt-2">
-                {currentPeriod.title}
+                Luyện Tập: {currentPeriod.title}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Em hãy đọc kỹ câu hỏi, chọn phương án đúng nhất và nhấn nút <strong>Nộp bài</strong> ở cuối để xem điểm số &amp; lời giải thích của Thầy.
+                Em hãy đọc kỹ câu hỏi, chọn phương án đúng nhất và nhấn nút <strong>Nộp bài</strong> ở cuối để xem điểm số &amp; lời giải thích của Thầy Trương.
               </p>
             </div>
 
@@ -327,7 +646,7 @@ export default function InClassPage() {
                 </div>
                 <div className="space-y-1">
                   <div className="text-xs font-bold text-emerald-900">
-                    KẾT QUẢ: {correctCount}/7 CÂU ĐÚNG
+                    KẾT QUẢ LUYỆN TẬP: {correctCount}/7 CÂU ĐÚNG
                   </div>
                   <div className="flex items-center gap-2 text-[11px] font-semibold">
                     <span className="text-blue-700">Biết: {correctNhanBiet}/{countNhanBiet}</span>
@@ -442,7 +761,7 @@ export default function InClassPage() {
                   onClick={handleResetQuiz}
                   className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
                 >
-                  Làm lại bài củng cố
+                  Làm lại bài luyện tập
                 </button>
               ) : (
                 <button
@@ -458,123 +777,136 @@ export default function InClassPage() {
         </div>
       )}
 
-      {/* CHỨC NĂNG 2: BÀI TẬP THỰC HÀNH TẠI LỚP (RUBRIC PHÒNG MÁY) */}
+      {/* ====================================================================== */}
+      {/* HOẠT ĐỘNG 3: BÀI TẬP THỰC HÀNH TẠI LỚP (CHỈ DÀNH CHO TIẾT THỰC HÀNH)    */}
+      {/* ====================================================================== */}
       {activeTab === 'practice' && (
         <div className="space-y-6">
-          {currentPeriod.practicalTask ? (
+          {currentPeriod.isPractice && currentPeriod.practicalTask ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-              <div>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Khối {currentPeriod.grade} · Tiết thực hành
-                </span>
-                <h2 className="text-xl font-bold text-slate-900 mt-2">
-                  {currentPeriod.practicalTask.title}
-                </h2>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {(currentPeriod.practicalTask as { description?: string }).description || currentPeriod.contentDesc}
-                </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    Khối {currentPeriod.grade} · Tiết thực hành trên máy
+                  </span>
+                  <h2 className="text-xl font-bold text-slate-900 mt-2">
+                    {currentPeriod.practicalTask.title}
+                  </h2>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    Mục tiêu kỹ năng: {currentPeriod.contentDesc}
+                  </p>
+                </div>
+
+                {/* NÚT TẢI TỆP MẪU THỰC HÀNH */}
+                <a
+                  href={currentPeriod.practicalTask.sampleFileUrl}
+                  download={currentPeriod.practicalTask.sampleFileName}
+                  className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 shrink-0"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Tải tệp mẫu ({currentPeriod.practicalTask.sampleFileName.split('.').pop()})</span>
+                </a>
               </div>
 
-              {/* NÚT TẢI TỆP MẪU THỰC HÀNH */}
-              <a
-                href={currentPeriod.practicalTask.sampleFileUrl}
-                download={currentPeriod.practicalTask.sampleFileName}
-                className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 shrink-0"
-              >
-                <Download className="w-4 h-4" />
-                <span>Tải tệp mẫu ({currentPeriod.practicalTask.sampleFileName.split('.').pop()})</span>
-              </a>
-            </div>
+              {/* CÁC BƯỚC THỰC HIỆN BÀI THỰC HÀNH */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-blue-600" />
+                  <span>Quy trình thực hiện tại phòng máy:</span>
+                </h3>
 
-            {/* CÁC BƯỚC THỰC HIỆN BÀI THỰC HÀNH */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-600" />
-                <span>Quy trình thực hiện tại phòng máy (6 bước):</span>
-              </h3>
-
-              <div className="space-y-2.5">
-                {currentPeriod.practicalTask.steps.map((step, sIdx) => (
-                  <div
-                    key={sIdx}
-                    className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-start gap-3 text-xs text-slate-700"
-                  >
-                    <span className="w-6 h-6 rounded-xl bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      {sIdx + 1}
-                    </span>
-                    <span className="leading-relaxed">{step}</span>
-                  </div>
-                ))}
+                <div className="space-y-2.5">
+                  {currentPeriod.practicalTask.steps.map((step, sIdx) => (
+                    <div
+                      key={sIdx}
+                      className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-start gap-3 text-xs text-slate-700"
+                    >
+                      <span className="w-6 h-6 rounded-xl bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        {sIdx + 1}
+                      </span>
+                      <span className="leading-relaxed">{step}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* TIÊU CHÍ ĐÁNH GIÁ RUBRIC (THANG 10 ĐIỂM) */}
-            <div className="space-y-3 pt-2">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-500" />
-                <span>Bảng tiêu chí chấm điểm thực hành (Rubric thang điểm 10):</span>
-              </h3>
+              {/* TIÊU CHÍ ĐÁNH GIÁ RUBRIC (THANG 10 ĐIỂM) */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  <span>Bảng tiêu chí chấm điểm thực hành (Rubric thang điểm 10):</span>
+                </h3>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-slate-200 rounded-2xl overflow-hidden">
-                  <thead className="bg-slate-100 text-slate-700 font-bold">
-                    <tr>
-                      <th className="py-3 px-4">Tiêu chí đánh giá</th>
-                      <th className="py-3 px-4 text-center">Điểm tối đa</th>
-                      <th className="py-3 px-4">Yêu cầu cần đạt</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {currentPeriod.practicalTask.rubric.map((r, rIdx) => (
-                      <tr key={rIdx} className="hover:bg-slate-50/80">
-                        <td className="py-3 px-4 font-semibold text-slate-900">
-                          {r.criterion}
-                        </td>
-                        <td className="py-3 px-4 text-center font-bold text-blue-600">
-                          {r.maxPoints} đ
-                        </td>
-                        <td className="py-3 px-4 text-slate-600">
-                          {r.note}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border border-slate-200 rounded-2xl overflow-hidden">
+                    <thead className="bg-slate-100 text-slate-700 font-bold">
+                      <tr>
+                        <th className="py-3 px-4">Tiêu chí đánh giá</th>
+                        <th className="py-3 px-4 text-center">Điểm tối đa</th>
+                        <th className="py-3 px-4">Yêu cầu cần đạt</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {currentPeriod.practicalTask.rubric.map((r, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-slate-50/80">
+                          <td className="py-3 px-4 font-semibold text-slate-900">
+                            {r.criterion}
+                          </td>
+                          <td className="py-3 px-4 text-center font-bold text-blue-600">
+                            {r.maxPoints} đ
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            {r.note}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* NÚT ĐIỀU HƯỚNG NỘP BÀI TRỰC TIẾP */}
+              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-slate-500 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  <span>Học sinh làm xong nộp trực tiếp lên hệ thống, không dùng USB để bảo vệ máy tính trường.</span>
+                </div>
+
+                <Link
+                  href="/subjects"
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  <span>Chuyển sang Cổng Nộp Bài Phòng Máy</span>
+                </Link>
               </div>
             </div>
-
-            {/* NÚT ĐIỀU HƯỚNG NỘP BÀI TRỰC TIẾP */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-slate-500 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                <span>Học sinh làm xong nộp trực tiếp lên hệ thống, không dùng USB để bảo vệ máy tính trường.</span>
-              </div>
-
-              <Link
-                href="/subjects"
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
-              >
-                <UploadCloud className="w-4 h-4" />
-                <span>Chuyển sang Cổng Nộp Bài Phòng Máy</span>
-              </Link>
-            </div>
-          </div>
           ) : (
+            /* TIẾT LÝ THUYẾT - HIỂN THỊ THÔNG BÁO SƯ PHẠM RÕ RÀNG */
             <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-4">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <BookOpen className="w-8 h-8" />
               </div>
-              <h3 className="font-bold text-lg text-slate-900">Tiết {currentPeriod.period}: Tiết Học Lý Thuyết</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Tiết học này tập trung vào kiến thức lý thuyết nền tảng và thảo luận. Em hãy chuyển sang tab <strong>Củng cố bài học (7 câu)</strong> để hoàn thành nhiệm vụ của tiết học này nhé!
+              <h3 className="font-bold text-lg text-slate-900">
+                Tiết {currentPeriod.period}: Tiết Học Lý Thuyết Nền Tảng &amp; Khám Phá
+              </h3>
+              <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
+                Tiết học này là tiết lý thuyết, trọng tâm là hoạt động <strong>Phiếu học tập khám phá cặp đôi</strong> và <strong>Luyện tập 7 câu chuẩn Bộ</strong>. Bài tập thực hành thao tác phần mềm chuyên sâu chỉ dành cho các tiết thực hành riêng biệt.
               </p>
-              <button
-                onClick={() => setActiveTab('reinforcement')}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-xs shadow-sm hover:bg-amber-600"
-              >
-                Chuyển sang Củng cố bài học (7 câu)
-              </button>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => setActiveTab('worksheet')}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-xs hover:bg-indigo-700 transition-all"
+                >
+                  Làm Phiếu học tập cặp đôi
+                </button>
+                <button
+                  onClick={() => setActiveTab('reinforcement')}
+                  className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-xs shadow-xs hover:bg-amber-600 transition-all"
+                >
+                  Làm Luyện tập (7 câu)
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -236,43 +236,52 @@ INSERT INTO public.classes (name, grade, academic_year) VALUES
 ('Lớp 9A16', 9, '2025-2026')
 ON CONFLICT (name) DO NOTHING;
 
-
 -- ============================================================================
--- 19. NGÂN HÀNG CÂU HỎI CỦNG CỐ BÀI HỌC (THEO CHUẨN MA TRẬN BỘ GD&ĐT)
--- Phục vụ hoạt động kết thúc tiết học trực tiếp: 7 câu hỏi phân hóa
--- (3 câu Nhận biết, 2 câu Thông hiểu, 2 câu Vận dụng)
+-- 19. HỆ THỐNG CƠ SỞ DỮ LIỆU 29 TIẾT HỌC CHO 4 KHỐI (116 TIẾT GDPT 2018)
+-- Thiết lập chuẩn hóa theo yêu cầu sư phạm của Thầy Trương:
+-- • Hoạt động trên lớp 1: Phiếu học tập điện tử (Khám phá cặp đôi 2 HS/máy)
+-- • Hoạt động trên lớp 2: Luyện tập (7 câu trắc nghiệm chuẩn: 3 Biết, 2 Hiểu, 2 Vận dụng)
+-- • Hoạt động trên lớp 3: Bài tập thực hành tại lớp (Chỉ dành riêng cho tiết thực hành)
+-- • Hoạt động ở nhà: Bài tập về nhà (Hỗ trợ nộp ảnh chụp vở, docx, xlsx)
 -- ============================================================================
 
--- Bảng 19.1: Danh mục bài học có hoạt động củng cố
-CREATE TABLE IF NOT EXISTS public.reinforcement_lessons (
-  id            TEXT PRIMARY KEY,       -- vd: rf-k6-tiet10, rf-k7-tiet12, rf-k8-tiet6, rf-k9-tiet8
-  grade         INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
-  period_num    INT NOT NULL,           -- Tiết theo PPCT
-  lesson_title  TEXT NOT NULL,          -- Tiêu đề bài học
-  topic         TEXT NOT NULL,          -- Chủ đề GDPT 2018
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Bảng 19.1: Toàn bộ 116 bài học trong chương trình 29 tiết của 4 khối 6, 7, 8, 9
+CREATE TABLE IF NOT EXISTS public.curriculum_periods (
+  id                  TEXT PRIMARY KEY,       -- k6-p01, k7-p12, k8-p06, k9-p08...
+  grade               INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  period_num          INT NOT NULL CHECK (period_num BETWEEN 1 AND 29),
+  title               TEXT NOT NULL,          -- Tên bài học
+  topic               TEXT NOT NULL,          -- Chủ đề GDPT 2018 (Chủ đề 1 đến Chủ đề 6)
+  content_desc        TEXT NOT NULL DEFAULT '',-- Mục kiến thức SGK Kết nối tri thức
+  is_practical        BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE: Tiết thực hành | FALSE: Tiết lý thuyết
+  digital_competency  TEXT NOT NULL DEFAULT '',-- Chuẩn Năng lực số (CV 3456) & Năng lực AI (QĐ 3439)
+  worksheet_data      JSONB NOT NULL DEFAULT '{}'::jsonb,   -- Cấu trúc Phiếu khám phá cặp đôi (3 chặng, chuông đổi vai, kéo thả, điền khuyết)
+  practical_task_data JSONB DEFAULT NULL,                   -- Hướng dẫn, file mẫu và Rubric 10đ (Chỉ có khi is_practical = TRUE)
+  homework_data       JSONB NOT NULL DEFAULT '{}'::jsonb,   -- Nhiệm vụ về nhà, hỗ trợ nộp ảnh/docx/xlsx, hạn nộp
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Bảng 19.2: Ngân hàng 7 câu hỏi củng cố cho từng bài
-CREATE TABLE IF NOT EXISTS public.reinforcement_questions (
-  id              TEXT PRIMARY KEY,     -- vd: rq-k7-01, rq-k7-02...
-  lesson_id       TEXT NOT NULL REFERENCES public.reinforcement_lessons(id) ON DELETE CASCADE,
+-- Bảng 19.2: Ngân hàng 812 câu hỏi Luyện tập phân hóa (Mỗi bài đúng 7 câu: 3 Biết, 2 Hiểu, 2 Vận dụng)
+CREATE TABLE IF NOT EXISTS public.practice_questions (
+  id              TEXT PRIMARY KEY,       -- pq-k6-p01-q1, pq-k7-p12-q3...
+  period_id       TEXT NOT NULL REFERENCES public.curriculum_periods(id) ON DELETE CASCADE,
   question_index  INT NOT NULL CHECK (question_index BETWEEN 1 AND 7),
   cognitive_level TEXT NOT NULL CHECK (cognitive_level IN ('Nhận biết', 'Thông hiểu', 'Vận dụng')),
   question_text   TEXT NOT NULL,
-  options_json    JSONB NOT NULL,       -- Mảng 4 phương án ['A', 'B', 'C', 'D']
+  options_json    JSONB NOT NULL,         -- Mảng 4 phương án ['A', 'B', 'C', 'D']
   correct_index   INT NOT NULL CHECK (correct_index BETWEEN 0 AND 3),
-  explanation     TEXT NOT NULL,        -- Lời giải thích chi tiết của Giáo viên
+  explanation     TEXT NOT NULL,          -- Lời giải thích chi tiết, sư phạm của Thầy Trương
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Bảng 19.3: Kết quả làm bài củng cố trực tiếp trên lớp của học sinh
-CREATE TABLE IF NOT EXISTS public.reinforcement_results (
+-- Bảng 19.3: Kết quả làm bài Luyện tập 7 câu trực tiếp trên lớp của học sinh
+CREATE TABLE IF NOT EXISTS public.practice_quiz_results (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  lesson_id       TEXT NOT NULL REFERENCES public.reinforcement_lessons(id) ON DELETE CASCADE,
+  period_id       TEXT NOT NULL REFERENCES public.curriculum_periods(id) ON DELETE CASCADE,
   student_code    TEXT NOT NULL,
   student_name    TEXT NOT NULL,
   class_name      TEXT NOT NULL,
+  grade           INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
   score           NUMERIC(4,2) NOT NULL, -- Thang điểm 10
   correct_count   INT NOT NULL DEFAULT 0, -- Số câu đúng trên 7
   total_questions INT NOT NULL DEFAULT 7,
@@ -280,21 +289,67 @@ CREATE TABLE IF NOT EXISTS public.reinforcement_results (
   submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- KHỞI TẠO DỮ LIỆU MẪU CHO 4 KHỐI LỚP (MỖI BÀI ĐỦ 7 CÂU: 3 BIẾT, 2 HIỂU, 2 VẬN DỤNG)
-INSERT INTO public.reinforcement_lessons (id, grade, period_num, lesson_title, topic) VALUES
-('rf-k6-tiet10', 6, 10, 'Tiết 10: Sơ đồ tư duy và phần mềm tạo sơ đồ tư duy', 'Chủ đề E: Ứng dụng tin học'),
-('rf-k7-tiet12', 7, 12, 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel', 'Chủ đề E: Ứng dụng tin học (Bảng tính điện tử)'),
-('rf-k8-tiet6',  8, 6,  'Tiết 6: Địa chỉ tương đối, tuyệt đối và hỗn hợp trong bảng tính', 'Chủ đề E: Ứng dụng tin học (Bảng tính nâng cao)'),
-('rf-k9-tiet8',  9, 8,  'Tiết 8: Trí tuệ nhân tạo (AI) và ứng dụng an toàn trong đời sống số', 'Chủ đề D: Đạo đức, pháp luật và văn hóa trong môi trường số')
-ON CONFLICT (id) DO NOTHING;
+-- Bảng 19.4: Kết quả nộp Phiếu học tập Khám phá Cặp đôi (2 học sinh ngồi chung 1 máy tính)
+CREATE TABLE IF NOT EXISTS public.worksheet_pair_submissions (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  period_id         TEXT NOT NULL REFERENCES public.curriculum_periods(id) ON DELETE CASCADE,
+  computer_number   TEXT NOT NULL,        -- Số máy: Máy 08 - Phòng Tin học 1
+  student_a_code    TEXT NOT NULL,        -- Mã học sinh A (Kỹ thuật viên)
+  student_a_name    TEXT NOT NULL,        -- Tên học sinh A
+  student_b_code    TEXT NOT NULL,        -- Mã học sinh B (Thư ký quan sát)
+  student_b_name    TEXT NOT NULL,        -- Tên học sinh B
+  class_name        TEXT NOT NULL,        -- Lớp 6A10, 7A11...
+  grade             INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  score             NUMERIC(4,2) NOT NULL DEFAULT 10.0,
+  xp_earned         INT NOT NULL DEFAULT 50, -- Điểm thưởng cộng đều cho cả Bạn A và Bạn B
+  submission_data   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  teacher_feedback  TEXT DEFAULT '',
+  submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- Dữ liệu 7 câu hỏi Khối 7 (Tiết 12)
-INSERT INTO public.reinforcement_questions (id, lesson_id, question_index, cognitive_level, question_text, options_json, correct_index, explanation) VALUES
-('rq-701-1', 'rf-k7-tiet12', 1, 'Nhận biết', 'Ký tự nào bắt buộc phải gõ đầu tiên khi bắt đầu nhập một công thức hoặc hàm trong Excel?', '["Dấu cộng (+)", "Dấu bằng (=)", "Dấu hai chấm (:)", "Dấu thăng (#)"]'::jsonb, 1, 'Mọi công thức và hàm tính toán trong bảng tính Excel đều phải bắt đầu bằng dấu bằng (=).'),
-('rq-701-2', 'rf-k7-tiet12', 2, 'Nhận biết', 'Cú pháp chuẩn của hàm điều kiện IF trong Excel là gì?', '["=IF(value_if_true, value_if_false, logical_test)", "=IF(logical_test, [value_if_true], [value_if_false])", "=IF(condition = true, result)", "=IF(range, criteria)"]'::jsonb, 1, 'Cú pháp hàm IF gồm 3 đối số: điều kiện kiểm tra (logical_test), giá trị khi đúng, giá trị khi sai.'),
-('rq-701-3', 'rf-k7-tiet12', 3, 'Nhận biết', 'Hàm nào sau đây dùng để đếm số ô thỏa mãn một điều kiện cho trước trong bảng tính?', '["SUMIF", "COUNTIF", "COUNTA", "AVERAGEIF"]'::jsonb, 1, 'Hàm COUNTIF dùng để đếm các ô theo một tiêu chí (Criteria) định trước.'),
-('rq-701-4', 'rf-k7-tiet12', 4, 'Thông hiểu', 'Cho công thức =IF(C5>=8, "Giỏi", IF(C5>=6.5, "Khá", "Đạt")). Nếu ô C5 có giá trị là 7.0 thì kết quả trả về là gì?', '["Giỏi", "Khá", "Đạt", "Báo lỗi cú pháp"]'::jsonb, 1, 'Vì 7.0 không >= 8 nên điều kiện 1 sai, hàm chuyển sang xét điều kiện 2: 7.0 >= 6.5 là Đúng -> Trả về "Khá".'),
-('rq-701-5', 'rf-k7-tiet12', 5, 'Thông hiểu', 'Trong công thức =SUMIF(B2:B20, "Nam", E2:E20), vùng nào chứa các giá trị số thực sự được cộng tổng?', '["B2:B20", "E2:E20", "Cả hai vùng", "Chỉ các ô có chữ Nam"]'::jsonb, 1, 'Đối số thứ 3 (E2:E20) là sum_range, tức vùng thực sự được tính tổng các giá trị số khi thỏa điều kiện cột B là "Nam".'),
-('rq-701-6', 'rf-k7-tiet12', 6, 'Vận dụng', 'Cần tính tổng số tiền tài trợ của các nhà hảo tâm đóng góp trên 500,000 VNĐ ở cột số tiền (C2:C50), công thức nào đúng?', '["=SUMIF(C2:C50, >500000)", "=SUMIF(C2:C50, ">500000")", "=COUNTIF(C2:C50, ">500000")", "=SUM(C2:C50 > 500000)"]'::jsonb, 1, 'Trong hàm SUMIF/COUNTIF, điều kiện có phép so sánh bắt buộc phải đặt trong cặp dấu ngoặc kép: ">500000".'),
-('rq-701-7', 'rf-k7-tiet12', 7, 'Vận dụng', 'Để đếm số bạn học sinh nữ sinh sau năm 2011 trong danh sách lớp, cần kết hợp sử dụng hàm nào tối ưu nhất?', '["Hàm COUNT kết hợp hàm IF", "Hàm COUNTIFS với nhiều điều kiện đồng thời", "Hàm SUMIF lồng nhau", "Chỉ cần hàm COUNTIF đơn giản"]'::jsonb, 1, 'Khi cần đếm thỏa mãn đồng thời từ 2 điều kiện trở lên (Giới tính="Nữ" VÀ Năm sinh>2011), hàm COUNTIFS là lựa chọn chuẩn xác nhất.')
-ON CONFLICT (id) DO NOTHING;
+-- Bảng 19.5: Nộp bài tập thực hành trên lớp (Chỉ dành riêng cho tiết thực hành)
+CREATE TABLE IF NOT EXISTS public.practical_submissions (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  period_id         TEXT NOT NULL REFERENCES public.curriculum_periods(id) ON DELETE CASCADE,
+  student_code      TEXT NOT NULL,
+  student_name      TEXT NOT NULL,
+  class_name        TEXT NOT NULL,
+  grade             INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  file_url          TEXT NOT NULL,
+  file_name         TEXT NOT NULL,
+  file_extension    TEXT NOT NULL,
+  rubric_scores     JSONB NOT NULL DEFAULT '{}'::jsonb,
+  final_score       NUMERIC(4,2) NOT NULL DEFAULT 0,
+  teacher_comment   TEXT DEFAULT '',
+  submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Bảng 19.6: Nộp bài tập về nhà (Hỗ trợ nộp ảnh chụp vở ghi, tệp docx, tệp xlsx)
+CREATE TABLE IF NOT EXISTS public.homework_submissions (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  period_id         TEXT NOT NULL REFERENCES public.curriculum_periods(id) ON DELETE CASCADE,
+  student_code      TEXT NOT NULL,
+  student_name      TEXT NOT NULL,
+  class_name        TEXT NOT NULL,
+  grade             INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  submission_type   TEXT NOT NULL CHECK (submission_type IN ('image', 'docx', 'xlsx', 'text')),
+  file_url          TEXT NOT NULL,
+  file_name         TEXT NOT NULL,
+  notes             TEXT DEFAULT '',
+  score             NUMERIC(4,2) DEFAULT NULL,
+  teacher_feedback  TEXT DEFAULT '',
+  submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- TẠO VIEW TƯƠNG THÍCH NGƯỢC (BACKWARD COMPATIBILITY CHO MÃ NGUỒN CŨ NẾU CẦN)
+CREATE OR REPLACE VIEW public.reinforcement_lessons AS
+  SELECT id, grade, period_num, title AS lesson_title, topic, created_at
+  FROM public.curriculum_periods;
+
+CREATE OR REPLACE VIEW public.reinforcement_questions AS
+  SELECT id, period_id AS lesson_id, question_index, cognitive_level, question_text, options_json, correct_index, explanation, created_at
+  FROM public.practice_questions;
+
+CREATE OR REPLACE VIEW public.reinforcement_results AS
+  SELECT id, period_id AS lesson_id, student_code, student_name, class_name, score, correct_count, total_questions, answers_json, submitted_at
+  FROM public.practice_quiz_results;
