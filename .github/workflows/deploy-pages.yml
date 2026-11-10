@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -39,14 +39,7 @@ jobs:
       - name: Build with Next.js (Static HTML Export)
         run: npm run build
 
-      # 1. Cập nhật tự động vào nhánh gh-pages (nếu chọn Deploy from a branch -> gh-pages)
-      - name: Deploy to gh-pages branch
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: out
-          branch: gh-pages
-
-      # 2. Xuất bản trực tiếp qua GitHub Actions (nếu chọn Source: GitHub Actions)
+      # Xuất bản trực tiếp qua GitHub Actions (Source: GitHub Actions)
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
