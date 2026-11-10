@@ -37,8 +37,9 @@ import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK
 import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
-import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw, RotateCw, ZoomIn, ZoomOut, ThumbsUp, Award, Sliders, CheckSquare } from 'lucide-react';
+import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw, RotateCw, ZoomIn, ZoomOut, ThumbsUp, Award, Sliders, CheckSquare, Radio } from 'lucide-react';
 import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
+import ClassroomCommandCenter from '@/components/ClassroomCommandCenter';
 
 
 export default function TeacherDashboard() {
@@ -52,7 +53,7 @@ export default function TeacherDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [exams, setExams] = useState(MOCK_EXAMS);
   const [notification, setNotification] = useState('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework' | 'reinforcement' | 'drive_config'>('roster');
+  const [activeTab, setActiveTab] = useState<'orchestration' | 'roster' | 'exams' | 'submissions' | 'homework' | 'reinforcement' | 'drive_config'>('orchestration');
   const [gasUrlInput, setGasUrlInput] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<{ loading: boolean; result?: { success: boolean; message: string; version?: string } }>({ loading: false });
   const [saveGasMsg, setSaveGasMsg] = useState<string>('');
@@ -352,6 +353,18 @@ export default function TeacherDashboard() {
       {/* TABS QUẢN TRỊ */}
       <div className="flex border-b border-slate-200 gap-6 text-sm font-bold flex-wrap">
         <button
+          onClick={() => setActiveTab('orchestration')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'orchestration'
+              ? 'border-b-2 border-rose-600 text-rose-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-rose-600 animate-pulse" />
+          <span>🕹️ Điều khiển lớp học (Command Center)</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase">LIVE</span>
+        </button>
+        <button
           onClick={() => setActiveTab('roster')}
           className={`pb-3 flex items-center gap-2 transition-all ${
             activeTab === 'roster'
@@ -394,17 +407,6 @@ export default function TeacherDashboard() {
         >
           <Camera className="w-4 h-4 text-purple-600" />
           <span>Bài tập về nhà ({homeworkSubs.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('live_monitor')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'live_monitor'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Activity className="w-4 h-4 text-emerald-500" />
-          <span>Theo dõi trực tiếp (Realtime)</span>
         </button>
         <button
           onClick={() => setActiveTab('exams')}
@@ -817,81 +819,13 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* TAB 3: THEO DÕI TRỰC TIẾP TRONG TIẾT HỌC */}
-      {activeTab === 'live_monitor' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  Tiến độ làm bài trực tiếp · {currentClass.name}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Đang diễn ra tiết học: Tin học - Thực hành Bảng tính Excel
-                </p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                Sĩ số: {classStudents.length} học sinh
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-1">
-              {classStudents.slice(0, 10).map((st, i) => (
-                <div key={st.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">{st.fullName}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                      Đang làm bài
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 flex items-center justify-between">
-                    <span>Mã HS: {st.studentCode}</span>
-                    <span className="font-bold text-blue-600">Điểm TB: {st.averageGrade}/10</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${80 + (i % 20)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* PHÂN TÍCH CÂU HỎI HỌC SINH THƯỜNG SAI */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
-            <div>
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Câu hỏi nhiều học sinh sai
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Báo cáo tức thì giúp giáo viên giảng lại ngay trong tiết
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-2xl border border-rose-200 bg-rose-50/50 space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-rose-700">
-                  <span>Câu số 3 (Địa chỉ tuyệt đối)</span>
-                  <span>35% trả lời sai</span>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Học sinh quên nhấn phím F4 để thêm ký hiệu $ trước tên cột và chỉ số hàng.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-700">
-                  <span>Câu số 2 (Cú pháp hàm IF)</span>
-                  <span>18% trả lời sai</span>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Còn một số em quên dấu nháy kép quanh giá trị dạng chuỗi chữ (như &quot;Đạt&quot;).
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* TAB 1: TRUNG TÂM ĐIỀU KHIỂN PHÒNG MÁY TRỰC TIẾP (COMMAND CENTER) */}
+      {activeTab === 'orchestration' && (
+        <ClassroomCommandCenter
+          currentClass={currentClass}
+          classStudents={classStudents}
+          onSelectClass={setSelectedClassId}
+        />
       )}
 
       {/* TAB 4: QUẢN LÝ ĐỀ KIỂM TRA */}
