@@ -8,6 +8,12 @@ export interface UserSession {
   studentName?: string;
   studentClass?: string;
   studentGrade?: number; // 6, 7, 8, 9
+  // Thông tin ghép cặp (Mô hình 2 học sinh ngồi chung 1 máy phòng thực hành)
+  isPair?: boolean;
+  partnerId?: string;
+  partnerCode?: string;
+  partnerName?: string;
+  pairNames?: string;
 }
 
 export function getCurrentUser(): UserSession {
@@ -43,6 +49,12 @@ export function getCurrentUser(): UserSession {
     if (match) studentGrade = parseInt(match[1], 10);
   }
 
+  const isPair = localStorage.getItem('truong_is_pair') === 'true';
+  const partnerId = localStorage.getItem('truong_partner_id') || undefined;
+  const partnerCode = localStorage.getItem('truong_partner_code') || undefined;
+  const partnerName = localStorage.getItem('truong_partner_name') || undefined;
+  const pairNames = localStorage.getItem('truong_pair_names') || undefined;
+
   return {
     isLoggedIn: true,
     role: 'student',
@@ -51,7 +63,27 @@ export function getCurrentUser(): UserSession {
     studentName,
     studentClass,
     studentGrade,
+    isPair,
+    partnerId,
+    partnerCode,
+    partnerName,
+    pairNames: pairNames || (isPair && partnerName ? `${studentName} & ${partnerName}` : undefined),
   };
+}
+
+export function logout(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('truong_user_role');
+  localStorage.removeItem('truong_student_id');
+  localStorage.removeItem('truong_student_code');
+  localStorage.removeItem('truong_student_name');
+  localStorage.removeItem('truong_student_class');
+  localStorage.removeItem('truong_student_grade');
+  localStorage.removeItem('truong_is_pair');
+  localStorage.removeItem('truong_partner_id');
+  localStorage.removeItem('truong_partner_code');
+  localStorage.removeItem('truong_partner_name');
+  localStorage.removeItem('truong_pair_names');
 }
 
 /**

@@ -23,6 +23,7 @@ import {
 import { MOCK_HOMEWORK_ASSIGNMENTS, MOCK_HOMEWORK_SUBMISSIONS, MOCK_CLASSES } from '@/lib/mock-data';
 import { HomeworkAssignment, HomeworkSubmission } from '@/lib/types';
 import { uploadHomeworkToDriveOnline, DriveUploadResult } from '@/lib/google-drive-service';
+import { compressImageFile, formatBytes, CompressionResult } from '@/lib/image-compressor';
 
 export default function HomeworkPage() {
   const [selectedGrade, setSelectedGrade] = useState<number | 'all'>('all');
@@ -38,6 +39,8 @@ export default function HomeworkPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<'image' | 'xlsx' | 'docx' | 'other'>('image');
+  const [compressionInfo, setCompressionInfo] = useState<CompressionResult | null>(null);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -78,29 +81,50 @@ export default function HomeworkPage() {
 
   const currentHw = MOCK_HOMEWORK_ASSIGNMENTS.find(h => h.id === selectedHwId) || MOCK_HOMEWORK_ASSIGNMENTS[0];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSelectedFile(file);
-
-      // Detect type
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext || '')) {
+      const isImg = ['jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext || '') || file.type.startsWith('image/');
+
+      if (isImg) {
         setFileType('image');
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreviewUrl(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else if (['xlsx', 'xls'].includes(ext || '')) {
-        setFileType('xlsx');
-        setImagePreviewUrl(null);
-      } else if (['docx', 'doc'].includes(ext || '')) {
-        setFileType('docx');
-        setImagePreviewUrl(null);
+        setIsCompressing(true);
+        try {
+          // Tự động nén ảnh thông minh phía client (max 1600px, JPEG quality 0.8)
+          const comp = await compressImageFile(file, {
+            maxWidth: 1600,
+            maxHeight: 1600,
+            quality: 0.8,
+            mimeType: 'image/jpeg',
+          });
+          setSelectedFile(comp.file);
+          setImagePreviewUrl(comp.dataUrl);
+          setCompressionInfo(comp);
+        } catch (err) {
+          console.error('Lỗi khi nén ảnh thông minh:', err);
+          setSelectedFile(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreviewUrl(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        } finally {
+          setIsCompressing(false);
+        }
       } else {
-        setFileType('other');
-        setImagePreviewUrl(null);
+        setSelectedFile(file);
+        setCompressionInfo(null);
+        if (['xlsx', 'xls'].includes(ext || '')) {
+          setFileType('xlsx');
+          setImagePreviewUrl(null);
+        } else if (['docx', 'doc'].includes(ext || '')) {
+          setFileType('docx');
+          setImagePreviewUrl(null);
+        } else {
+          setFileType('other');
+          setImagePreviewUrl(null);
+        }
       }
     }
   };
@@ -108,6 +132,7 @@ export default function HomeworkPage() {
   const handleRemoveFile = () => {
     setSelectedFile(null);
     setImagePreviewUrl(null);
+    setCompressionInfo(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -427,6 +452,31 @@ export default function HomeworkPage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+
+                    {/* THÔNG BÁO TỰ ĐỘNG NÉN ẢNH THÔNG MINH PHÍA CLIENT */}
+                    {isCompressing && (
+                      <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold flex items-center gap-2.5 animate-pulse">
+                        <Sparkles className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                        <span>Đang tự động nén ảnh thông minh phía client (Giữ nét chữ viết tay, tối ưu tốc độ tải Google Drive)...</span>
+                      </div>
+                    )}
+
+                    {compressionInfo && compressionInfo.isCompressed && (
+                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200 text-emerald-900 text-xs space-y-1.5 shadow-2xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-extrabold flex items-center gap-1.5 text-emerald-900">
+                            <Sparkles className="w-4 h-4 text-emerald-600" />
+                            <span>✨ Đã nén ảnh thông minh thành công</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider">
+                            Giảm {compressionInfo.reductionPercent}% dung lượng
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-emerald-800 leading-relaxed">
+                          Dung lượng tối ưu: <del className="text-slate-400 font-mono">{formatBytes(compressionInfo.originalSize)}</del> ➔ <strong className="text-emerald-900 font-mono text-xs">{formatBytes(compressionInfo.compressedSize)}</strong>. Độ nét chuẩn ({compressionInfo.width}×{compressionInfo.height}px) bảo toàn từng nét chữ viết tay, tăng tốc nộp bài lên Google Drive Online gấp 5-10 lần!
+                        </p>
+                      </div>
+                    )}
 
                     {/* KHUNG XEM TRƯỚC ẢNH CHỤP VỞ (PREVIEW) */}
                     {imagePreviewUrl && (

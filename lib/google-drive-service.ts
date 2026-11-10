@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImageFile } from './image-compressor';
+
 // ============================================================================
 // DỊCH VỤ ĐỒNG BỘ & LƯU TRỮ GOOGLE DRIVE ONLINE (GOOGLE APPS SCRIPT WEB APP)
 // Hoạt động 24/7 trên Đám mây Google:
@@ -68,8 +70,20 @@ export async function uploadHomeworkToDriveOnline(params: {
   }
 
   try {
-    const fileBase64 = await fileToBase64(params.file);
-    const ext = params.file.name.split('.').pop() || 'dat';
+    let fileToUpload = params.file;
+    if (fileToUpload.type.startsWith('image/') || /\.(jpe?g|png|webp|bmp)$/i.test(fileToUpload.name)) {
+      try {
+        const comp = await compressImageFile(fileToUpload, { maxWidth: 1600, maxHeight: 1600, quality: 0.8 });
+        if (comp.isCompressed) {
+          fileToUpload = comp.file;
+        }
+      } catch (err) {
+        console.warn('Lỗi khi nén ảnh ngầm trước khi tải lên Drive:', err);
+      }
+    }
+
+    const fileBase64 = await fileToBase64(fileToUpload);
+    const ext = fileToUpload.name.split('.').pop() || 'dat';
     const cleanStudentName = params.studentName
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -149,8 +163,20 @@ export async function uploadPracticalToDriveOnline(params: {
   }
 
   try {
-    const fileBase64 = await fileToBase64(params.file);
-    const ext = params.file.name.split('.').pop() || 'dat';
+    let fileToUpload = params.file;
+    if (fileToUpload.type.startsWith('image/') || /\.(jpe?g|png|webp|bmp)$/i.test(fileToUpload.name)) {
+      try {
+        const comp = await compressImageFile(fileToUpload, { maxWidth: 1600, maxHeight: 1600, quality: 0.8 });
+        if (comp.isCompressed) {
+          fileToUpload = comp.file;
+        }
+      } catch (err) {
+        console.warn('Lỗi khi nén ảnh ngầm trước khi tải lên Drive:', err);
+      }
+    }
+
+    const fileBase64 = await fileToBase64(fileToUpload);
+    const ext = fileToUpload.name.split('.').pop() || 'dat';
     const cleanStudentName = params.studentName
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
