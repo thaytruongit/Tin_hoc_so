@@ -235,3 +235,66 @@ INSERT INTO public.classes (name, grade, academic_year) VALUES
 ('Lớp 9A15', 9, '2025-2026'),
 ('Lớp 9A16', 9, '2025-2026')
 ON CONFLICT (name) DO NOTHING;
+
+
+-- ============================================================================
+-- 19. NGÂN HÀNG CÂU HỎI CỦNG CỐ BÀI HỌC (THEO CHUẨN MA TRẬN BỘ GD&ĐT)
+-- Phục vụ hoạt động kết thúc tiết học trực tiếp: 7 câu hỏi phân hóa
+-- (3 câu Nhận biết, 2 câu Thông hiểu, 2 câu Vận dụng)
+-- ============================================================================
+
+-- Bảng 19.1: Danh mục bài học có hoạt động củng cố
+CREATE TABLE IF NOT EXISTS public.reinforcement_lessons (
+  id            TEXT PRIMARY KEY,       -- vd: rf-k6-tiet10, rf-k7-tiet12, rf-k8-tiet6, rf-k9-tiet8
+  grade         INT NOT NULL CHECK (grade IN (6, 7, 8, 9)),
+  period_num    INT NOT NULL,           -- Tiết theo PPCT
+  lesson_title  TEXT NOT NULL,          -- Tiêu đề bài học
+  topic         TEXT NOT NULL,          -- Chủ đề GDPT 2018
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Bảng 19.2: Ngân hàng 7 câu hỏi củng cố cho từng bài
+CREATE TABLE IF NOT EXISTS public.reinforcement_questions (
+  id              TEXT PRIMARY KEY,     -- vd: rq-k7-01, rq-k7-02...
+  lesson_id       TEXT NOT NULL REFERENCES public.reinforcement_lessons(id) ON DELETE CASCADE,
+  question_index  INT NOT NULL CHECK (question_index BETWEEN 1 AND 7),
+  cognitive_level TEXT NOT NULL CHECK (cognitive_level IN ('Nhận biết', 'Thông hiểu', 'Vận dụng')),
+  question_text   TEXT NOT NULL,
+  options_json    JSONB NOT NULL,       -- Mảng 4 phương án ['A', 'B', 'C', 'D']
+  correct_index   INT NOT NULL CHECK (correct_index BETWEEN 0 AND 3),
+  explanation     TEXT NOT NULL,        -- Lời giải thích chi tiết của Giáo viên
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Bảng 19.3: Kết quả làm bài củng cố trực tiếp trên lớp của học sinh
+CREATE TABLE IF NOT EXISTS public.reinforcement_results (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lesson_id       TEXT NOT NULL REFERENCES public.reinforcement_lessons(id) ON DELETE CASCADE,
+  student_code    TEXT NOT NULL,
+  student_name    TEXT NOT NULL,
+  class_name      TEXT NOT NULL,
+  score           NUMERIC(4,2) NOT NULL, -- Thang điểm 10
+  correct_count   INT NOT NULL DEFAULT 0, -- Số câu đúng trên 7
+  total_questions INT NOT NULL DEFAULT 7,
+  answers_json    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- KHỞI TẠO DỮ LIỆU MẪU CHO 4 KHỐI LỚP (MỖI BÀI ĐỦ 7 CÂU: 3 BIẾT, 2 HIỂU, 2 VẬN DỤNG)
+INSERT INTO public.reinforcement_lessons (id, grade, period_num, lesson_title, topic) VALUES
+('rf-k6-tiet10', 6, 10, 'Tiết 10: Sơ đồ tư duy và phần mềm tạo sơ đồ tư duy', 'Chủ đề E: Ứng dụng tin học'),
+('rf-k7-tiet12', 7, 12, 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel', 'Chủ đề E: Ứng dụng tin học (Bảng tính điện tử)'),
+('rf-k8-tiet6',  8, 6,  'Tiết 6: Địa chỉ tương đối, tuyệt đối và hỗn hợp trong bảng tính', 'Chủ đề E: Ứng dụng tin học (Bảng tính nâng cao)'),
+('rf-k9-tiet8',  9, 8,  'Tiết 8: Trí tuệ nhân tạo (AI) và ứng dụng an toàn trong đời sống số', 'Chủ đề D: Đạo đức, pháp luật và văn hóa trong môi trường số')
+ON CONFLICT (id) DO NOTHING;
+
+-- Dữ liệu 7 câu hỏi Khối 7 (Tiết 12)
+INSERT INTO public.reinforcement_questions (id, lesson_id, question_index, cognitive_level, question_text, options_json, correct_index, explanation) VALUES
+('rq-701-1', 'rf-k7-tiet12', 1, 'Nhận biết', 'Ký tự nào bắt buộc phải gõ đầu tiên khi bắt đầu nhập một công thức hoặc hàm trong Excel?', '["Dấu cộng (+)", "Dấu bằng (=)", "Dấu hai chấm (:)", "Dấu thăng (#)"]'::jsonb, 1, 'Mọi công thức và hàm tính toán trong bảng tính Excel đều phải bắt đầu bằng dấu bằng (=).'),
+('rq-701-2', 'rf-k7-tiet12', 2, 'Nhận biết', 'Cú pháp chuẩn của hàm điều kiện IF trong Excel là gì?', '["=IF(value_if_true, value_if_false, logical_test)", "=IF(logical_test, [value_if_true], [value_if_false])", "=IF(condition = true, result)", "=IF(range, criteria)"]'::jsonb, 1, 'Cú pháp hàm IF gồm 3 đối số: điều kiện kiểm tra (logical_test), giá trị khi đúng, giá trị khi sai.'),
+('rq-701-3', 'rf-k7-tiet12', 3, 'Nhận biết', 'Hàm nào sau đây dùng để đếm số ô thỏa mãn một điều kiện cho trước trong bảng tính?', '["SUMIF", "COUNTIF", "COUNTA", "AVERAGEIF"]'::jsonb, 1, 'Hàm COUNTIF dùng để đếm các ô theo một tiêu chí (Criteria) định trước.'),
+('rq-701-4', 'rf-k7-tiet12', 4, 'Thông hiểu', 'Cho công thức =IF(C5>=8, "Giỏi", IF(C5>=6.5, "Khá", "Đạt")). Nếu ô C5 có giá trị là 7.0 thì kết quả trả về là gì?', '["Giỏi", "Khá", "Đạt", "Báo lỗi cú pháp"]'::jsonb, 1, 'Vì 7.0 không >= 8 nên điều kiện 1 sai, hàm chuyển sang xét điều kiện 2: 7.0 >= 6.5 là Đúng -> Trả về "Khá".'),
+('rq-701-5', 'rf-k7-tiet12', 5, 'Thông hiểu', 'Trong công thức =SUMIF(B2:B20, "Nam", E2:E20), vùng nào chứa các giá trị số thực sự được cộng tổng?', '["B2:B20", "E2:E20", "Cả hai vùng", "Chỉ các ô có chữ Nam"]'::jsonb, 1, 'Đối số thứ 3 (E2:E20) là sum_range, tức vùng thực sự được tính tổng các giá trị số khi thỏa điều kiện cột B là "Nam".'),
+('rq-701-6', 'rf-k7-tiet12', 6, 'Vận dụng', 'Cần tính tổng số tiền tài trợ của các nhà hảo tâm đóng góp trên 500,000 VNĐ ở cột số tiền (C2:C50), công thức nào đúng?', '["=SUMIF(C2:C50, >500000)", "=SUMIF(C2:C50, ">500000")", "=COUNTIF(C2:C50, ">500000")", "=SUM(C2:C50 > 500000)"]'::jsonb, 1, 'Trong hàm SUMIF/COUNTIF, điều kiện có phép so sánh bắt buộc phải đặt trong cặp dấu ngoặc kép: ">500000".'),
+('rq-701-7', 'rf-k7-tiet12', 7, 'Vận dụng', 'Để đếm số bạn học sinh nữ sinh sau năm 2011 trong danh sách lớp, cần kết hợp sử dụng hàm nào tối ưu nhất?', '["Hàm COUNT kết hợp hàm IF", "Hàm COUNTIFS với nhiều điều kiện đồng thời", "Hàm SUMIF lồng nhau", "Chỉ cần hàm COUNTIF đơn giản"]'::jsonb, 1, 'Khi cần đếm thỏa mãn đồng thời từ 2 điều kiện trở lên (Giới tính="Nữ" VÀ Năm sinh>2011), hàm COUNTIFS là lựa chọn chuẩn xác nhất.')
+ON CONFLICT (id) DO NOTHING;

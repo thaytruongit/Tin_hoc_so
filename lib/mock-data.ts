@@ -13372,6 +13372,126 @@ export const MOCK_SUBMISSIONS: PracticalSubmission[] = [
 
 export const MOCK_IN_CLASS_LESSONS: InClassLesson[] = [
   {
+    id: 'lesson-601',
+    grade: 6,
+    lessonTitle: 'Tiết 10: Sơ đồ tư duy và phần mềm vẽ sơ đồ tư duy',
+    topic: 'Chủ đề E: Ứng dụng tin học',
+    period: 10,
+    reinforcementQuestions: [
+      {
+        id: 'rq-601-1',
+        level: 'Nhận biết',
+        question: 'Sơ đồ tư duy (Mindmap) là phương pháp biểu diễn thông tin bằng cách nào sau đây?',
+        options: [
+          'Chỉ sử dụng các đoạn văn bản dài và liên tục',
+          'Kết hợp từ khóa, hình ảnh, màu sắc và các đường nối phân nhánh',
+          'Chỉ sử dụng bảng tính gồm các hàng và cột số liệu',
+          'Sử dụng các dòng mã lệnh lập trình máy tính'
+        ],
+        correctIndex: 1,
+        explanation: 'Sơ đồ tư duy là công cụ tổ chức tư duy trực quan kết hợp từ khóa, đường nối, hình ảnh và màu sắc.'
+      },
+      {
+        id: 'rq-601-2',
+        level: 'Nhận biết',
+        question: 'Thành phần nằm ở vị trí trung tâm của một sơ đồ tư duy là gì?',
+        options: [
+          'Các nhánh phụ chi tiết',
+          'Chủ đề chính hoặc ý tưởng trung tâm',
+          'Hình ảnh minh họa nhỏ',
+          'Danh sách các đường liên kết'
+        ],
+        correctIndex: 1,
+        explanation: 'Ở trung tâm sơ đồ tư duy luôn là chủ đề chính hoặc ý tưởng cốt lõi của bài học.'
+      },
+      {
+        id: 'rq-601-3',
+        level: 'Nhận biết',
+        question: 'Phần mềm nào sau đây là phần mềm chuyên dụng để tạo sơ đồ tư duy?',
+        options: [
+          'Mindomo / XMind',
+          'Microsoft Excel',
+          'Scratch 3.0',
+          'Windows Media Player'
+        ],
+        correctIndex: 0,
+        explanation: 'XMind, Mindomo, FreeMind là các phần mềm chuyên nghiệp dùng để xây dựng sơ đồ tư duy.'
+      },
+      {
+        id: 'rq-601-4',
+        level: 'Thông hiểu',
+        question: 'Ưu điểm lớn nhất của việc sử dụng từ khóa ngắn gọn trên các nhánh sơ đồ tư duy so với viết cả câu dài là gì?',
+        options: [
+          'Làm cho sơ đồ có nhiều chữ hơn',
+          'Kích thích não bộ ghi nhớ sâu, nắm bắt ý chính nhanh chóng và không bị rối mắt',
+          'Giúp máy tính khởi động nhanh hơn',
+          'Để tiết kiệm mực khi in ra giấy'
+        ],
+        correctIndex: 1,
+        explanation: 'Từ khóa cô đọng giúp não bộ liên tưởng và ghi nhớ cấu trúc kiến thức nhanh hơn nhiều lần so với đọc câu dài.'
+      },
+      {
+        id: 'rq-601-5',
+        level: 'Thông hiểu',
+        question: 'Khi phân cấp các nhánh trong sơ đồ tư duy, quy tắc nào sau đây là đúng?',
+        options: [
+          'Nhánh cấp 1 nối trực tiếp từ chủ đề trung tâm, nét vẽ thường đậm hơn nhánh cấp 2, 3',
+          'Tất cả các nhánh đều có độ dày và màu sắc giống hệt nhau',
+          'Nhánh con cấp 2 nối thẳng về chủ đề trung tâm bỏ qua nhánh cấp 1',
+          'Không được phép chèn hình ảnh minh họa vào nhánh'
+        ],
+        correctIndex: 0,
+        explanation: 'Nhánh chính (cấp 1) tỏa ra từ trung tâm có nét đậm nhất, các nhánh con mảnh dần theo cấp độ chi tiết.'
+      },
+      {
+        id: 'rq-601-6',
+        level: 'Vận dụng',
+        question: 'Để tóm tắt bài học Tin học 6 "Các thiết bị vào/ra của máy tính", em nên đặt các nhánh cấp 1 như thế nào là khoa học nhất?',
+        options: [
+          'Nhánh 1: Bàn phím; Nhánh 2: Chuột; Nhánh 3: Màn hình; Nhánh 4: Loa',
+          'Nhánh 1: Thiết bị vào (Input); Nhánh 2: Thiết bị ra (Output)',
+          'Nhánh 1: Giá tiền; Nhánh 2: Nơi bán thiết bị',
+          'Chỉ cần 1 nhánh ghi hết tên các thiết bị'
+        ],
+        correctIndex: 1,
+        explanation: 'Cách phân nhánh cấp 1 theo "Thiết bị vào" và "Thiết bị ra" giúp phân loại chuẩn xác theo bản chất kiến thức khoa học.'
+      },
+      {
+        id: 'rq-601-7',
+        level: 'Vận dụng',
+        question: 'Em hãy chọn thao tác đúng trên phần mềm Mindomo/XMind khi muốn thêm một nhánh con cùng cấp với nhánh đang chọn:',
+        options: [
+          'Nhấn phím Tab trên bàn phím',
+          'Nhấn phím Enter trên bàn phím',
+          'Nhấn phím Delete trên bàn phím',
+          'Nhấn tổ hợp phím Ctrl + S'
+        ],
+        correctIndex: 1,
+        explanation: 'Trong hầu hết phần mềm Mindmap, phím Enter tạo nhánh cùng cấp (Sibling topic), phím Tab tạo nhánh con (Subtopic).'
+      }
+    ],
+    practicalTask: {
+      title: 'Thực hành tạo sơ đồ tư duy tóm tắt chủ đề "Mạng máy tính và Internet"',
+      description: 'Sử dụng phần mềm XMind hoặc vẽ trực tiếp để lập sơ đồ tư duy gồm ít nhất 1 chủ đề trung tâm, 3 nhánh cấp 1 và 6 nhánh con có biểu tượng màu sắc.',
+      sampleFileName: 'Mau_So_Do_Tu_Duy_Tin6_Tiet10.xmind',
+      sampleFileUrl: '/practice-files/BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+      steps: [
+        'Bước 1: Khởi động phần mềm XMind/Mindomo hoặc công cụ tạo sơ đồ tư duy trên máy tính phòng máy.',
+        'Bước 2: Tạo chủ đề trung tâm với tên "MẠNG MÁY TÍNH VÀ INTERNET" và chọn màu nổi bật.',
+        'Bước 3: Nhấn phím Tab để tạo 3 nhánh cấp 1: "Khái niệm", "Thành phần mạng", "Lợi ích Internet".',
+        'Bước 4: Nhấn phím Enter để thêm các nhánh con chi tiết cho từng nhánh chính.',
+        'Bước 5: Chèn biểu tượng (Icon/Marker) và đổi màu sắc đường nối cho sinh động.',
+        'Bước 6: Xuất tệp dạng ảnh (.PNG) hoặc tệp gốc, lưu vào thư mục bài làm và nộp lên website.'
+      ],
+      rubric: [
+        { criterion: 'Xác định đúng chủ đề trung tâm và cấu trúc phân cấp', maxPoints: 3.0, note: 'Đủ chủ đề chính và ít nhất 3 nhánh cấp 1 rõ ràng' },
+        { criterion: 'Nội dung kiến thức chính xác, sử dụng từ khóa chuẩn', maxPoints: 4.0, note: 'Từ khóa súc tích, không chép nguyên cả đoạn văn' },
+        { criterion: 'Tính thẩm mỹ, phối màu và chèn biểu tượng trực quan', maxPoints: 2.0, note: 'Màu sắc hài hòa, có icon minh họa tương ứng' },
+        { criterion: 'Kỹ năng thao tác phần mềm và nộp bài đúng hạn', maxPoints: 1.0, note: 'Thực hiện thuần thục phím tắt Tab, Enter và xuất tệp' }
+      ]
+    }
+  },
+  {
     id: 'lesson-701',
     grade: 7,
     lessonTitle: 'Tiết 12: Sử dụng các hàm điều kiện IF, SUMIF, COUNTIF trong Excel',
@@ -13384,8 +13504,7 @@ export const MOCK_IN_CLASS_LESSONS: InClassLesson[] = [
         question: 'Ký tự nào bắt buộc phải gõ đầu tiên khi bắt đầu nhập một công thức hoặc hàm trong Excel?',
         options: ['Dấu cộng (+)', 'Dấu bằng (=)', 'Dấu hai chấm (:)', 'Dấu thăng (#)'],
         correctIndex: 1,
-        explanation: 'Mọi công thức và hàm tính toán trong bảng tính Excel đều phải bắt đầu bằng dấu bằng (=).',
-        stats: { A: 2, B: 38, C: 1, D: 0 }
+        explanation: 'Mọi công thức và hàm tính toán trong bảng tính Excel đều phải bắt đầu bằng dấu bằng (=).'
       },
       {
         id: 'rq-701-2',
@@ -13398,180 +13517,282 @@ export const MOCK_IN_CLASS_LESSONS: InClassLesson[] = [
           '=IF(range, criteria)'
         ],
         correctIndex: 1,
-        explanation: 'Cú pháp hàm IF gồm 3 đối số: điều kiện kiểm tra (logical_test), giá trị khi đúng, và giá trị khi sai.',
-        stats: { A: 4, B: 35, C: 2, D: 0 }
+        explanation: 'Cú pháp hàm IF gồm 3 đối số: điều kiện kiểm tra (logical_test), giá trị khi đúng, giá trị khi sai.'
       },
       {
         id: 'rq-701-3',
         level: 'Nhận biết',
-        question: 'Ký hiệu nào được dùng để cố định hàng hoặc cột khi tạo địa chỉ ô tuyệt đối trong Excel?',
-        options: ['Ký hiệu phần trăm (%)', 'Ký hiệu đô la ($)', 'Ký hiệu và (&)', 'Ký hiệu sao (*)'],
+        question: 'Hàm nào sau đây dùng để đếm số ô thỏa mãn một điều kiện cho trước trong bảng tính?',
+        options: ['SUMIF', 'COUNTIF', 'COUNTA', 'AVERAGEIF'],
         correctIndex: 1,
-        explanation: 'Ký hiệu $ được đặt trước tên cột hoặc chỉ số hàng (ví dụ: $A$1) để tạo địa chỉ tuyệt đối.',
-        stats: { A: 1, B: 39, C: 1, D: 0 }
+        explanation: 'Hàm COUNTIF dùng để đếm các ô theo một tiêu chí (Criteria) định trước.'
       },
       {
         id: 'rq-701-4',
         level: 'Thông hiểu',
-        question: 'Giả sử ô A1 có giá trị là 8.5. Khi thực hiện công thức =IF(A1>=5, "Đạt", "Chưa đạt"), kết quả trả về tại ô tính là gì?',
-        options: ['8.5', 'Đạt', 'Chưa đạt', 'TRUE'],
+        question: 'Cho công thức =IF(C5>=8, "Giỏi", IF(C5>=6.5, "Khá", "Đạt")). Nếu ô C5 có giá trị là 7.0 thì kết quả trả về là gì?',
+        options: ['Giỏi', 'Khá', 'Đạt', 'Báo lỗi cú pháp'],
         correctIndex: 1,
-        explanation: 'Vì A1 = 8.5 thỏa mãn điều kiện A1 >= 5 nên hàm trả về giá trị khi đúng là chuỗi chữ "Đạt".',
-        stats: { A: 0, B: 39, C: 2, D: 0 }
+        explanation: 'Vì 7.0 không >= 8 nên điều kiện 1 sai, hàm chuyển sang xét điều kiện 2: 7.0 >= 6.5 là Đúng -> Trả về "Khá".'
       },
       {
         id: 'rq-701-5',
         level: 'Thông hiểu',
-        question: 'Hàm nào sau đây dùng để đếm số ô thỏa mãn một điều kiện cho trước trong bảng tính?',
-        options: ['Hàm COUNT', 'Hàm COUNTA', 'Hàm COUNTIF', 'Hàm SUMIF'],
-        correctIndex: 2,
-        explanation: 'Hàm COUNTIF dùng để đếm có điều kiện (=COUNTIF(range, criteria)), còn COUNT chỉ đếm các ô chứa số.',
-        stats: { A: 5, B: 2, C: 34, D: 0 }
+        question: 'Trong công thức =SUMIF(B2:B20, "Nam", E2:E20), vùng nào chứa các giá trị số thực sự được cộng tổng?',
+        options: ['B2:B20', 'E2:E20', 'Cả hai vùng', 'Chỉ các ô có chữ Nam'],
+        correctIndex: 1,
+        explanation: 'Đối số thứ 3 (E2:E20) là sum_range, tức vùng thực sự được tính tổng các giá trị số khi thỏa điều kiện cột B là "Nam".'
       },
       {
         id: 'rq-701-6',
         level: 'Vận dụng',
-        question: 'Để tính tổng thành tiền của riêng các thiết bị thuộc "Phòng máy 1" trong cột B (từ B5:B15) với cột thành tiền F5:F15, em dùng công thức nào?',
+        question: 'Cần tính tổng số tiền tài trợ của các nhà hảo tâm đóng góp trên 500,000 VNĐ ở cột số tiền (C2:C50), công thức nào đúng?',
         options: [
-          '=SUM(F5:F15)',
-          '=COUNTIF(B5:B15, "Phòng máy 1")',
-          '=SUMIF(B5:B15, "Phòng máy 1", F5:F15)',
-          '=IF(B5="Phòng máy 1", SUM(F5:F15), 0)'
+          '=SUMIF(C2:C50, >500000)',
+          '=SUMIF(C2:C50, ">500000")',
+          '=COUNTIF(C2:C50, ">500000")',
+          '=SUM(C2:C50 > 500000)'
         ],
-        correctIndex: 2,
-        explanation: 'Cú pháp =SUMIF(vùng_chứa_điều_kiện, điều_kiện, vùng_tính_tổng) là chuẩn xác nhất để tính tổng theo điều kiện.',
-        stats: { A: 1, B: 3, C: 36, D: 1 }
+        correctIndex: 1,
+        explanation: 'Trong hàm SUMIF/COUNTIF, điều kiện có phép so sánh bắt buộc phải đặt trong cặp dấu ngoặc kép: ">500000".'
       },
       {
         id: 'rq-701-7',
         level: 'Vận dụng',
-        question: 'Tại ô D5 có công thức =$B$2*C5. Khi sao chép công thức này sang ô D6, công thức tại ô D6 sẽ tự động chuyển thành gì?',
+        question: 'Để đếm số bạn học sinh nữ sinh sau năm 2011 trong danh sách lớp, cần kết hợp sử dụng hàm nào tối ưu nhất?',
         options: [
-          '=$B$3*C6',
-          '=$B$2*C6',
-          '=B2*C6',
-          '=$B$2*D6'
+          'Hàm COUNT kết hợp hàm IF',
+          'Hàm COUNTIFS với nhiều điều kiện đồng thời',
+          'Hàm SUMIF lồng nhau',
+          'Chỉ cần hàm COUNTIF đơn giản'
         ],
         correctIndex: 1,
-        explanation: 'Vì ô B2 có địa chỉ tuyệt đối ($B$2) nên không đổi khi sao chép, còn C5 là địa chỉ tương đối nên chuyển thành C6.',
-        stats: { A: 6, B: 32, C: 2, D: 1 }
+        explanation: 'Khi cần đếm thỏa mãn đồng thời từ 2 điều kiện trở lên (Giới tính="Nữ" VÀ Năm sinh>2011), hàm COUNTIFS là lựa chọn chuẩn xác nhất.'
       }
     ],
     practicalTask: {
-      title: 'Bài thực hành: Xây dựng bảng tính theo dõi kết quả học tập & thống kê học lực',
-      description: 'Học sinh sử dụng tệp mẫu Excel có sẵn, áp dụng hàm IF để xét kết quả Đạt/Chưa đạt và hàm COUNTIF để thống kê số lượng học sinh giỏi của lớp.',
-      steps: [
-        'Bước 1: Bấm nút "Tải tệp mẫu (.xlsx)" bên dưới và mở bằng phần mềm Microsoft Excel.',
-        'Bước 2: Tại cột Điểm TB (cột G), nhập công thức tính điểm trung bình môn: =AVERAGE(E5:F5).',
-        'Bước 3: Tại cột Kết quả (cột H), sử dụng hàm IF: =IF(G5>=5, "Đạt", "Chưa đạt").',
-        'Bước 4: Tại cột Xếp loại (cột I), dùng hàm IF lồng nhau để phân loại học sinh (>=8: Giỏi, >=6.5: Khá, >=5: Trung bình, còn lại: Yếu).',
-        'Bước 5: Chuyển sang Sheet "Ham_COUNTIF", dùng hàm COUNTIF đếm số lượng học sinh đạt loại Giỏi.',
-        'Bước 6: Lưu tệp với tên: [Lớp]_[MãHS]_[HọTên]_BaiThucHanh12.xlsx và bấm nút "Nộp bài trực tiếp".'
-      ],
+      title: 'Thực hành tính điểm trung bình, xếp loại học lực và thống kê số lượng học sinh bằng IF, SUMIF, COUNTIF',
+      description: 'Mở tệp bảng tính thực hành BTTH_Ham_IF_SUMIF_COUNTIF.xlsx đã tải về, thực hiện các yêu cầu tính toán theo bảng điểm học kỳ 1 của lớp.',
       sampleFileName: 'BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
-      sampleFileUrl: '/teacher/practice-files/BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+      sampleFileUrl: '/practice-files/BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+      steps: [
+        'Bước 1: Tải tệp mẫu BTTH_Ham_IF_SUMIF_COUNTIF.xlsx về máy tính phòng thực hành.',
+        'Bước 2: Mở tệp và nhập công thức tính Điểm trung bình các môn tại cột F bằng hàm AVERAGE.',
+        'Bước 3: Tại cột G (Xếp loại), sử dụng hàm IF lồng nhau để phân loại: Giỏi (>=8.0), Khá (>=6.5), Đạt (>=5.0), Chưa đạt (<5.0).',
+        'Bước 4: Sử dụng hàm COUNTIF tại bảng thống kê để đếm số học sinh đạt từng loại học lực.',
+        'Bước 5: Sử dụng hàm SUMIF để tính tổng điểm rèn luyện của các bạn học sinh Nữ.',
+        'Bước 6: Lưu tệp bài làm với tên Lop_HoVaTen_Tiet12.xlsx và nộp lên cổng Nộp bài phòng máy.'
+      ],
       rubric: [
-        { criterion: 'Định dạng bảng tính (tiêu đề, kẻ khung, căn giữa, định dạng số thập phân)', maxPoints: 2, note: 'Bảng rõ ràng, khoa học' },
-        { criterion: 'Công thức hàm AVERAGE và hàm IF xét Đạt / Chưa đạt', maxPoints: 3, note: 'Kết quả chính xác 100%' },
-        { criterion: 'Công thức hàm IF lồng xếp loại và hàm COUNTIF thống kê', maxPoints: 3, note: 'Áp dụng logic đúng' },
-        { criterion: 'Lưu tệp đúng quy cách và nộp bài đúng hạn trong tiết học', maxPoints: 2, note: 'Nộp bài trước khi hết giờ' }
+        { criterion: 'Tính đúng Điểm trung bình bằng hàm AVERAGE', maxPoints: 2.0, note: 'Kết quả chính xác, định dạng 1 chữ số thập phân' },
+        { criterion: 'Sử dụng chuẩn xác hàm IF lồng nhau để xếp loại', maxPoints: 4.0, note: 'Đúng cú pháp, không sai dấu nháy kép chuỗi chữ' },
+        { criterion: 'Thực hiện đúng hàm COUNTIF thống kê số lượng', maxPoints: 2.0, note: 'Khóa vùng dữ liệu chuẩn khi sao chép công thức' },
+        { criterion: 'Thực hiện đúng hàm SUMIF tính tổng có điều kiện', maxPoints: 2.0, note: 'Cú pháp 3 đối số vùng điều kiện, tiêu chí, vùng tính tổng' }
       ]
     }
   },
   {
     id: 'lesson-801',
     grade: 8,
-    lessonTitle: 'Tiết 6: Địa chỉ tương đối và địa chỉ tuyệt đối trong tính toán bảng tính',
-    topic: 'Chủ đề E: Ứng dụng Tin học (Bảng tính điện tử nâng cao)',
+    lessonTitle: 'Tiết 6: Địa chỉ tương đối, tuyệt đối và hỗn hợp trong bảng tính',
+    topic: 'Chủ đề E: Ứng dụng tin học (Bảng tính nâng cao)',
     period: 6,
     reinforcementQuestions: [
       {
         id: 'rq-801-1',
         level: 'Nhận biết',
-        question: 'Địa chỉ nào sau đây là địa chỉ tương đối trong Excel?',
-        options: ['$A$1', '$A1', 'A$1', 'A1'],
-        correctIndex: 3,
-        explanation: 'Địa chỉ tương đối là địa chỉ không có ký hiệu $ trước tên cột và chỉ số hàng (ví dụ: A1).',
-        stats: { A: 1, B: 2, C: 1, D: 43 }
+        question: 'Ký hiệu nào được dùng để cố định hàng hoặc cột khi tạo địa chỉ tuyệt đối trong Excel?',
+        options: ['Ký hiệu %', 'Ký hiệu $', 'Ký hiệu &', 'Ký hiệu @'],
+        correctIndex: 1,
+        explanation: 'Dấu đô la ($) đặt trước tên cột hoặc chỉ số hàng để biến địa chỉ đó thành địa chỉ tuyệt đối (cố định).'
       },
       {
         id: 'rq-801-2',
         level: 'Nhận biết',
-        question: 'Phím tắt nào trên bàn phím dùng để chuyển đổi nhanh giữa các dạng địa chỉ ô trong Excel?',
+        question: 'Phím tắt nào trên bàn phím dùng để chuyển đổi nhanh giữa các dạng địa chỉ tương đối, tuyệt đối và hỗn hợp?',
         options: ['Phím F2', 'Phím F4', 'Phím F5', 'Phím F9'],
         correctIndex: 1,
-        explanation: 'Nhấn phím F4 khi đang chọn địa chỉ ô sẽ tự động đổi qua lại giữa A1 -> $A$1 -> A$1 -> $A1.',
-        stats: { A: 3, B: 41, C: 2, D: 1 }
+        explanation: 'Nhấn phím F4 khi con trỏ đang ở vị trí địa chỉ ô sẽ lần lượt chuyển đổi giữa: A1 -> $A$1 -> A$1 -> $A1 -> A1.'
       },
       {
         id: 'rq-801-3',
         level: 'Nhận biết',
-        question: 'Địa chỉ ô $C5 được gọi là địa chỉ loại gì?',
-        options: ['Địa chỉ tương đối', 'Địa chỉ tuyệt đối', 'Địa chỉ hỗn hợp (cố định cột C)', 'Địa chỉ hỗn hợp (cố định hàng 5)'],
-        correctIndex: 2,
-        explanation: 'Địa chỉ $C5 có dấu $ đứng trước chữ C nên là địa chỉ hỗn hợp cố định cột C, hàng 5 tự do thay đổi.',
-        stats: { A: 1, B: 4, C: 40, D: 2 }
+        question: 'Địa chỉ $C$5 là dạng địa chỉ nào sau đây?',
+        options: ['Địa chỉ tương đối', 'Địa chỉ tuyệt đối', 'Địa chỉ hỗn hợp cố định hàng', 'Địa chỉ hỗn hợp cố định cột'],
+        correctIndex: 1,
+        explanation: 'Có dấu $ trước cả tên cột C và chỉ số hàng 5 nên $C$5 là địa chỉ tuyệt đối toàn phần.'
       },
       {
         id: 'rq-801-4',
         level: 'Thông hiểu',
-        question: 'Tại sao khi tính bảng lương với mức thưởng chung cố định ở ô B1, ta phải dùng địa chỉ $B$1 thay vì B1?',
-        options: [
-          'Để máy tính tính toán nhanh hơn',
-          'Để khi sao chép công thức cho các nhân viên khác, ô B1 không bị thay đổi',
-          'Để bảo vệ ô B1 không bị xóa nhầm',
-          'Excel bắt buộc mọi công thức nhân đều phải có $'
-        ],
+        question: 'Tại ô C1 có công thức =A1+B1. Khi sao chép công thức này xuống ô C2, công thức tại ô C2 sẽ tự động biến đổi thành gì?',
+        options: ['=$A$1+$B$1', '=A2+B2', '=A1+B2', '=B1+C1'],
         correctIndex: 1,
-        explanation: 'Dùng địa chỉ tuyệt đối $B$1 để khi kéo sao chép công thức xuống dưới, ô tham chiếu tới tiền thưởng vẫn giữ nguyên ở ô B1.',
-        stats: { A: 0, B: 45, C: 2, D: 0 }
+        explanation: 'Vì A1 và B1 là địa chỉ tương đối, khi sao chép xuống 1 hàng, chỉ số hàng sẽ tự động tăng thêm 1 thành =A2+B2.'
       },
       {
         id: 'rq-801-5',
         level: 'Thông hiểu',
-        question: 'Tại ô C3 có công thức =A$2*B3. Khi sao chép sang ô D3, công thức sẽ thành gì?',
-        options: ['=B$2*C3', '=A$2*C3', '=B$3*C3', '=A$3*B3'],
-        correctIndex: 0,
-        explanation: 'Vì cột A là tương đối nên khi sang cột D (tăng 1 cột) chuyển thành B. Hàng $2 cố định. Cột B tương đối chuyển thành C.',
-        stats: { A: 36, B: 6, C: 3, D: 2 }
+        question: 'Địa chỉ nào sau đây là địa chỉ hỗn hợp cố định cột A nhưng cho phép hàng thay đổi tương đối?',
+        options: ['$A$1', 'A$1', '$A1', 'A1'],
+        correctIndex: 2,
+        explanation: '$A1 có dấu $ trước chữ A nên cột A được cố định, số 1 không có $ nên hàng thay đổi khi sao chép.'
       },
       {
         id: 'rq-801-6',
         level: 'Vận dụng',
-        question: 'Một bảng tính cần nhân hệ số thuế VAT (ô $F$1 = 10%) cho từng mặt hàng từ dòng 5 đến dòng 20. Công thức tại ô E5 tính tiền thuế là gì?',
-        options: ['=D5*F1', '=D5*$F$1', '=$D$5*F1', '=$D$5*$F$1'],
+        question: 'Ô D2 chứa tỷ giá USD = 25,400. Để tính giá tiền Việt Nam tại cột C từ cột giá USD (cột B, từ hàng 5 đến hàng 50), công thức tại ô C5 nhập như thế nào để sao chép xuống dưới không bị lỗi?',
+        options: ['=B5*D2', '=B5*$D$2', '=$B$5*D2', '=$B$5*$D$2'],
         correctIndex: 1,
-        explanation: 'Tiền hàng ở ô D5 thay đổi theo từng dòng (tương đối), còn thuế VAT ở ô F1 cố định cho cả bảng nên dùng $F$1.',
-        stats: { A: 3, B: 42, C: 1, D: 1 }
+        explanation: 'B5 là địa chỉ tương đối để khi kéo xuống sẽ tự đổi thành B6, B7... còn $D$2 phải là địa chỉ tuyệt đối để ô tỷ giá luôn giữ nguyên.'
       },
       {
         id: 'rq-801-7',
         level: 'Vận dụng',
-        question: 'Khi sao chép công thức =$A1+B$1 từ ô C2 xuống ô C4, công thức tại ô C4 sẽ là gì?',
-        options: ['=$A3+B$1', '=$A1+B$1', '=$A3+C$1', '=$A1+B$3'],
+        question: 'Khi lập bảng cửu chương nhân từ 1 đến 9 (hàng tiêu đề ở hàng 1, cột tiêu đề ở cột A), công thức tại ô giao nhau B2 cần viết như thế nào để chỉ cần nhập 1 lần rồi kéo cho toàn bộ bảng 9x9?',
+        options: ['=B$1*$A2', '=$B1*A$2', '=$B$1*$A$2', '=B1*A2'],
         correctIndex: 0,
-        explanation: 'Từ C2 xuống C4 là tăng 2 hàng. Cột A cố định ($A), hàng 1 tăng 2 thành hàng 3 ($A3). Cột B giữ nguyên, hàng 1 cố định (B$1). Kết quả: =$A3+B$1.',
-        stats: { A: 35, B: 5, C: 4, D: 3 }
+        explanation: 'B$1 cố định hàng 1 (lấy số nhân hàng trên) và $A2 cố định cột A (lấy số nhân cột trái), đây là ứng dụng đỉnh cao của địa chỉ hỗn hợp.'
       }
     ],
     practicalTask: {
-      title: 'Bài thực hành: Áp dụng địa chỉ tương đối & tuyệt đối tính hóa đơn bán hàng',
-      description: 'Học sinh mở tệp thực hành Tiết 6, cố định ô tỷ lệ giảm giá ($C$2) để tính thành tiền chiết khấu tự động cho tất cả các nhóm máy.',
+      title: 'Thực hành tính bảng dự toán kinh phí giải bóng đá và lập bảng cửu chương bằng địa chỉ hỗn hợp',
+      description: 'Mở tệp BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx, áp dụng kiến thức địa chỉ tuyệt đối để tính bảng lương và địa chỉ hỗn hợp để hoàn thành ma trận cửu chương 9x9.',
+      sampleFileName: 'BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
+      sampleFileUrl: '/practice-files/BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
       steps: [
-        'Bước 1: Bấm tải tệp Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx.',
-        'Bước 2: Xác định ô chứa tỷ lệ chiết khấu cố định ($C$2).',
-        'Bước 3: Nhập công thức tính tiền giảm giá: =Thành_tiền * $C$2.',
-        'Bước 4: Sử dụng Fill Handle (kéo góc dưới bên phải) để sao chép công thức cho toàn bộ danh sách.',
-        'Bước 5: Kiểm tra lại các ô sau khi sao chép xem ô $C$2 có bị dịch chuyển không.',
-        'Bước 6: Lưu tệp và nộp trực tiếp tại phòng máy.'
+        'Bước 1: Tải tệp thực hành BTTH_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx về máy tính.',
+        'Bước 2: Mở Sheet 1 (Dự toán giải bóng đá): Tính thành tiền bằng công thức Số lượng * Đơn giá.',
+        'Bước 3: Tại ô Thuế VAT, sử dụng địa chỉ tuyệt đối $B$2 (ô chứa thuế suất 10%) để nhân với Thành tiền.',
+        'Bước 4: Mở Sheet 2 (Bảng cửu chương): Nhập công thức sử dụng địa chỉ hỗn hợp =B$1*$A2 tại ô B2.',
+        'Bước 5: Kéo thả chốt điền Fill Handle sang ngang đến cột J, sau đó kéo xuống dưới đến hàng 10.',
+        'Bước 6: Kiểm tra tính đúng đắn của toàn bộ 81 ô kết quả, lưu tệp và nộp lên hệ thống.'
       ],
-      sampleFileName: 'Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
-      sampleFileUrl: '/teacher/practice-files/Bai_Tap_Thuc_Hanh_Tiet_6_Dia_Chi_Tuong_Doi_Tuyet_Doi.xlsx',
       rubric: [
-        { criterion: 'Xác định đúng ô cần cố định tuyệt đối ($C$2)', maxPoints: 3, note: 'Hiểu bản chất địa chỉ ô' },
-        { criterion: 'Viết công thức tính chiết khấu và sao chép tự động', maxPoints: 4, note: 'Kết quả chính xác toàn bộ cột' },
-        { criterion: 'Định dạng tiền tệ VNĐ có dấu phân cách hàng nghìn', maxPoints: 2, note: 'Thẩm mỹ bảng tính' },
-        { criterion: 'Lưu đúng cú pháp và nộp trước khi hết tiết', maxPoints: 1, note: 'Kỷ luật phòng máy' }
+        { criterion: 'Phân biệt và sử dụng đúng địa chỉ tương đối và tuyệt đối', maxPoints: 3.0, note: 'Khóa đúng ô thuế suất $B$2 bằng phím F4' },
+        { criterion: 'Vận dụng chuẩn xác công thức địa chỉ hỗn hợp B$1*$A2', maxPoints: 4.0, note: 'Hoàn thành bảng 9x9 chỉ bằng 1 thao tác sao chép công thức' },
+        { criterion: 'Định dạng dữ liệu số và kẻ khung bảng biểu đẹp mắt', maxPoints: 2.0, note: 'Định dạng tiền tệ VNĐ và căn lề thẩm mỹ' },
+        { criterion: 'Kỹ năng lưu và nộp tệp đúng định dạng quy định', maxPoints: 1.0, note: 'Lưu đúng tên tệp và nộp thành công lên web' }
+      ]
+    }
+  },
+  {
+    id: 'lesson-901',
+    grade: 9,
+    lessonTitle: 'Tiết 8: Trí tuệ nhân tạo (AI) và ứng dụng an toàn trong đời sống số',
+    topic: 'Chủ đề D: Đạo đức, pháp luật và văn hóa trong môi trường số',
+    period: 8,
+    reinforcementQuestions: [
+      {
+        id: 'rq-901-1',
+        level: 'Nhận biết',
+        question: 'Trí tuệ nhân tạo (AI - Artificial Intelligence) là gì?',
+        options: [
+          'Một loại vi mạch máy tính có tốc độ siêu nhanh',
+          'Khả năng của máy tính hoặc hệ thống có thể mô phỏng các năng lực trí tuệ của con người như học tập, suy luận và tự giải quyết vấn đề',
+          'Một phần mềm diệt virus tự động trên hệ điều hành Windows',
+          'Mạng internet kết nối toàn cầu không dây'
+        ],
+        correctIndex: 1,
+        explanation: 'AI là ngành khoa học máy tính nghiên cứu cách tạo ra các hệ thống có khả năng mô phỏng trí thông minh của con người.'
+      },
+      {
+        id: 'rq-901-2',
+        level: 'Nhận biết',
+        question: 'Ứng dụng nào sau đây KHÔNG phải là ứng dụng tiêu biểu của công nghệ Trí tuệ nhân tạo?',
+        options: [
+          'Nhận diện khuôn mặt FaceID để mở khóa điện thoại',
+          'Trợ lý ảo điều khiển bằng giọng nói (Siri, Google Assistant)',
+          'Hệ thống xe tự hành tự động nhận diện vật cản',
+          'Bóng đèn dây tóc truyền thống bật tắt bằng công tắc cơ học'
+        ],
+        correctIndex: 3,
+        explanation: 'Bóng đèn dây tóc dùng công tắc cơ là thiết bị điện thuần túy, hoàn toàn không có xử lý dữ liệu hay trí tuệ nhân tạo.'
+      },
+      {
+        id: 'rq-901-3',
+        level: 'Nhận biết',
+        question: 'Mô hình ngôn ngữ lớn (LLM) như ChatGPT hay Google Gemini hoạt động dựa trên cơ chế cốt lõi nào?',
+        options: [
+          'Ghi nhớ thủ công từng từ điển in giấy',
+          'Học máy (Machine Learning) và mạng nơ-ron sâu được huấn luyện trên kho ngữ liệu khổng lồ',
+          'Hệ thống camera vệ tinh quét toàn cầu',
+          'Các thuật toán sắp xếp nổi bọt'
+        ],
+        correctIndex: 1,
+        explanation: 'LLM được huấn luyện dựa trên học sâu (Deep Learning) và kiến trúc Transformer trên lượng dữ liệu khổng lồ.'
+      },
+      {
+        id: 'rq-901-4',
+        level: 'Thông hiểu',
+        question: 'Hiện tượng "Ảo giác của AI" (AI Hallucination) có nghĩa là gì?',
+        options: [
+          'Màn hình máy tính bị nhấp nháy khi sử dụng AI',
+          'Hệ thống AI tự tin đưa ra thông tin sai sự thật hoặc bịa đặt nhưng hành văn nghe rất thuyết phục',
+          'Máy tính bị nhiễm mã độc tống tiền',
+          'Người dùng bị mỏi mắt sau khi dùng máy tính quá lâu'
+        ],
+        correctIndex: 1,
+        explanation: 'Ảo giác AI là khi mô hình tạo ra câu trả lời không có thật hoặc sai lệch nhưng ngữ pháp rất mượt mà.'
+      },
+      {
+        id: 'rq-901-5',
+        level: 'Thông hiểu',
+        question: 'Hành vi nào sau đây là vi phạm đạo đức học đường và an toàn thông tin khi sử dụng AI trong học tập?',
+        options: [
+          'Nhờ AI giải thích lại một khái niệm thuật toán chưa hiểu rõ',
+          'Yêu cầu AI viết hộ 100% bài văn rồi nộp cho Thầy Cô và nhận đó là bài tự mình viết',
+          'Hỏi AI các bước gợi ý dàn ý cho một dự án sáng tạo',
+          'Sử dụng AI để kiểm tra lỗi chính tả trong bài thuyết trình'
+        ],
+        correctIndex: 1,
+        explanation: 'Dùng AI sao chép nguyên văn để gian lận điểm số là vi phạm nghiêm trọng tính trung thực trong học tập.'
+      },
+      {
+        id: 'rq-901-6',
+        level: 'Vận dụng',
+        question: 'Khi nhận được một video trên mạng xã hội có hình ảnh và giọng nói của người quen nhờ chuyển tiền khẩn cấp, em nên làm gì đầu tiên để phòng tránh lừa đảo Deepfake AI?',
+        options: [
+          'Chuyển tiền ngay lập tức vì thấy đúng mặt và nghe đúng giọng bạn mình',
+          'Chia sẻ video đó lên nhiều nhóm mạng xã hội để xin ý kiến',
+          'Bình tĩnh gọi điện thoại trực tiếp vào số di động hoặc gặp mặt trực tiếp để xác minh',
+          'Gửi thông tin tài khoản ngân hàng của mình cho người trong video'
+        ],
+        correctIndex: 2,
+        explanation: 'Công nghệ Deepfake có thể giả mạo khuôn mặt và giọng nói, luôn cần gọi điện thoại thoại thường hoặc gặp mặt để xác thực.'
+      },
+      {
+        id: 'rq-901-7',
+        level: 'Vận dụng',
+        question: 'Để khai thác AI hỗ trợ ôn tập môn Tin học đạt hiệu quả cao nhất mà vẫn phát triển được tư duy của bản thân, phương pháp đúng là gì?',
+        options: [
+          'Yêu cầu AI làm sẵn toàn bộ bài kiểm tra và học thuộc đáp án',
+          'Cung cấp ngữ cảnh rõ ràng, đặt câu hỏi phản biện, đối chiếu lại kiến thức với SGK và tự tay viết lại theo cách hiểu của mình',
+          'Chỉ hỏi AI những câu hỏi ngắn một từ',
+          'Tin tưởng tuyệt đối vào mọi câu trả lời của AI mà không cần kiểm chứng'
+        ],
+        correctIndex: 1,
+        explanation: 'AI chỉ là trợ lý hỗ trợ tư duy, người học phải luôn kiểm chứng với SGK và tự mình tổng hợp tri thức.'
+      }
+    ],
+    practicalTask: {
+      title: 'Thực hành trải nghiệm đối thoại với Trợ lý AI và phân tích độ tin cậy của thông tin số',
+      description: 'Học sinh nhập vai kỹ sư ra lệnh (Prompt Engineering) để yêu cầu AI tóm tắt bài học, phát hiện các điểm "ảo giác" và lập bảng so sánh với sách giáo khoa.',
+      sampleFileName: 'Phieu_Thuc_Hanh_AI_TinHoc9_Tiet8.docx',
+      sampleFileUrl: '/practice-files/BTTH_Ham_IF_SUMIF_COUNTIF.xlsx',
+      steps: [
+        'Bước 1: Mở trình duyệt web và truy cập giao diện trợ lý AI học tập được chỉ định.',
+        'Bước 2: Soạn câu lệnh (Prompt) yêu cầu AI tóm tắt 3 đặc điểm an toàn thông tin theo chuẩn Luật An ninh mạng.',
+        'Bước 3: Đọc phản hồi của AI và đối chiếu từng luận điểm với nội dung trong SGK Tin học 9.',
+        'Bước 4: Thử nghiệm đặt 1 câu hỏi "bẫy" để kiểm tra xem AI có gặp hiện tượng ảo giác (Hallucination) hay không.',
+        'Bước 5: Ghi lại các phát hiện và bài học rút ra vào bảng thu hoạch.',
+        'Bước 6: Xuất tệp văn bản bài làm và nộp trực tiếp lên website để nhận đánh giá.'
+      ],
+      rubric: [
+        { criterion: 'Kỹ năng viết câu lệnh Prompt rõ ràng, có ngữ cảnh', maxPoints: 3.0, note: 'Câu lệnh cụ thể vai trò, yêu cầu và định dạng đầu ra' },
+        { criterion: 'Khả năng đối chiếu và phản biện thông tin của AI', maxPoints: 4.0, note: 'Chỉ ra được ít nhất 1 điểm cần kiểm chứng lại với SGK' },
+        { criterion: 'Hiểu rõ các nguyên tắc an toàn số và đạo đức AI', maxPoints: 2.0, note: 'Trình bày đúng thái độ học tập trung thực' },
+        { criterion: 'Trình bày báo cáo mạch lạc, nộp bài đúng giờ', maxPoints: 1.0, note: 'Định dạng văn bản chuẩn, sạch sẽ' }
       ]
     }
   }

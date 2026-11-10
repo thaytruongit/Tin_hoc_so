@@ -10,7 +10,9 @@ import {
   CheckCircle2, 
   ShieldAlert,
   Flame,
-  BookMarked
+  BookMarked,
+  UploadCloud,
+  Check
 } from 'lucide-react';
 import { MOCK_STUDENTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_CLASSES } from '@/lib/mock-data';
 
@@ -36,11 +38,18 @@ export default function HomePage() {
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-              Website giảng dạy, giao phiếu học tập tương tác, tổ chức kiểm tra tự động chấm điểm và thi đua tích lũy huy hiệu cho học sinh Khối 6, 7, 8, 9.
+              Website giảng dạy, giao phiếu học tập tương tác, củng cố 7 câu hỏi phân hóa, tổ chức kiểm tra tự động chấm điểm và thi đua tích lũy huy hiệu cho học sinh Khối 6, 7, 8, 9.
             </p>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+              <Link
+                href="/in-class"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-extrabold text-white bg-amber-500 hover:bg-amber-600 shadow-md shadow-amber-500/25 hover:shadow-lg transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Củng cố bài học (7 câu)</span>
+              </Link>
               <Link
                 href="/login?role=student"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25 hover:shadow-lg transition-all"
@@ -56,19 +65,44 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* CỦNG CỐ BÀI HỌC BANNER NỔI BẬT */}
+            <div className="pt-4 text-left">
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                    Hoạt động 1 trực tiếp trên lớp
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+                    Củng Cố Bài Học — 7 Câu Trắc Nghiệm Tự Động Chấm Điểm
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/90">
+                    Phân hóa chuẩn Bộ GD&ĐT: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>. Làm bài trên máy tính, nhận điểm tức thì và xem lời giải thích chi tiết của Thầy Trương!
+                  </p>
+                </div>
+                <Link
+                  href="/in-class"
+                  className="px-6 py-3.5 rounded-2xl bg-white text-amber-700 hover:bg-amber-50 font-black text-sm shadow-lg shrink-0 flex items-center gap-2 group"
+                >
+                  <span>Bắt đầu làm bài ngay</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
             {/* Stats Badge */}
-            <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
               <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs">
                 <div className="text-2xl font-bold text-blue-600">{MOCK_CLASSES.length} Lớp</div>
                 <div className="text-xs text-slate-500 font-medium">Khối 6, 7, 8, 9</div>
               </div>
               <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs">
-                <div className="text-2xl font-bold text-indigo-600">165+</div>
-                <div className="text-xs text-slate-500 font-medium">Học sinh tham gia</div>
+                <div className="text-2xl font-bold text-indigo-600">669 HS</div>
+                <div className="text-xs text-slate-500 font-medium">THCS Mão Điền</div>
               </div>
               <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs">
-                <div className="text-2xl font-bold text-emerald-600">100%</div>
-                <div className="text-xs text-slate-500 font-medium">Tự động chấm điểm</div>
+                <div className="text-2xl font-bold text-emerald-600">7 Câu</div>
+                <div className="text-xs text-slate-500 font-medium">Biết - Hiểu - Vận dụng</div>
               </div>
               <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs">
                 <div className="text-2xl font-bold text-amber-500">Gamification</div>
@@ -87,7 +121,7 @@ export default function HomePage() {
               Chương trình Tin học các khối lớp
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              Phân phối chương trình chuẩn GDPT 2018 tích hợp phiếu học tập và bài thực hành máy tính
+              Phân phối chương trình chuẩn GDPT 2018 tích hợp phiếu học tập, bài thực hành và củng cố 7 câu hỏi
             </p>
           </div>
           <Link
@@ -104,30 +138,30 @@ export default function HomePage() {
             {
               grade: 6,
               title: 'Tin học Khối 6',
-              desc: 'Thông tin và dữ liệu, Mạng máy tính, Internet, An toàn thông tin số.',
+              desc: 'Sơ đồ tư duy, Thông tin và dữ liệu, Mạng máy tính, Internet, An toàn số.',
               color: 'from-blue-500 to-cyan-500',
-              badge: 'Chủ đề A - D',
+              badge: 'Chủ đề A - E',
             },
             {
               grade: 7,
               title: 'Tin học Khối 7',
-              desc: 'Phần mềm bảng tính điện tử Excel, công thức tính toán và xử lý số liệu.',
+              desc: 'Phần mềm bảng tính Excel, các hàm điều kiện IF, SUMIF, COUNTIF.',
               color: 'from-emerald-500 to-teal-500',
               badge: 'Chủ đề E: Ứng dụng',
             },
             {
               grade: 8,
               title: 'Tin học Khối 8',
-              desc: 'Thuật toán, cấu trúc rẽ nhánh, lặp và bước đầu làm quen với lập trình.',
+              desc: 'Địa chỉ tương đối/tuyệt đối trong Excel, thuật toán và cấu trúc điều khiển.',
               color: 'from-indigo-500 to-purple-500',
-              badge: 'Chủ đề F: Lập trình',
+              badge: 'Chủ đề E - F',
             },
             {
               grade: 9,
               title: 'Tin học Khối 9',
-              desc: 'Dịch vụ đám mây, mạng xã hội an toàn và ứng dụng đa phương tiện.',
+              desc: 'Trí tuệ nhân tạo (AI), dịch vụ đám mây, an toàn thông tin và đa phương tiện.',
               color: 'from-rose-500 to-orange-500',
-              badge: 'Hướng nghiệp số',
+              badge: 'Chủ đề D & Hướng nghiệp',
             },
           ].map((item) => (
             <div
@@ -149,26 +183,38 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 mt-6 flex items-center justify-between">
+              <div className="pt-4 border-t border-slate-100 mt-6 space-y-2">
                 <Link
-                  href={`/worksheets?grade=${item.grade}`}
-                  className="text-xs font-bold text-slate-700 hover:text-blue-600"
+                  href="/in-class"
+                  className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 flex items-center justify-between"
                 >
-                  Phiếu bài tập
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    Củng cố 7 câu (Khối {item.grade})
+                  </span>
+                  <span>→</span>
                 </Link>
-                <Link
-                  href={`/exams?grade=${item.grade}`}
-                  className="text-xs font-bold text-blue-600 hover:underline"
-                >
-                  Vào thi →
-                </Link>
+                <div className="flex items-center justify-between text-xs font-semibold pt-1">
+                  <Link
+                    href={`/worksheets?grade=${item.grade}`}
+                    className="text-slate-600 hover:text-blue-600"
+                  >
+                    Phiếu học tập
+                  </Link>
+                  <Link
+                    href={`/exams?grade=${item.grade}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Đề kiểm tra →
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CORE FEATURES (PHIẾU HỌC TẬP & PHÒNG KIỂM TRA CHỐNG GIAN LẬN) */}
+      {/* CORE FEATURES */}
       <section className="bg-slate-50 border-y border-slate-200/80 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -181,102 +227,108 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                <FileText className="w-5 h-5" />
+            <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <Sparkles className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-lg text-slate-900">
-                Phiếu học tập điện tử 4 Pha
-              </h3>
+              <h3 className="font-bold text-xl text-slate-900">1. Củng cố bài học (7 câu)</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Tương ứng 4 pha giảng dạy (Khởi động - Khám phá - Luyện tập - Vận dụng). Tự động chấm và giải thích ngay khi nộp bài.
+                Đúng chuẩn 3 mức độ nhận thức theo quy định Bộ GD&ĐT: 3 câu Nhận biết, 2 câu Thông hiểu, 2 câu Vận dụng. Chấm điểm tức thì và hiển thị lời giải chi tiết.
               </p>
-              <ul className="space-y-2 text-xs text-slate-600 pt-2">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Trắc nghiệm đa phương án & Đúng/Sai</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Cộng điểm kinh nghiệm XP tức thì</li>
-              </ul>
+              <Link
+                href="/in-class"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 pt-2"
+              >
+                <span>Vào làm bài củng cố ngay</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                <ClipboardCheck className="w-5 h-5" />
+            <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <FileText className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-lg text-slate-900">
-                Kiểm tra có bấm giờ & Chống gian lận
-              </h3>
+              <h3 className="font-bold text-xl text-slate-900">2. Phiếu học tập điện tử 4 pha</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Đồng hồ đếm ngược, theo dõi số lần học sinh chuyển tab hoặc mở ứng dụng khác khi làm bài để đảm bảo tính khách quan.
+                Thiết kế bám sát bài giảng trên lớp theo 4 pha: Khởi động, Khám phá, Luyện tập và Vận dụng. Học sinh hoàn thành nhận điểm thưởng XP.
               </p>
-              <ul className="space-y-2 text-xs text-slate-600 pt-2">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Đếm lượt thoát màn hình thi</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Khóa đề/mở đề linh hoạt theo tiết</li>
-              </ul>
+              <Link
+                href="/worksheets"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 pt-2"
+              >
+                <span>Xem danh sách phiếu</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                <Trophy className="w-5 h-5" />
+            <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                <ClipboardCheck className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-lg text-slate-900">
-                Gamification & Bảng vàng vinh danh
-              </h3>
+              <h3 className="font-bold text-xl text-slate-900">3. Phòng thi kiểm tra định kỳ</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Tạo động lực học tập với cơ chế lên cấp (Level), chuỗi ngày học liên tục (Streak) và hệ thống huy hiệu cá nhân sinh động.
+                Hệ thống đề kiểm tra thường xuyên và giữa kỳ chuẩn ma trận. Tự động xáo trộn câu hỏi, chống gian lận và khóa đề linh hoạt theo giờ học.
               </p>
-              <ul className="space-y-2 text-xs text-slate-600 pt-2">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Xếp hạng theo từng lớp học</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Vinh danh học sinh tiến bộ nhất</li>
-              </ul>
+              <Link
+                href="/exams"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 pt-2"
+              >
+                <span>Vào phòng kiểm tra</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TOP LEADERBOARD PREVIEW */}
+      {/* BẢNG VÀNG THI ĐUA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
-          <div className="relative z-10 max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8 border-b border-white/10 pb-6">
-              <div>
-                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
-                  <Flame className="w-4 h-4" />
-                  <span>Bảng vàng tích lũy điểm kinh nghiệm (XP)</span>
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight">
-                  Top học sinh dẫn đầu tuần này
-                </h3>
-              </div>
-              <Link
-                href="/achievements"
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 transition-all"
-              >
-                Xem toàn bộ bảng vàng →
-              </Link>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">
+              <Trophy className="w-4 h-4" />
+              <span>Thi đua học tập</span>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {topStudents.map((st, idx) => (
-                <div
-                  key={st.id}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xs flex items-center gap-4"
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${
-                    idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-950' : 'bg-amber-700 text-white'
-                  }`}>
-                    #{idx + 1}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white">{st.fullName}</h4>
-                    <p className="text-xs text-slate-400">{st.className} · Mã: {st.studentCode}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-bold text-amber-400">{st.totalXp} XP</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">Cấp {st.level}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Bảng vàng thành tích THCS Mão Điền
+            </h2>
           </div>
+          <Link
+            href="/achievements"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+          >
+            <span>Xem bảng xếp hạng đầy đủ</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {topStudents.map((st, idx) => (
+            <div
+              key={st.id}
+              className={`p-6 rounded-3xl border bg-white shadow-xs relative overflow-hidden flex items-center gap-4 ${
+                idx === 0 ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-slate-200'
+              }`}
+            >
+              <div className="text-2xl font-black text-slate-300 w-8 text-center shrink-0">
+                #{idx + 1}
+              </div>
+              <img
+                src={st.avatarUrl}
+                alt={st.fullName}
+                className="w-14 h-14 rounded-2xl bg-slate-100 p-1 border border-slate-200 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-bold text-slate-900 text-sm truncate">{st.fullName}</h4>
+                <p className="text-xs text-slate-500 font-medium">{st.className}</p>
+                <div className="flex items-center gap-3 mt-1.5 text-xs">
+                  <span className="font-bold text-amber-600">{st.totalXp} XP</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="font-medium text-slate-600">Cấp {st.level}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>

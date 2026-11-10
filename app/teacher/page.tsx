@@ -26,12 +26,14 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { 
+  Sparkles, 
+  BookOpen, 
   Camera, 
   Image as ImageIcon, 
   ExternalLink, 
   X 
 } from 'lucide-react';
-import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS, MOCK_HOMEWORK_SUBMISSIONS } from '@/lib/mock-data';
+import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS, MOCK_HOMEWORK_SUBMISSIONS, MOCK_IN_CLASS_LESSONS } from '@/lib/mock-data';
 import { PracticalSubmission, HomeworkSubmission } from '@/lib/types';
 
 
@@ -41,7 +43,7 @@ export default function TeacherDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [exams, setExams] = useState(MOCK_EXAMS);
   const [notification, setNotification] = useState('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions' | 'homework' | 'reinforcement'>('roster');
   const [submissions, setSubmissions] = useState<PracticalSubmission[]>(MOCK_SUBMISSIONS);
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
   const [gradeScore, setGradeScore] = useState<string>('9.5');
@@ -51,6 +53,8 @@ export default function TeacherDashboard() {
   const [gradingHwId, setGradingHwId] = useState<string | null>(null);
   const [hwScore, setHwScore] = useState<string>('10');
   const [hwFeedback, setHwFeedback] = useState<string>('Bài làm rất tốt, trình bày sạch đẹp!');
+  const [rfLessonId, setRfLessonId] = useState<string>(MOCK_IN_CLASS_LESSONS[1].id);
+  const [rfResults, setRfResults] = useState<any[]>([]);
 
   // Tải danh sách bài nộp từ localStorage nếu có
   useEffect(() => {
@@ -68,6 +72,17 @@ export default function TeacherDashboard() {
       }
 
       const savedHw = localStorage.getItem('truong_homework_submissions');
+      const savedRf = localStorage.getItem('truong_reinforcement_results');
+      if (savedRf) {
+        try {
+          const parsedRf = JSON.parse(savedRf);
+          if (Array.isArray(parsedRf)) {
+            setRfResults(parsedRf);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
       if (savedHw) {
         try {
           const parsedHw = JSON.parse(savedHw);
@@ -270,6 +285,17 @@ export default function TeacherDashboard() {
         >
           <UploadCloud className="w-4 h-4 text-amber-500" />
           <span>Bài thực hành phòng máy ({submissions.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('reinforcement')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'reinforcement'
+              ? 'border-b-2 border-amber-500 text-amber-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <span>Ngân hàng Củng cố (7 câu)</span>
         </button>
         <button
           onClick={() => setActiveTab('homework')}
@@ -722,6 +748,157 @@ export default function TeacherDashboard() {
           </div>
         </div>
       )}
+      {/* TAB 6: NGÂN HÀNG CÂU HỎI CỦNG CỐ 7 CÂU */}
+      {activeTab === 'reinforcement' && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <span>Ngân hàng câu hỏi Củng cố bài học (Chuẩn ma trận Bộ GD&amp;ĐT)</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Gồm đúng 7 câu hỏi trắc nghiệm chia chuẩn 3 mức độ nhận thức: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>.
+              </p>
+            </div>
+            <Link
+              href="/in-class"
+              target="_blank"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+            >
+              <span>Mở giao diện làm bài (Học sinh)</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* CHỌN BÀI HỌC THEO KHỐI */}
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+            {MOCK_IN_CLASS_LESSONS.map((l) => (
+              <button
+                key={l.id}
+                onClick={() => setRfLessonId(l.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  rfLessonId === l.id
+                    ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-400/30'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Khối {l.grade}: {l.lessonTitle.split(':')[0]}
+              </button>
+            ))}
+          </div>
+
+          {/* CHI TIẾT 7 CÂU HỎI CỦA BÀI HỌC ĐANG CHỌN */}
+          {(() => {
+            const currentRf = MOCK_IN_CLASS_LESSONS.find(l => l.id === rfLessonId) || MOCK_IN_CLASS_LESSONS[0];
+            return (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase">
+                      Khối {currentRf.grade} · {currentRf.topic}
+                    </span>
+                    <h4 className="font-bold text-sm text-slate-900 mt-1">{currentRf.lessonTitle}</h4>
+                  </div>
+                  <div className="text-xs font-bold text-amber-800 bg-white px-3 py-1.5 rounded-xl border border-amber-300">
+                    Ma trận: 3 Biết · 2 Hiểu · 2 Vận dụng
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {currentRf.reinforcementQuestions.map((q, qIdx) => (
+                    <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center shrink-0">
+                            {qIdx + 1}
+                          </span>
+                          <span className="font-bold text-xs text-slate-900">{q.question}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          q.level === 'Nhận biết' ? 'bg-blue-100 text-blue-800' :
+                          q.level === 'Thông hiểu' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {q.level}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {q.options.map((opt, oIdx) => {
+                          const isCorrect = oIdx === q.correctIndex;
+                          return (
+                            <div
+                              key={oIdx}
+                              className={`p-2.5 rounded-xl border flex items-center gap-2 ${
+                                isCorrect
+                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                                  : 'bg-white border-slate-200 text-slate-600'
+                              }`}
+                            >
+                              <span className={`w-4 h-4 rounded text-[10px] flex items-center justify-center font-bold ${
+                                isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                {String.fromCharCode(65 + oIdx)}
+                              </span>
+                              <span>{opt}</span>
+                              {isCorrect && <span className="text-[10px] text-emerald-700 ml-auto font-black">(Đáp án đúng)</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-600 flex items-start gap-1.5">
+                        <span className="font-bold text-slate-800 shrink-0">💡 Lời giải của Thầy:</span>
+                        <span className="italic">{q.explanation}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DANH SÁCH HỌC SINH ĐÃ NỘP BÀI CỦNG CỐ TRỰC TIẾP */}
+                {rfResults.length > 0 && (
+                  <div className="pt-4 border-t border-slate-200 space-y-3">
+                    <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                      Kết quả học sinh nộp bài củng cố gần đây ({rfResults.length} lượt):
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 text-slate-600 font-bold">
+                          <tr>
+                            <th className="py-2.5 px-3">Học sinh</th>
+                            <th className="py-2.5 px-3">Lớp</th>
+                            <th className="py-2.5 px-3">Bài củng cố</th>
+                            <th className="py-2.5 px-3 text-center">Số câu đúng</th>
+                            <th className="py-2.5 px-3 text-center">Điểm số</th>
+                            <th className="py-2.5 px-3 text-right">Thời gian</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {rfResults.map((r, rIdx) => (
+                            <tr key={rIdx} className="hover:bg-slate-50">
+                              <td className="py-2.5 px-3 font-bold text-slate-900">{r.studentName}</td>
+                              <td className="py-2.5 px-3 text-slate-600">{r.studentClass}</td>
+                              <td className="py-2.5 px-3 text-slate-700">{r.lessonTitle}</td>
+                              <td className="py-2.5 px-3 text-center font-semibold text-blue-600">{r.correctCount}/7 câu</td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                  {r.score} đ
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right text-slate-400">{r.submittedAt}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {/* TAB 5: BÀI TẬP VỀ NHÀ (ẢNH CHỤP VỞ / EXCEL / WORD) */}
       {activeTab === 'homework' && (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">

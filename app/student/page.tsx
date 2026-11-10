@@ -15,7 +15,7 @@ import {
   LogOut,
   Zap
 } from 'lucide-react';
-import { MOCK_STUDENTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_BADGES } from '@/lib/mock-data';
+import { MOCK_STUDENTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_BADGES, MOCK_IN_CLASS_LESSONS } from '@/lib/mock-data';
 
 export default function StudentDashboard() {
   const [currentStudent, setCurrentStudent] = useState(MOCK_STUDENTS[0]);
@@ -31,6 +31,7 @@ export default function StudentDashboard() {
   const gradeNumber = parseInt(currentStudent.className.replace(/\D/g, '').charAt(0)) || 6;
   const gradeWorksheets = MOCK_WORKSHEETS.filter(w => w.grade === gradeNumber);
   const gradeExams = MOCK_EXAMS.filter(e => e.grade === gradeNumber);
+  const currentReinforcementLesson = MOCK_IN_CLASS_LESSONS.find(l => l.grade === gradeNumber) || MOCK_IN_CLASS_LESSONS[0];
 
   // Tính % XP lên cấp tiếp theo
   const currentLevelXp = (currentStudent.level - 1) * 250;
@@ -101,6 +102,52 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* MAIN TASKS (PHIẾU HỌC TẬP & ĐỀ KIỂM TRA) */}
         <div className="lg:col-span-2 space-y-8">
+          {/* HOẠT ĐỘNG 1: CỦNG CỐ BÀI HỌC (7 CÂU TRẮC NGHIỆM) */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase tracking-wider">
+                      Hoạt động 1 trên lớp
+                    </span>
+                    <span className="text-xs font-bold text-amber-700">Khối {gradeNumber}</span>
+                  </div>
+                  <h2 className="font-extrabold text-base sm:text-lg text-slate-900 mt-0.5">
+                    Củng Cố Bài Học — 7 Câu Trắc Nghiệm Chuẩn Bộ GD&amp;ĐT
+                  </h2>
+                </div>
+              </div>
+              <span className="hidden sm:inline-block text-xs font-bold px-3 py-1 rounded-full bg-white text-amber-800 border border-amber-300 shadow-2xs">
+                3 Biết · 2 Hiểu · 2 Vận dụng
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-amber-700">
+                  {currentReinforcementLesson.topic}
+                </span>
+                <h3 className="font-bold text-sm text-slate-900">
+                  {currentReinforcementLesson.lessonTitle}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Làm bài trực tiếp trên máy tính, chấm điểm tức thì và xem lời giải thích chi tiết của Thầy Trương.
+                </p>
+              </div>
+
+              <Link
+                href="/in-class"
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-md shadow-amber-500/20 flex items-center gap-2 shrink-0 group transition-all"
+              >
+                <span>Làm bài củng cố ngay</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
           {/* PHIẾU HỌC TẬP ĐƯỢC GIAO */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
             <div className="flex items-center justify-between">

@@ -169,8 +169,18 @@ export default function SubjectsPage() {
           </p>
         </div>
 
-        {/* 4 MENU PHỤ ĐIỀU HƯỚNG NHANH */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-white/10 relative z-10">
+        {/* 5 MENU PHỤ ĐIỀU HƯỚNG NHANH */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-6 mt-6 border-t border-white/10 relative z-10">
+          <Link
+            href="/in-class"
+            className="p-3 rounded-2xl flex items-center gap-3 transition-all bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 border border-amber-300/40"
+          >
+            <Sparkles className="w-5 h-5 text-amber-100" />
+            <div className="text-left">
+              <span className="block text-[10px] uppercase tracking-wider text-amber-100 font-extrabold">Hoạt động 1</span>
+              <span className="text-sm font-black">Củng Cố (7 Câu)</span>
+            </div>
+          </Link>
           <button
             onClick={() => setActiveSection('files')}
             className={`p-3 rounded-2xl flex items-center gap-3 transition-all ${
