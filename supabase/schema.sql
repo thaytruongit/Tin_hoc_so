@@ -215,3 +215,23 @@ INSERT INTO public.badges (code, name, category, description, icon_name, xp_bonu
 ('CREATIVE', 'Nhà Sáng Tạo', 'Năng lực', 'Có sản phẩm bài tập hoặc thuật toán/cách giải sáng tạo độc đáo', 'Lightbulb', 80),
 ('TEAM_PLAYER', 'Đồng Đội Tích Cực', 'Tập thể', 'Tích cực tham gia và hỗ trợ hoạt động nhóm trong giờ thực hành máy tính', 'Users', 60)
 ON CONFLICT (code) DO NOTHING;
+
+
+-- DỮ LIỆU KHỞI TẠO 15 LỚP HỌC TRƯỜNG THCS MÃO ĐIỀN
+INSERT INTO public.classes (name, grade, academic_year) VALUES
+('Lớp 6A10', 6, '2025-2026'),
+('Lớp 6A11', 6, '2025-2026'),
+('Lớp 6A12', 6, '2025-2026'),
+('Lớp 6A13', 6, '2025-2026'),
+('Lớp 7A10', 7, '2025-2026'),
+('Lớp 7A11', 7, '2025-2026'),
+('Lớp 7A12', 7, '2025-2026'),
+('Lớp 7A13', 7, '2025-2026'),
+('Lớp 8A11', 8, '2025-2026'),
+('Lớp 8A12', 8, '2025-2026'),
+('Lớp 8A13', 8, '2025-2026'),
+('Lớp 9A13', 9, '2025-2026'),
+('Lớp 9A14', 9, '2025-2026'),
+('Lớp 9A15', 9, '2025-2026'),
+('Lớp 9A16', 9, '2025-2026')
+ON CONFLICT (name) DO NOTHING;

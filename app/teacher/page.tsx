@@ -22,17 +22,19 @@ import {
   UploadCloud,
   FileSpreadsheet,
   Check,
-  MessageSquare
+  MessageSquare,
+  GraduationCap
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_RECENT_RESULTS, MOCK_WORKSHEETS, MOCK_EXAMS, MOCK_SUBMISSIONS } from '@/lib/mock-data';
 import { PracticalSubmission } from '@/lib/types';
 
 export default function TeacherDashboard() {
-  const [selectedClassId, setSelectedClassId] = useState(MOCK_CLASSES[0].id);
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState<number | 'all'>('all');
+  const [selectedClassId, setSelectedClassId] = useState(MOCK_CLASSES[4].id); // Mặc định 7A10
   const [searchTerm, setSearchTerm] = useState('');
   const [exams, setExams] = useState(MOCK_EXAMS);
   const [notification, setNotification] = useState('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions'>('live_monitor');
+  const [activeTab, setActiveTab] = useState<'roster' | 'live_monitor' | 'exams' | 'submissions'>('roster');
   const [submissions, setSubmissions] = useState<PracticalSubmission[]>(MOCK_SUBMISSIONS);
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
   const [gradeScore, setGradeScore] = useState<string>('9.5');
@@ -55,8 +57,18 @@ export default function TeacherDashboard() {
     }
   }, []);
 
+  const displayClasses = selectedGradeFilter === 'all'
+    ? MOCK_CLASSES
+    : MOCK_CLASSES.filter(c => c.grade === selectedGradeFilter);
+
   const currentClass = MOCK_CLASSES.find(c => c.id === selectedClassId) || MOCK_CLASSES[0];
   const classStudents = MOCK_STUDENTS.filter(s => s.classId === selectedClassId);
+
+  const filteredStudents = classStudents.filter(s => 
+    s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.studentCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.dob && s.dob.includes(searchTerm))
+  );
 
   const toggleLockExam = (examId: string) => {
     setExams(prev => prev.map(e => {
@@ -71,7 +83,7 @@ export default function TeacherDashboard() {
   };
 
   const handleAssignWorksheet = () => {
-    setNotification(`Đã giao nhiệm vụ "Phiếu học tập Tiết 1 - Thông tin và dữ liệu" cho ${currentClass.name}! Học sinh có thể làm bài ngay.`);
+    setNotification(`Đã giao nhiệm vụ cho ${currentClass.name}! Học sinh có thể làm bài ngay.`);
     setTimeout(() => setNotification(''), 4000);
   };
 
@@ -106,27 +118,28 @@ export default function TeacherDashboard() {
             THAYTRUONGIT-THCS MÃO ĐIỀN · Quản trị lớp học
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Kênh Giáo Viên & Theo Dõi Trực Tiếp
+            Kênh Giáo Viên & Quản Trị Học Sinh
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Giáo viên phụ trách: Thầy Trương IT · Môn Tin học Khối 6, 7, 8, 9
+            Tổng số: <strong>669 học sinh</strong> · <strong>15 lớp</strong> (Khối 6, 7, 8, 9) · Mật khẩu chung: <strong>123</strong>
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+            download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Tải Excel 669 tài khoản</span>
+          </a>
           <button
             onClick={handleAssignWorksheet}
             className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
-            <span>Giao nhiệm vụ ngay</span>
-          </button>
-          <button
-            onClick={() => alert('Đang xuất bảng điểm và báo cáo đánh giá năng lực ra Excel...')}
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 transition-all flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            <span>Xuất Excel</span>
+            <span>Giao bài ngay</span>
           </button>
         </div>
       </div>
@@ -138,30 +151,51 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* CHỌN LỚP */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
-          Chọn lớp học:
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {MOCK_CLASSES.map((cls) => (
+      {/* BỘ LỌC VÀ CHỌN LỚP HỌC (15 LỚP) */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-blue-600" />
+            <span>Chọn lớp giảng dạy (15 lớp THCS Mão Điền):</span>
+          </h2>
+
+          {/* Lọc nhanh theo Khối */}
+          <div className="flex flex-wrap gap-1.5">
+            {(['all', 6, 7, 8, 9] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setSelectedGradeFilter(g)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  selectedGradeFilter === g
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {g === 'all' ? 'Tất cả (15 lớp)' : `Khối ${g}`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+          {displayClasses.map((cls) => (
             <button
               key={cls.id}
               onClick={() => setSelectedClassId(cls.id)}
-              className={`p-4 rounded-2xl border text-left transition-all ${
+              className={`p-3 rounded-2xl border text-left transition-all ${
                 selectedClassId === cls.id
-                  ? 'border-blue-600 bg-blue-50/50 shadow-sm ring-2 ring-blue-500/20'
+                  ? 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20'
                   : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Khối {cls.grade}</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                <span className="text-[11px] font-semibold text-slate-500">Khối {cls.grade}</span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                   {cls.classCode}
                 </span>
               </div>
-              <h3 className="font-bold text-base text-slate-900 mt-1">{cls.name}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">{cls.studentCount} học sinh</p>
+              <h3 className="font-bold text-sm text-slate-900 mt-1">{cls.name}</h3>
+              <p className="text-[11px] text-blue-600 font-medium mt-0.5">{cls.studentCount} học sinh</p>
             </button>
           ))}
         </div>
@@ -170,15 +204,15 @@ export default function TeacherDashboard() {
       {/* TABS QUẢN TRỊ */}
       <div className="flex border-b border-slate-200 gap-6 text-sm font-bold flex-wrap">
         <button
-          onClick={() => setActiveTab('live_monitor')}
+          onClick={() => setActiveTab('roster')}
           className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'live_monitor'
+            activeTab === 'roster'
               ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Activity className="w-4 h-4 text-emerald-500" />
-          <span>Theo dõi trực tiếp (Realtime)</span>
+          <Users className="w-4 h-4" />
+          <span>Danh sách tài khoản ({currentClass.name} · {classStudents.length} HS)</span>
         </button>
         <button
           onClick={() => setActiveTab('submissions')}
@@ -189,18 +223,18 @@ export default function TeacherDashboard() {
           }`}
         >
           <UploadCloud className="w-4 h-4 text-amber-500" />
-          <span>Quản lý Nộp bài thực hành ({submissions.length})</span>
+          <span>Bài thực hành phòng máy ({submissions.length})</span>
         </button>
         <button
-          onClick={() => setActiveTab('roster')}
+          onClick={() => setActiveTab('live_monitor')}
           className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'roster'
+            activeTab === 'live_monitor'
               ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span>Danh sách học sinh ({currentClass.name})</span>
+          <Activity className="w-4 h-4 text-emerald-500" />
+          <span>Theo dõi trực tiếp (Realtime)</span>
         </button>
         <button
           onClick={() => setActiveTab('exams')}
@@ -215,79 +249,105 @@ export default function TeacherDashboard() {
         </button>
       </div>
 
-      {/* TAB 1: THEO DÕI TRỰC TIẾP TRONG TIẾT HỌC */}
-      {activeTab === 'live_monitor' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  Tiến độ làm bài trực tiếp · {currentClass.name}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Đang diễn ra tiết học: Tin học 6 - Bài 1: Thông tin và dữ liệu
-                </p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                Đã nộp: 2/2 em
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {classStudents.map((st, i) => (
-                <div key={st.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">{st.fullName}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                      Đã nộp bài (100%)
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 flex items-center justify-between">
-                    <span>Mã HS: {st.studentCode}</span>
-                    <span className="font-bold text-blue-600">Điểm: {i === 0 ? '9.5' : '8.8'}/10</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '100%' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* PHÂN TÍCH CÂU HỎI HỌC SINH THƯỜNG SAI */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+      {/* TAB 1: ROSTER & CẤP TÀI KHOẢN (MÔ HÌNH 4A CHUẨN) */}
+      {activeTab === 'roster' && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Câu hỏi nhiều học sinh sai
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                <span>Danh sách học sinh {currentClass.name}</span>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                  {classStudents.length} em
+                </span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Báo cáo tức thì giúp giáo viên giảng lại ngay trong tiết
+                Mã học sinh tự động sinh theo mẫu: <code>[TênLớp][STT]</code> (Ví dụ: <strong>{currentClass.name.replace('Lớp ', '')}01</strong>) · Mật khẩu: <strong>123</strong>
               </p>
             </div>
 
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-2xl border border-rose-200 bg-rose-50/50 space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-rose-700">
-                  <span>Câu số 3 (Bộ nhớ ngoài)</span>
-                  <span>45% trả lời sai</span>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Học sinh nhầm lẫn giữa chức năng của ROM/RAM và Thiết bị lưu trữ ngoài.
-                </p>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Tìm họ tên, mã HS hoặc ngày sinh..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-700">
-                  <span>Câu số 1 (Vật mang tin)</span>
-                  <span>20% trả lời sai</span>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Còn một số em chọn tiếng còi thay vì quyển sách giáo khoa.
-                </p>
-              </div>
+              <a
+                href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+                download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all"
+                title="Tải bảng tính Excel toàn trường"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Xuất Excel</span>
+              </a>
             </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-3 text-center">STT</th>
+                  <th className="py-3 px-3">Mã HS (Đăng nhập)</th>
+                  <th className="py-3 px-3">Họ và tên</th>
+                  <th className="py-3 px-3 text-center">Ngày sinh</th>
+                  <th className="py-3 px-3 text-center">Mật khẩu</th>
+                  <th className="py-3 px-3 text-center">Điểm học tập</th>
+                  <th className="py-3 px-3 text-center">Điểm XP thi đua</th>
+                  <th className="py-3 px-3 text-center">Cấp độ</th>
+                  <th className="py-3 px-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredStudents.map((st, idx) => (
+                  <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3 text-center font-mono text-slate-400 font-semibold">
+                      {idx + 1}
+                    </td>
+                    <td className="py-3 px-3 font-bold text-slate-900">
+                      <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-mono">
+                        {st.studentCode}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 font-bold text-slate-900">
+                      {st.fullName}
+                    </td>
+                    <td className="py-3 px-3 text-center text-slate-500 font-mono">
+                      {st.dob || '-'}
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-600 bg-slate-50 rounded">
+                      {st.password || '123'}
+                    </td>
+                    <td className="py-3 px-3 text-center font-black text-blue-600">
+                      {st.averageGrade}/10
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-amber-600">
+                      {st.totalXp} XP
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold text-[10px]">
+                        Cấp {st.level}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <button
+                        onClick={() => alert(`Đặt lại mật khẩu cho học sinh ${st.fullName} thành "123"`)}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] transition-colors"
+                      >
+                        Reset MK
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -484,74 +544,79 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* TAB 3: ROSTER & MẬT KHẨU (4A) */}
-      {activeTab === 'roster' && (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                Danh sách học sinh · {currentClass.name}
-              </h3>
-              <p className="text-xs text-slate-500">
-                Tài khoản & mật khẩu học sinh do thầy cấp (Mô hình 4A)
-              </p>
+      {/* TAB 3: THEO DÕI TRỰC TIẾP TRONG TIẾT HỌC */}
+      {activeTab === 'live_monitor' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                  Tiến độ làm bài trực tiếp · {currentClass.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Đang diễn ra tiết học: Tin học - Thực hành Bảng tính Excel
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                Sĩ số: {classStudents.length} học sinh
+              </span>
             </div>
 
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Tìm tên hoặc mã HS..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-1">
+              {classStudents.slice(0, 10).map((st, i) => (
+                <div key={st.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900">{st.fullName}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                      Đang làm bài
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500 flex items-center justify-between">
+                    <span>Mã HS: {st.studentCode}</span>
+                    <span className="font-bold text-blue-600">Điểm TB: {st.averageGrade}/10</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${80 + (i % 20)}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-3">Mã HS</th>
-                  <th className="py-3 px-3">Họ và tên</th>
-                  <th className="py-3 px-3">Mật khẩu</th>
-                  <th className="py-3 px-3">Điểm học tập</th>
-                  <th className="py-3 px-3">Điểm XP thi đua</th>
-                  <th className="py-3 px-3">Cấp độ</th>
-                  <th className="py-3 px-3 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {classStudents.map((st) => (
-                  <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 font-bold text-slate-900">
-                      <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
-                        {st.studentCode}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 font-medium text-slate-900">{st.fullName}</td>
-                    <td className="py-3 px-3 font-mono text-slate-500">123</td>
-                    <td className="py-3 px-3 font-black text-blue-600">{st.averageGrade}/10</td>
-                    <td className="py-3 px-3 font-bold text-amber-600">{st.totalXp} XP</td>
-                    <td className="py-3 px-3">
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold text-[10px]">
-                        Cấp {st.level}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <button
-                        onClick={() => alert(`Đặt lại mật khẩu cho học sinh ${st.fullName} thành "123"`)}
-                        className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px]"
-                      >
-                        Reset MK
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* PHÂN TÍCH CÂU HỎI HỌC SINH THƯỜNG SAI */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                Câu hỏi nhiều học sinh sai
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Báo cáo tức thì giúp giáo viên giảng lại ngay trong tiết
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-2xl border border-rose-200 bg-rose-50/50 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-rose-700">
+                  <span>Câu số 3 (Địa chỉ tuyệt đối)</span>
+                  <span>35% trả lời sai</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Học sinh quên nhấn phím F4 để thêm ký hiệu $ trước tên cột và chỉ số hàng.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-700">
+                  <span>Câu số 2 (Cú pháp hàm IF)</span>
+                  <span>18% trả lời sai</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Còn một số em quên dấu nháy kép quanh giá trị dạng chuỗi chữ (như &quot;Đạt&quot;).
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

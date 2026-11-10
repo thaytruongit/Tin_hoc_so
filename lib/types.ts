@@ -12,8 +12,9 @@ export interface Student {
   id: string;
   classId: string;
   className: string;
-  studentCode: string; // Ví dụ: HS601, HS902
+  studentCode: string; // Ví dụ: 7A1101, 6A1005
   fullName: string;
+  dob?: string;
   password?: string;
   avatarUrl: string;
   totalXp: number;
