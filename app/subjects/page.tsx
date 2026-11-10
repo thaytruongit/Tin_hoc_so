@@ -97,13 +97,24 @@ function SubjectsContent() {
     setSelectedGrade(grade);
   };
 
+  // Tự động đồng bộ Tiết thực hành khi đổi Khối lớp
+  useEffect(() => {
+    const curGrade = selectedGrade === 'all' ? 7 : selectedGrade;
+    const curList = (CURRICULUM_DATA[curGrade] || []).filter(p => p.isPractice);
+    if (curList.length > 0 && !curList.find(p => p.period === selectedPracticePeriodNum)) {
+      setSelectedPracticePeriodNum(curList[0].period);
+      setAssignmentTitle(`Tiết ${curList[0].period}: ${curList[0].title}`);
+    }
+  }, [selectedGrade]);
+
   // State cho Video đang phát
   const [currentVideo, setCurrentVideo] = useState<VideoLecture>(MOCK_VIDEOS[0]);
 
-  // Lọc dữ liệu theo khối lớp
-  const filteredFiles = selectedGrade === 'all' 
-    ? MOCK_PRACTICE_FILES 
-    : MOCK_PRACTICE_FILES.filter(f => f.grade === selectedGrade);
+  // 43 TIẾT THỰC HÀNH CHUẨN GDPT 2018 (Chất liệu hữu cơ SGK Kết nối tri thức)
+  const practicePeriods = (selectedGrade === 'all' 
+    ? ([6, 7, 8, 9] as const).flatMap(g => CURRICULUM_DATA[g]) 
+    : (CURRICULUM_DATA[selectedGrade] || [])
+  ).filter(p => p.isPractice && p.practicalTask);
 
   const filteredVideos = selectedGrade === 'all'
     ? MOCK_VIDEOS
@@ -515,38 +526,84 @@ function SubjectsContent() {
                 <p className="font-semibold text-indigo-700 text-[11px] pt-1">Định hướng: {viewingPeriod.digitalCompetency}</p>
               </div>
 
-              {/* 1. Phiếu học tập 4 pha */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                    <FileTextIcon className="w-4 h-4 text-blue-600" />
-                    <span>1. Phiếu học tập điện tử 4 pha (Khám phá cặp đôi)</span>
-                  </h4>
+              {/* 1. Phiếu học tập điện tử (Khám phá cặp đôi) */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <FileTextIcon className="w-4 h-4 text-blue-600" />
+                      <span>1. Phiếu học tập điện tử (Khám phá cặp đôi - 2 HS/máy)</span>
+                    </h4>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Thời lượng: {viewingPeriod.worksheet.timeLimitMin || 15} phút · Thưởng: +{viewingPeriod.worksheet.xpReward || 50} XP chia đều tài khoản
+                    </span>
+                  </div>
                   <Link
                     href={`/in-class?grade=${viewingPeriod.grade}&period=${viewingPeriod.period}&tab=worksheet`}
-                    className="px-3.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs"
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all shrink-0"
                   >
-                    Làm Phiếu Cặp đôi trên lớp →
+                    <span>Làm Phiếu Cặp đôi trên lớp</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="font-bold text-blue-600 block mb-1">Pha 1: Khởi động</span>
-                    <p className="text-slate-600">{viewingPeriod.worksheet.phase1_khoi_dong}</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="font-bold text-emerald-600 block mb-1">Pha 2: Khám phá</span>
-                    <p className="text-slate-600">{viewingPeriod.worksheet.phase2_kham_pha}</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="font-bold text-amber-600 block mb-1">Pha 3: Luyện tập</span>
-                    <p className="text-slate-600">{viewingPeriod.worksheet.phase3_luyen_tap}</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="font-bold text-purple-600 block mb-1">Pha 4: Vận dụng</span>
-                    <p className="text-slate-600">{viewingPeriod.worksheet.phase4_van_dung}</p>
-                  </div>
+
+                {/* Bối cảnh khởi động SGK */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-1">
+                  <span className="font-bold text-blue-900 text-xs">Tình huống khởi động &amp; khám phá SGK:</span>
+                  <p className="text-slate-700 text-xs leading-relaxed">{viewingPeriod.worksheet.phase1_khoi_dong || viewingPeriod.worksheet.phase2_kham_pha}</p>
                 </div>
+
+                {/* Ngân hàng từ khóa Word Bank */}
+                {viewingPeriod.worksheet.wordBank && viewingPeriod.worksheet.wordBank.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="font-bold text-slate-700 text-xs">Kho thẻ từ khóa bám sát SGK Kết nối tri thức:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {viewingPeriod.worksheet.wordBank.map((w, idx) => (
+                        <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-semibold">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Điền khuyết SGK */}
+                {viewingPeriod.worksheet.fillBlanks && viewingPeriod.worksheet.fillBlanks.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 text-xs">Nhiệm vụ điền khuyết kiến thức cốt lõi:</span>
+                    <div className="space-y-2">
+                      {viewingPeriod.worksheet.fillBlanks.map((fb, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                          <p className="text-slate-800 font-medium"><strong>Câu {idx + 1}:</strong> {fb.statement}</p>
+                          <p className="text-emerald-700 font-semibold text-[11px]">✓ Từ khóa cần điền: <span className="underline font-bold">{fb.correctAnswer}</span></p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Nối cặp / Phân loại */}
+                {viewingPeriod.worksheet.matchingPairs && viewingPeriod.worksheet.matchingPairs.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 text-xs">Nối cặp khái niệm &amp; bản chất kỹ thuật:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {viewingPeriod.worksheet.matchingPairs.map((m, idx) => (
+                        <div key={idx} className="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-200 text-xs space-y-0.5">
+                          <span className="font-bold text-indigo-900 block">● {m.left}</span>
+                          <span className="text-slate-600 block text-[11px]">{m.right}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Thảo luận cặp đôi */}
+                {(viewingPeriod.worksheet.discussionPrompt || viewingPeriod.worksheet.phase4_van_dung) && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs space-y-1">
+                    <span className="font-bold text-amber-900">Thảo luận cặp đôi (Phân vai Kỹ thuật viên &amp; Thư ký):</span>
+                    <p className="text-slate-700 leading-relaxed">{viewingPeriod.worksheet.discussionPrompt || viewingPeriod.worksheet.phase4_van_dung}</p>
+                  </div>
+                )}
               </div>
 
               {/* 2. Củng cố bài học 7 câu */}
@@ -558,9 +615,10 @@ function SubjectsContent() {
                   </h4>
                   <Link
                     href={`/in-class?grade=${viewingPeriod.grade}&period=${viewingPeriod.period}&tab=reinforcement`}
-                    className="px-3.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs"
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all"
                   >
-                    Vào phòng làm bài 7 câu →
+                    <span>Làm bài 7 câu</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -583,32 +641,83 @@ function SubjectsContent() {
                 </div>
               </div>
 
-              {/* 3. Bài tập thực hành nếu có */}
-              {viewingPeriod.isPractice && viewingPeriod.practicalTask && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                      <Laptop className="w-4 h-4 text-purple-600" />
-                      <span>3. Bài tập thực hành &amp; Rubric 10 điểm</span>
-                    </h4>
+              {/* 3. Bài tập thực hành phòng máy (Chỉ cho tiết thực hành) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-purple-600" />
+                    <span>3. Bài tập thực hành phòng máy &amp; Rubric 10 điểm</span>
+                  </h4>
+                  {viewingPeriod.isPractice && viewingPeriod.practicalTask && (
                     <Link
                       href={`/in-class?grade=${viewingPeriod.grade}&period=${viewingPeriod.period}&tab=practice`}
-                      className="px-3.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all"
                     >
-                      Mở giao diện Thực hành phòng máy →
+                      <span>Mở giao diện Thực hành máy</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-purple-50/50 border border-purple-200 space-y-3">
-                    <p className="font-bold text-purple-900">{viewingPeriod.practicalTask.title}</p>
-                    <div className="space-y-1">
-                      <span className="font-bold text-slate-700">Quy trình thực hiện:</span>
-                      {viewingPeriod.practicalTask.steps.map((st, sIdx) => (
-                        <div key={sIdx} className="text-slate-600 pl-2">· {st}</div>
-                      ))}
+                  )}
+                </div>
+
+                {viewingPeriod.isPractice && viewingPeriod.practicalTask ? (
+                  <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-200 text-purple-900 font-extrabold text-[10px] uppercase">
+                          Tiết thực hành chính thức
+                        </span>
+                        <p className="font-bold text-purple-950 text-sm mt-1">{viewingPeriod.practicalTask.title}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[11px] font-mono bg-white px-2.5 py-1 rounded-lg border border-purple-200 text-purple-800 font-bold block shadow-2xs">
+                          {viewingPeriod.practicalTask.sampleFileName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="font-bold text-slate-800 text-xs">Quy trình 6 bước thực hành chuẩn:</span>
+                      <div className="space-y-1 bg-white p-3 rounded-xl border border-purple-100">
+                        {viewingPeriod.practicalTask.steps.map((st, sIdx) => (
+                          <div key={sIdx} className="text-slate-700 text-xs flex items-start gap-2">
+                            <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                              {sIdx + 1}
+                            </span>
+                            <span>{st}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="font-bold text-slate-800 text-xs">Rubric thang điểm 10 chuẩn sư phạm:</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {viewingPeriod.practicalTask.rubric.map((rb, rIdx) => (
+                          <div key={rIdx} className="p-2.5 rounded-xl bg-white border border-purple-100 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-purple-900 text-[11px]">{rb.criterion}</span>
+                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                                {rb.maxPoints} điểm
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-600 leading-tight">{rb.note}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-slate-600 text-xs space-y-1 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-slate-800">Tiết học Lý thuyết &amp; Khám phá kiến thức cốt lõi</p>
+                      <p className="text-slate-500 mt-0.5 leading-relaxed">
+                        Toàn bộ thời lượng tiết học này dành cho hoạt động <strong>Phiếu học tập điện tử Khám phá cặp đôi (2 HS/máy)</strong> và <strong>Luyện tập củng cố 7 câu chuẩn Bộ GD&amp;ĐT</strong>. Không yêu cầu nộp sản phẩm thực hành phần mềm.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* 4. Bài tập về nhà */}
               <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 space-y-2">
@@ -675,80 +784,112 @@ function SubjectsContent() {
         </div>
       )}
 
-      {/* PHẦN 1: KHO TỆP EXCEL MẪU THỰC HÀNH */}
+      {/* PHẦN 1: KHO TỆP MẪU THỰC HÀNH & ĐỀ BÀI PHÒNG MÁY (43 TIẾT THỰC HÀNH CHUẨN) */}
       {activeSection === 'files' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <FileSpreadsheet className="w-6 h-6 text-emerald-600" />
-                <span>Số Hóa Tệp Thực Hành Excel (Tải về làm tại phòng máy)</span>
+                <span>Số Hóa Tệp &amp; Đề Bài Thực Hành Phòng Máy (43 Tiết Chuẩn GDPT 2018)</span>
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Các tệp bài tập thực hành chính thức: Địa chỉ tương đối/tuyệt đối, hàm IF, SUMIF, COUNTIF. Học sinh bấm tải về làm trực tiếp.
+                Tệp dữ liệu mẫu (.xlsx, .docx) và quy trình 6 bước thực hành chuẩn cho Khối {selectedGrade === 'all' ? '6, 7, 8, 9' : selectedGrade}. Học sinh tải về làm trực tiếp tại phòng máy trường THCS Mão Điền.
               </p>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
-              {filteredFiles.length} tệp bài tập sẵn sàng
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+              {practicePeriods.length} tệp thực hành sẵn sàng
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredFiles.map((file) => (
-              <div
-                key={file.id}
-                className="p-6 rounded-3xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {file.badge}
-                    </span>
-                    <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                      {file.fileSize}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    {file.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {file.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {file.topics.map((t, idx) => (
-                      <span key={idx} className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                        #{t}
+            {practicePeriods.map((period) => {
+              const isExcel = period.practicalTask?.sampleFileName.endsWith('.xlsx');
+              return (
+                <div
+                  key={period.id}
+                  className="p-6 rounded-3xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Khối {period.grade} · Tiết {period.period}
                       </span>
-                    ))}
+                      <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-bold">
+                        {period.practicalTask?.sampleFileName}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                      {period.practicalTask?.title || period.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      <strong>Bài học:</strong> {period.title} ({period.topic})
+                    </p>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs text-slate-600">
+                      <div className="font-semibold text-slate-700 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Quy trình thực hiện ({period.practicalTask?.steps.length || 6} bước):</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 pl-5">
+                        {period.practicalTask?.steps[0]}
+                      </p>
+                      {period.practicalTask?.steps[1] && (
+                        <p className="text-[11px] text-slate-500 pl-5">
+                          {period.practicalTask?.steps[1]}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <span className="text-[10px] font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100">
+                        🎯 {period.digitalCompetency}
+                      </span>
+                      <span className="text-[10px] font-medium bg-amber-50 text-amber-800 px-2 py-0.5 rounded-md border border-amber-100">
+                        ⭐ Rubric 10 điểm ({period.practicalTask?.rubric.length} tiêu chí)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => alert(`Tải tệp mẫu phòng máy: ${period.practicalTask?.sampleFileName}\n\nThầy cô và các em có thể mở trực tiếp trong phòng thực hành hoặc tải về làm ngoại tuyến.`)}
+                        className="flex-1 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Tải tệp ({isExcel ? '.xlsx' : '.docx'})</span>
+                      </button>
+
+                      <Link
+                        href={`/in-class?grade=${period.grade}&period=${period.period}&tab=practice`}
+                        className="flex-1 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Laptop className="w-3.5 h-3.5" />
+                        <span>Vào phòng TH ➔</span>
+                      </Link>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedGrade(period.grade);
+                        setSelectedPracticePeriodNum(period.period);
+                        setAssignmentTitle(`Tiết ${period.period}: ${period.title}`);
+                        setActiveSection('submit');
+                      }}
+                      className="w-full py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all flex items-center justify-center gap-1"
+                    >
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Nộp bài trực tuyến (Không cần USB)</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <a
-                    href={file.fileUrl}
-                    download={file.fileName}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 group-hover:shadow-emerald-500/20"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Tải tệp về máy (.xlsx)</span>
-                  </a>
-
-                  <button
-                    onClick={() => {
-                      setAssignmentTitle(file.title);
-                      setActiveSection('submit');
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all flex items-center gap-1.5"
-                  >
-                    <UploadCloud className="w-4 h-4" />
-                    <span>Nộp bài</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-900">
