@@ -150,7 +150,7 @@ export default function ExamClient() {
       <div className="sticky top-20 z-40 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase">
-            Phòng thi trực tuyến · Thầy Trương Thành Trường
+            Phòng thi trực tuyến · Thầy Đỗ Mạnh Trường
           </span>
           <h2 className="font-bold text-sm sm:text-base text-slate-900 mt-1 line-clamp-1">
             {exam.title}
@@ -193,7 +193,7 @@ export default function ExamClient() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <span>
-              <strong>Cảnh báo giám thị phòng thi:</strong> Em vừa rời khỏi màn hình bài thi. Hệ thống đã ghi nhận <strong>{tabSwitches} lần</strong> vi phạm và báo cáo về bàn Thầy Trương Thành Trường!
+              <strong>Cảnh báo giám thị phòng thi:</strong> Em vừa rời khỏi màn hình bài thi. Hệ thống đã ghi nhận <strong>{tabSwitches} lần</strong> vi phạm và báo cáo về bàn Thầy Đỗ Mạnh Trường!
             </span>
           </div>
           <button
@@ -219,7 +219,7 @@ export default function ExamClient() {
             {score} <span className="text-2xl text-slate-400 font-normal">/ 10đ</span>
           </div>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Số lần rời màn hình: <strong>{tabSwitches} lần</strong>. Điểm thi và toàn bộ dữ liệu làm bài đã được tự động lưu trữ an toàn vào cơ sở dữ liệu học sinh của Thầy Trương Thành Trường.
+            Số lần rời màn hình: <strong>{tabSwitches} lần</strong>. Điểm thi và toàn bộ dữ liệu làm bài đã được tự động lưu trữ an toàn vào cơ sở dữ liệu học sinh của Thầy Đỗ Mạnh Trường.
           </p>
           <div className="pt-2 flex justify-center gap-3">
             <Link
@@ -310,7 +310,7 @@ export default function ExamClient() {
                 <div className="mt-3 p-3.5 rounded-2xl bg-white border border-slate-200 text-xs text-slate-600 space-y-1">
                   <span className="font-bold text-slate-800 flex items-center gap-1.5">
                     <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Lời giải thích của Thầy Trương Thành Trường:</span>
+                    <span>Lời giải thích của Thầy Đỗ Mạnh Trường:</span>
                   </span>
                   <p className="pl-5 leading-relaxed">{q.explanation}</p>
                 </div>

@@ -30,7 +30,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const savedRole = localStorage.getItem('truong_user_role') as 'student' | 'teacher' | null;
-    const name = localStorage.getItem('truong_student_name') || 'Thầy Trương Thành Trường';
+    const name = localStorage.getItem('truong_student_name') || 'Thầy Đỗ Mạnh Trường';
     const pair = localStorage.getItem('truong_is_pair') === 'true';
     const pairDisplay = localStorage.getItem('truong_pair_names') || '';
 
@@ -154,7 +154,7 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline-block text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                  {role === 'teacher' ? '👨‍🏫 Thầy Trương' : isPair ? `👥 ${pairNames || userName}` : `🎓 ${userName}`}
+                  {role === 'teacher' ? '👨‍🏫 Thầy Đỗ Mạnh Trường' : isPair ? `👥 ${pairNames || userName}` : `🎓 ${userName}`}
                 </span>
                 <button
                   onClick={handleLogout}

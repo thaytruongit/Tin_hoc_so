@@ -1,7 +1,7 @@
 # 🚀 TRUONG DIGITAL CLASSROOM
 
 **Hệ sinh thái giáo dục số & Cổng học tập môn Tin học THCS (Khối 6, 7, 8, 9)**  
-*Dành riêng cho giáo viên & học sinh trường THCS Mão Điền — Thầy Trương Thành Trường.*
+*Dành riêng cho giáo viên & học sinh trường THCS Mão Điền — Thầy Đỗ Mạnh Trường.*
 
 🔗 **Địa chỉ website trực tuyến (GitHub Pages):**  
 👉 **[https://thaytruongit.github.io/teacher/](https://thaytruongit.github.io/teacher/)**
@@ -48,4 +48,4 @@ Dự án được xây dựng theo mô hình **GitHub First** và triển khai t
 
 ---
 
-© 2026 Thầy Trương Thành Trường · THCS Mão Điền.
+© 2026 Thầy Đỗ Mạnh Trường · THCS Mão Điền.

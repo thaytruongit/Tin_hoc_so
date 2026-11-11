@@ -198,7 +198,7 @@ function LoginForm() {
       }
 
       localStorage.setItem('truong_user_role', 'teacher');
-      localStorage.setItem('truong_teacher_name', 'Thầy Trương Thành Trường');
+      localStorage.setItem('truong_teacher_name', 'Thầy Đỗ Mạnh Trường');
       router.push('/teacher');
     }, 300);
   };
@@ -215,7 +215,7 @@ function LoginForm() {
             CỔNG HỌC TẬP TIN HỌC THCS MÃO ĐIỀN
           </h2>
           <p className="text-xs text-blue-100 font-medium mt-1">
-            Hệ thống Dạy học 3 Hoạt động · Thầy Trương Thành Trường
+            Hệ thống Dạy học 3 Hoạt động · Thầy Đỗ Mạnh Trường
           </p>
 
           {/* Tab chuyển đổi vai trò */}
@@ -489,7 +489,7 @@ function LoginForm() {
           <form onSubmit={handleTeacherLogin} className="space-y-4 max-w-md mx-auto py-6">
             <div className="text-center space-y-1 mb-6">
               <h3 className="text-lg font-black text-slate-900">
-                Kênh Quản Trị Thầy Trương Thành Trường
+                Kênh Quản Trị Thầy Đỗ Mạnh Trường
               </h3>
               <p className="text-xs text-slate-500">
                 Điều hành 3 hoạt động trực tiếp, phòng học 3D thời gian thực và quản lý điểm số

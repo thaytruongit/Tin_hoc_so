@@ -146,7 +146,7 @@ export default function HomeworkPage() {
     setIsSubmitting(true);
     const chosenClass = MOCK_CLASSES.find(c => c.id === classId) || MOCK_CLASSES[0];
 
-    // Tự động tải lên Google Drive Online của Thầy Trương (hoạt động 24/7 kể cả học sinh ở nhà)
+    // Tự động tải lên Google Drive Online của Thầy Đỗ Mạnh Trường (hoạt động 24/7 kể cả học sinh ở nhà)
     let driveFileUrl = imagePreviewUrl || undefined;
     let driveNoteSuffix = '';
 
@@ -341,7 +341,7 @@ export default function HomeworkPage() {
                   <p><strong>Thời gian:</strong> {submissionSuccess.submittedAt}</p>
                 </div>
                 <p className="text-[11px] text-emerald-700">
-                  Thầy Trương Thành Trường sẽ kiểm tra và nhận xét bài của em trước buổi học tới.
+                  Thầy Đỗ Mạnh Trường sẽ kiểm tra và nhận xét bài của em trước buổi học tới.
                 </p>
               </div>
             )}
@@ -508,7 +508,7 @@ export default function HomeworkPage() {
               {/* LỜI NHẮN CHO THẦY */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">
-                  Lời nhắn / Câu hỏi gửi Thầy Trương Thành Trường (nếu có):
+                  Lời nhắn / Câu hỏi gửi Thầy Đỗ Mạnh Trường (nếu có):
                 </label>
                 <textarea
                   rows={2}
@@ -529,7 +529,7 @@ export default function HomeworkPage() {
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Gửi Bài Tập Về Nhà Cho Thầy Trương Thành Trường</span>
+                    <span>Gửi Bài Tập Về Nhà Cho Thầy Đỗ Mạnh Trường</span>
                   </>
                 )}
               </button>
@@ -545,7 +545,7 @@ export default function HomeworkPage() {
               <span>Bài tập về nhà đã nộp ({submissionsList.length})</span>
             </h3>
             <p className="text-[11px] text-slate-500">
-              Nhận xét và điểm số của Thầy Trương Thành Trường sau khi chấm bài.
+              Nhận xét và điểm số của Thầy Đỗ Mạnh Trường sau khi chấm bài.
             </p>
 
             <div className="space-y-3">

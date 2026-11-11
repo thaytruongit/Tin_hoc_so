@@ -13276,7 +13276,7 @@ export const MOCK_VIDEOS: VideoLecture[] = [
       'Cảnh giác với các đường link lạ và quà tặng ảo',
       'Giao tiếp lịch sự, không lan truyền tin giả'
     ],
-    author: 'Thầy Trương IT',
+    author: 'Thầy Đỗ Mạnh Trường IT',
   },
   {
     id: 'vid-2',
@@ -13292,7 +13292,7 @@ export const MOCK_VIDEOS: VideoLecture[] = [
       'Sáng tạo nội dung số và lập trình',
       'Giải quyết vấn đề bằng công nghệ'
     ],
-    author: 'Thầy Trương IT',
+    author: 'Thầy Đỗ Mạnh Trường IT',
   },
   {
     id: 'vid-3',
@@ -13307,7 +13307,7 @@ export const MOCK_VIDEOS: VideoLecture[] = [
       'Nhận biết giao diện Workbook, Sheet, Hàng, Cột và Ô tính',
       'Cách nhập công thức bắt đầu bằng dấu bằng (=)'
     ],
-    author: 'Thầy Trương IT',
+    author: 'Thầy Đỗ Mạnh Trường IT',
   },
   {
     id: 'vid-4',
@@ -13322,7 +13322,7 @@ export const MOCK_VIDEOS: VideoLecture[] = [
       'Kiểm chứng thông tin do AI cung cấp trước khi sử dụng',
       'Ứng dụng AI sáng tạo trong giải toán và lập trình'
     ],
-    author: 'Thầy Trương IT',
+    author: 'Thầy Đỗ Mạnh Trường IT',
   },
 ];
 

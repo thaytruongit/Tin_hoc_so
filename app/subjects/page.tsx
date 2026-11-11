@@ -658,7 +658,7 @@ function SubjectsContent() {
                     <p><strong>Thời gian:</strong> {submissionSuccess.submittedAt}</p>
                   </div>
                   <p className="text-xs text-emerald-800 font-medium">
-                    Thầy Trương Thành Trường đã nhận được bài làm của em. Điểm số và nhận xét sẽ được cập nhật trong Kênh Giáo viên.
+                    Thầy Đỗ Mạnh Trường đã nhận được bài làm của em. Điểm số và nhận xét sẽ được cập nhật trong Kênh Giáo viên.
                   </p>
                 </div>
               )}

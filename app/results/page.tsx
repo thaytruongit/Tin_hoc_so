@@ -163,7 +163,7 @@ export default function ResultsPage() {
           </div>
 
           <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 text-xs text-slate-600 space-y-1">
-            <span className="font-bold text-blue-900 block">Nhận xét của Thầy Trương:</span>
+            <span className="font-bold text-blue-900 block">Nhận xét của Thầy Đỗ Mạnh Trường:</span>
             <p>Học sinh có khả năng tiếp thu bài nhanh, kỹ năng thực hành máy tính và làm bài kiểm tra rất xuất sắc. Cần phát huy ở phần giải thuật toán nâng cao.</p>
           </div>
         </div>

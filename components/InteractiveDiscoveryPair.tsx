@@ -467,7 +467,7 @@ export default function InteractiveDiscoveryPair({
                   <span className="text-base text-emerald-600 font-extrabold">{resultScore} / 10 Điểm</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Đã lưu kết quả của cặp đôi và báo cáo trực tiếp về màn hình của Thầy Trương Thành Trường!
+                  Đã lưu kết quả của cặp đôi và báo cáo trực tiếp về màn hình của Thầy Đỗ Mạnh Trường!
                 </p>
               </div>
             </div>
@@ -498,3 +498,4 @@ export default function InteractiveDiscoveryPair({
     </div>
   );
 }
+

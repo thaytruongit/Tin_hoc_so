@@ -192,7 +192,7 @@ export default function TeacherDashboard() {
         return {
           ...s,
           grade: numScore,
-          feedback: gradeComment + (badgeReward ? ` [Thầy Trương Thành Trường khen:${badgeReward}]` : ''),
+          feedback: gradeComment + (badgeReward ? ` [Thầy Đỗ Mạnh Trường khen:${badgeReward}]` : ''),
           status: 'graded' as const
         };
       }
@@ -249,7 +249,7 @@ export default function TeacherDashboard() {
             Truy Cập Bị Từ Chối — Quyền Giáo Viên
           </h1>
           <p className="text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
-            Kênh Giáo Viên dành riêng cho <strong>Thầy Trương Thành Trường</strong> để quản trị điểm số và đề thi.<br />
+            Kênh Giáo Viên dành riêng cho <strong>Thầy Đỗ Mạnh Trường</strong> để quản trị điểm số và đề thi.<br />
             Tài khoản của em là <strong>{currentUser.studentName}</strong> ({currentUser.studentClass} - Khối {currentUser.studentGrade}) chỉ có quyền thực hiện học liệu của lớp mình.
           </p>
         </div>
@@ -1251,7 +1251,7 @@ export default function TeacherDashboard() {
                   />
                 </div>
                 <div className="sm:col-span-3">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Lời phê / Nhận xét của Thầy Trương Thành Trường:</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Lời phê / Nhận xét của Thầy Đỗ Mạnh Trường:</label>
                   <input
                     type="text"
                     value={hwFeedback}

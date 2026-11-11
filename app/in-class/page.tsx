@@ -91,7 +91,7 @@ function InClassContent() {
   const currentPeriod = periodsOfGrade.find(p => p.period === selectedPeriodNum) || periodsOfGrade[0];
   const currentQuestions = currentPeriod.reinforcement.questions;
 
-  // Lắng nghe trạng thái khóa / mở thủ công từ Thầy Trương Thành Trường qua Supabase Realtime
+  // Lắng nghe trạng thái khóa / mở thủ công từ Thầy Đỗ Mạnh Trường qua Supabase Realtime
   useEffect(() => {
     const unsub = subscribeToClassroomState((newState) => {
       setControlState(newState);
@@ -160,7 +160,7 @@ function InClassContent() {
     setCurrentSlideIndex(0);
   };
 
-  // Trạng thái khóa / mở của 3 hoạt động từ Thầy Trương Thành Trường
+  // Trạng thái khóa / mở của 3 hoạt động từ Thầy Đỗ Mạnh Trường
   const isDiscoveryLocked = !controlState.activityLocks.discovery;
   const isPracticeLocked = !controlState.activityLocks.practice;
   const isLabLocked = !controlState.activityLocks.lab;
@@ -176,7 +176,7 @@ function InClassContent() {
 
   const handleSubmitWorksheet = () => {
     if (isDiscoveryLocked) {
-      alert('Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      alert('Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường.');
       return;
     }
     if (worksheetSubmitted) return;
@@ -239,7 +239,7 @@ function InClassContent() {
 
   const handleGradeQuiz = () => {
     if (isPracticeLocked) {
-      alert('Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      alert('Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường.');
       return;
     }
 
@@ -328,7 +328,7 @@ function InClassContent() {
   const handleSubmitPractical = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLabLocked) {
-      alert('Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      alert('Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường.');
       return;
     }
     if (!practicalFile) {
@@ -343,7 +343,7 @@ function InClassContent() {
     const taskName = currentPeriod.practicalTask?.title || `Thực hành Tiết ${currentPeriod.period}`;
 
     try {
-      // 1. Tải thẳng lên Google Drive Online của Thầy Trương Thành Trường
+      // 1. Tải thẳng lên Google Drive Online của Thầy Đỗ Mạnh Trường
       const driveRes = await uploadPracticalToDriveOnline({
         file: practicalFile,
         grade: selectedGrade,
@@ -371,7 +371,7 @@ function InClassContent() {
         status: 'graded',
         score: 10,
         teacherFeedback: driveRes.status === 'ok' 
-          ? `Đã nhận sản phẩm thành công lên Google Drive của Thầy Trương Thành Trường: ${driveRes.folderPath}. Đạt chuẩn kỹ thuật thao tác!`
+          ? `Đã nhận sản phẩm thành công lên Google Drive của Thầy Đỗ Mạnh Trường: ${driveRes.folderPath}. Đạt chuẩn kỹ thuật thao tác!`
           : 'Đã ghi nhận nộp bài thực hành thành công!',
       };
 
@@ -404,7 +404,7 @@ function InClassContent() {
               <span>Tiết {currentPeriod.period} · {currentPeriod.topic}</span>
             </span>
             <span className="text-xs text-blue-200">
-              Giáo viên: <strong>Thầy Trương Thành Trường</strong>
+              Giáo viên: <strong>Thầy Đỗ Mạnh Trường</strong>
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -600,7 +600,7 @@ function InClassContent() {
           {isDiscoveryLocked && (
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
               <Lock className="w-5 h-5 text-amber-600 shrink-0" />
-              <span>Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+              <span>Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
             </div>
           )}
 
@@ -650,7 +650,7 @@ function InClassContent() {
           {isPracticeLocked && (
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
               <Lock className="w-5 h-5 text-amber-600 shrink-0" />
-              <span>Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+              <span>Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
             </div>
           )}
 
@@ -769,12 +769,12 @@ function InClassContent() {
                     })}
                   </div>
 
-                  {/* GIẢI THÍCH CHI TIẾT CỦA THẦY TRƯƠNG THÀNH TRƯỜNG */}
+                  {/* GIẢI THÍCH CHI TIẾT CỦA THẦY ĐỖ MẠNH TRƯỜNG */}
                   {isSubmitted && (
                     <div className="mt-4 p-3.5 rounded-2xl bg-white border border-slate-200 text-xs text-slate-600 space-y-1">
                       <p className="font-bold text-slate-800 flex items-center gap-1.5">
                         <HelpCircle className="w-4 h-4 text-blue-600" />
-                        <span>Lời giải thích của Thầy Trương Thành Trường:</span>
+                        <span>Lời giải thích của Thầy Đỗ Mạnh Trường:</span>
                       </p>
                       <p className="text-slate-600 pl-5 leading-relaxed">{q.explanation}</p>
                     </div>
@@ -824,7 +824,7 @@ function InClassContent() {
           {isLabLocked && (
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
               <Lock className="w-5 h-5 text-amber-600 shrink-0" />
-              <span>Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+              <span>Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Đỗ Mạnh Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
             </div>
           )}
 
@@ -1057,7 +1057,7 @@ function InClassContent() {
                   href={`/slides/${currentPeriod.slide?.fileName}`}
                   download={currentPeriod.slide?.fileName || 'BaiGiang.pptx'}
                   onClick={() => {
-                    alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${currentPeriod.slide?.fileName}\nTệp được đồng bộ từ Google Drive của Thầy Trương Thành Trường.`);
+                    alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${currentPeriod.slide?.fileName}\nTệp được đồng bộ từ Google Drive của Thầy Đỗ Mạnh Trường.`);
                   }}
                   className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2"
                 >
@@ -1129,7 +1129,7 @@ function InClassContent() {
                   )}
 
                   <p className="text-xs text-slate-500 pt-2">
-                    Môn Tin học Lớp {currentPeriod.grade} · Trường THCS Mão Điền · Thầy Trương Thành Trường
+                    Môn Tin học Lớp {currentPeriod.grade} · Trường THCS Mão Điền · Thầy Đỗ Mạnh Trường
                   </p>
                 </div>
 

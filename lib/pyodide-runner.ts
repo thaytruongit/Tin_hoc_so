@@ -2,7 +2,7 @@
 
 // ============================================================================
 // TRÌNH CHẤM CODE PYTHON THỰC TẾ TRÊN WEBASSEMBLY (PYODIDE RUNNER)
-// Giáo viên: Thầy Trương Thành Trường — THCS Mão Điền
+// Giáo viên: Thầy Đỗ Mạnh Trường — THCS Mão Điền
 // Chạy Python 3.12 thật 100% trong sandbox WebAssembly ngay trên trình duyệt
 // ============================================================================
 

@@ -108,7 +108,7 @@ export default function Virtual3DClassroom({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
-                Thầy Trương Thành Trường Đang Giảng Dạy
+                Thầy Đỗ Mạnh Trường Đang Giảng Dạy
               </span>
               <span className="text-xs font-extrabold text-indigo-700">
                 {lessonTitle}

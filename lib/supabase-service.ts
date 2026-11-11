@@ -2,7 +2,7 @@
 
 // ============================================================================
 // DỊCH VỤ KẾT NỐI DỮ LIỆU THẬT SUPABASE POSTGRESQL (CLOUD DATABASE SERVICE)
-// Giáo viên: Thầy Trương Thành Trường — THCS Mão Điền
+// Giáo viên: Thầy Đỗ Mạnh Trường — THCS Mão Điền
 // Lưu trữ tập trung điểm thi, kết quả phiếu cặp đôi và bài nộp thực hành
 // Hỗ trợ chế độ chạy kép (Hybrid): Có Supabase thì lưu Cloud, offline thì lưu Local
 // ============================================================================
@@ -191,7 +191,7 @@ export async function savePracticalSubmissionToCloud(sub: PracticalSubmission): 
 }
 
 /**
- * 4. Thầy Trương Thành Trường tải danh sách kết quả thi của một Lớp từ Supabase Cloud
+ * 4. Thầy Đỗ Mạnh Trường tải danh sách kết quả thi của một Lớp từ Supabase Cloud
  */
 export async function fetchClassExamResultsFromCloud(className: string): Promise<CloudExamResult[]> {
   if (isSupabaseConfigured && supabase) {

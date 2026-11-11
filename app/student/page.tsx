@@ -404,7 +404,7 @@ export default function StudentDashboard() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Trắc nghiệm khách quan tự động chấm điểm 10/10 tức thì và hiển thị lời giải thích chi tiết của Thầy Trương sau khi hoàn thành.
+              Trắc nghiệm khách quan tự động chấm điểm 10/10 tức thì và hiển thị lời giải thích chi tiết của Thầy Đỗ Mạnh Trường sau khi hoàn thành.
             </p>
 
             <div className="space-y-3">

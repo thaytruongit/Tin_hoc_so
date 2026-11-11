@@ -30,7 +30,7 @@ export function getCurrentUser(): UserSession {
     return {
       isLoggedIn: true,
       role: 'teacher',
-      studentName: 'Thầy Trương Thành Trường',
+      studentName: 'Thầy Đỗ Mạnh Trường',
     };
   }
 

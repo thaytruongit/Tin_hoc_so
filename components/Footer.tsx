@@ -26,7 +26,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-blue-400" />
-                <span>manhtruongdo1984@gmail.com - Thầy Trương Thành Trường</span>
+                <span>manhtruongdo1984@gmail.com - Thầy Đỗ Mạnh Trường</span>
               </div>
             </div>
           </div>
@@ -61,7 +61,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© {new Date().getFullYear()} Thầy Trương Thành Trường - THCS Mão Điền. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Thầy Đỗ Mạnh Trường - THCS Mão Điền. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />

@@ -135,7 +135,7 @@ export default function ProgrammingPage() {
           Luyện Lập Trình Thực Tế: Python &amp; C++
         </h1>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Biên dịch và chạy thật 100% bằng <strong>Python WebAssembly (Pyodide)</strong> ngay trên trình duyệt. Góc rèn thuật toán &amp; bồi dưỡng học sinh giỏi môn Tin học — <strong>Thầy Trương Thành Trường</strong>.
+          Biên dịch và chạy thật 100% bằng <strong>Python WebAssembly (Pyodide)</strong> ngay trên trình duyệt. Góc rèn thuật toán &amp; bồi dưỡng học sinh giỏi môn Tin học — <strong>Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
         {/* BỘ LỌC NGÔN NGỮ */}

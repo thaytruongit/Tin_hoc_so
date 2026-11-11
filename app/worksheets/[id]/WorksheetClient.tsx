@@ -238,7 +238,7 @@ export default function WorksheetClient() {
                   />
                   {submitted && (
                     <p className="text-xs text-blue-600 font-medium">
-                      * Câu trả lời tự luận đã được nộp cho Thầy Trương nhận xét và đánh giá.
+                      * Câu trả lời tự luận đã được nộp cho Thầy Đỗ Mạnh Trường nhận xét và đánh giá.
                     </p>
                   )}
                 </div>

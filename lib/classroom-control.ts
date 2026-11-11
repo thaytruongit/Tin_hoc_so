@@ -135,7 +135,7 @@ export function getDefaultClassroomState(): ClassroomControlState {
     isTimerRunning: true,
     isTimeUp: false,
     spotlightMachineId: null,
-    broadcastMessage: '🔔 Chào mừng các em đến với Tiết học Tin học · Thầy Trương Thành Trường!',
+    broadcastMessage: '🔔 Chào mừng các em đến với Tiết học Tin học · Thầy Đỗ Mạnh Trường!',
     broadcastTime: '08:00',
     machines: createDefaultMachines('Lớp 7A11'),
     helpRequests: [
@@ -231,7 +231,7 @@ export function awardStarToMachine(machineId: number): ClassroomControlState {
     return {
       ...prev,
       machines: updated,
-      broadcastMessage: `⭐ Thầy Trương Thành Trường tặng 1 SAO THƯỞNG tuyên dương ${targetMachine?.machineName} (${targetMachine?.student1Name})!`,
+      broadcastMessage: `⭐ Thầy Đỗ Mạnh Trường tặng 1 SAO THƯỞNG tuyên dương ${targetMachine?.machineName} (${targetMachine?.student1Name})!`,
       broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     };
   });

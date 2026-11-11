@@ -77,7 +77,7 @@ export default function HomePage() {
                     Củng Cố Bài Học — 7 Câu Trắc Nghiệm Tự Động Chấm Điểm
                   </h3>
                   <p className="text-xs sm:text-sm text-white/90">
-                    Phân hóa chuẩn Bộ GD&ĐT: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>. Làm bài trên máy tính, nhận điểm tức thì và xem lời giải thích chi tiết của Thầy Trương Thành Trường!
+                    Phân hóa chuẩn Bộ GD&ĐT: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>. Làm bài trên máy tính, nhận điểm tức thì và xem lời giải thích chi tiết của Thầy Đỗ Mạnh Trường!
                   </p>
                 </div>
                 <Link

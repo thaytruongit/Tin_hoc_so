@@ -4,7 +4,7 @@ import { compressImageFile } from './image-compressor';
 
 // ============================================================================
 // DỊCH VỤ ĐỒNG BỘ & LƯU TRỮ GOOGLE DRIVE ONLINE (GOOGLE APPS SCRIPT WEB APP)
-// Giáo viên: Thầy Trương Thành Trường — THCS Mão Điền
+// Giáo viên: Thầy Đỗ Mạnh Trường — THCS Mão Điền
 // ============================================================================
 
 export interface DriveUploadResult {
@@ -46,7 +46,7 @@ export function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Tải bài tập về nhà trực tiếp lên Google Drive Online của Thầy Trương
+ * Tải bài tập về nhà trực tiếp lên Google Drive Online của Thầy Đỗ Mạnh Trường
  */
 export async function uploadHomeworkToDriveOnline(params: {
   file: File;
@@ -123,7 +123,7 @@ export async function uploadHomeworkToDriveOnline(params: {
         downloadUrl: data.downloadUrl,
         fileId: data.fileId,
         folderPath: `Giảng dạy/NOP_BAI_VE_NHA/KHOI_${params.grade}/Tiet_${params.period < 10 ? '0' : ''}${params.period}`,
-        message: data.message || 'Đã tải thành công lên Google Drive Online của Thầy Trương!'
+        message: data.message || 'Đã tải thành công lên Google Drive Online của Thầy Đỗ Mạnh Trường!'
       };
     } else {
       return {
@@ -141,7 +141,7 @@ export async function uploadHomeworkToDriveOnline(params: {
 }
 
 /**
- * Tải bài tập thực hành phòng máy trực tiếp lên Google Drive Online của Thầy Trương
+ * Tải bài tập thực hành phòng máy trực tiếp lên Google Drive Online của Thầy Đỗ Mạnh Trường
  */
 export async function uploadPracticalToDriveOnline(params: {
   file: File;

@@ -75,13 +75,13 @@ export default function ClassroomSyncWatcher() {
   return (
     <>
       {/* ==================================================================== */}
-      {/* 1. THANH THÔNG BÁO KHẨN TỪ THẦY TRƯƠNG THÀNH TRƯỜNG */}
+      {/* 1. THANH THÔNG BÁO KHẨN TỪ THẦY ĐỖ MẠNH TRƯỜNG */}
       {/* ==================================================================== */}
       {!isTeacher && state.broadcastMessage && closedBroadcast !== state.broadcastMessage && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-amber-600 via-indigo-600 to-blue-700 text-white px-4 py-2.5 shadow-lg flex items-center justify-between gap-3 text-xs sm:text-sm font-bold animate-slideDown">
           <div className="flex items-center gap-2 max-w-5xl mx-auto truncate">
             <Volume2 className="w-4 h-4 shrink-0 text-amber-200 animate-pulse" />
-            <span className="truncate">📢 <strong>Thầy Trương Thành Trường:</strong> {state.broadcastMessage}</span>
+            <span className="truncate">📢 <strong>Thầy Đỗ Mạnh Trường:</strong> {state.broadcastMessage}</span>
           </div>
           <button
             type="button"
@@ -150,7 +150,7 @@ export default function ClassroomSyncWatcher() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-rose-600 font-extrabold text-sm">
                 <HelpCircle className="w-5 h-5" />
-                <span>Gửi tín hiệu trợ giúp lên bàn Thầy Trương Thành Trường</span>
+                <span>Gửi tín hiệu trợ giúp lên bàn Thầy Đỗ Mạnh Trường</span>
               </div>
               <button 
                 type="button"
@@ -164,7 +164,7 @@ export default function ClassroomSyncWatcher() {
             {helpSent ? (
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span>Đã gửi tín hiệu tới bàn Thầy! Thầy Trương Thành Trường sẽ đến bàn hỗ trợ em ngay.</span>
+                <span>Đã gửi tín hiệu tới bàn Thầy! Thầy Đỗ Mạnh Trường sẽ đến bàn hỗ trợ em ngay.</span>
               </div>
             ) : (
               <form onSubmit={handleSendHelp} className="space-y-3">
