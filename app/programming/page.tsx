@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Code2, 
-  Terminal, 
-  Play, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Sparkles, 
-  BookOpen, 
-  Copy, 
-  Clock, 
+import {
+  Code2,
+  Terminal,
+  Play,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Sparkles,
+  BookOpen,
+  Copy,
+  Clock,
   RotateCcw,
   Zap,
   Sliders,
@@ -23,11 +23,11 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MOCK_PROGRAMMING_CHALLENGES } from '@/lib/mock-data';
-import { 
-  runPythonCodeReal, 
-  runMultipleTestCases, 
-  PythonExecutionResult, 
-  MultiTestSummary 
+import {
+  runPythonCodeReal,
+  runMultipleTestCases,
+  PythonExecutionResult,
+  MultiTestSummary
 } from '@/lib/pyodide-runner';
 
 export default function ProgrammingPage() {
@@ -92,8 +92,8 @@ export default function ProgrammingPage() {
     const testCases = activeChallenge.testCases && activeChallenge.testCases.length > 0
       ? activeChallenge.testCases
       : [
-          { input: activeChallenge.sampleInput, expectedOutput: activeChallenge.sampleOutput },
-        ];
+        { input: activeChallenge.sampleInput, expectedOutput: activeChallenge.sampleOutput },
+      ];
 
     setIsSubmittingMulti(true);
     setMultiTestSummary(null);
@@ -235,18 +235,16 @@ export default function ProgrammingPage() {
             <button
               type="button"
               onClick={() => setSelectedLang('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedLang === 'all' ? 'bg-cyan-500 text-slate-950 font-black shadow-neon-cyan/40' : 'text-slate-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedLang === 'all' ? 'bg-cyan-500 text-slate-950 font-black shadow-neon-cyan/40' : 'text-slate-400 hover:text-white'
+                }`}
             >
               Tất cả ngôn ngữ
             </button>
             <button
               type="button"
               onClick={() => setSelectedLang('Python')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                selectedLang === 'Python' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-neon-mana/40' : 'text-slate-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${selectedLang === 'Python' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-neon-mana/40' : 'text-slate-400 hover:text-white'
+                }`}
             >
               <span>Python 3.12 (Pyodide)</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -254,9 +252,8 @@ export default function ProgrammingPage() {
             <button
               type="button"
               onClick={() => setSelectedLang('C++')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedLang === 'C++' ? 'bg-blue-600 text-white font-black' : 'text-slate-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedLang === 'C++' ? 'bg-blue-600 text-white font-black' : 'text-slate-400 hover:text-white'
+                }`}
             >
               C++ (HSG)
             </button>
@@ -269,11 +266,10 @@ export default function ProgrammingPage() {
                 key={g}
                 type="button"
                 onClick={() => setSelectedGradeFilter(g)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  selectedGradeFilter === g
-                    ? 'bg-purple-600 text-white font-black shadow-neon-purple/40'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedGradeFilter === g
+                  ? 'bg-purple-600 text-white font-black shadow-neon-purple/40'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
               >
                 {g === 'all' ? 'Tất cả khối' : g}
               </button>
@@ -296,16 +292,14 @@ export default function ProgrammingPage() {
                 key={c.id}
                 type="button"
                 onClick={() => handleSelectChallenge(c)}
-                className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                  activeChallenge.id === c.id
-                    ? 'border-cyan-400 bg-cyan-950/60 shadow-neon-cyan/30 ring-1 ring-cyan-400/50'
-                    : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
-                }`}
+                className={`w-full text-left p-4 rounded-2xl border transition-all ${activeChallenge.id === c.id
+                  ? 'border-cyan-400 bg-cyan-950/60 shadow-neon-cyan/30 ring-1 ring-cyan-400/50'
+                  : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                    c.language === 'C++' ? 'bg-blue-950 text-blue-300 border border-blue-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
-                  }`}>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${c.language === 'C++' ? 'bg-blue-950 text-blue-300 border border-blue-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                    }`}>
                     {c.language} · {c.gradeLevel}
                   </span>
                   <span className="text-[10px] font-black text-amber-400 flex items-center gap-1">
@@ -326,9 +320,8 @@ export default function ProgrammingPage() {
           <div className="cyber-hud-card rounded-3xl border border-cyan-500/30 p-6 shadow-neon-cyan/10 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-black text-lg text-white glow-text-cyan">{activeChallenge.title}</h2>
-              <span className={`text-xs font-black px-3 py-1 rounded-full ${
-                activeChallenge.language === 'Python' ? 'bg-emerald-950 text-emerald-300 border border-emerald-400/40' : 'bg-blue-950 text-blue-300 border border-blue-400/40'
-              }`}>
+              <span className={`text-xs font-black px-3 py-1 rounded-full ${activeChallenge.language === 'Python' ? 'bg-emerald-950 text-emerald-300 border border-emerald-400/40' : 'bg-blue-950 text-blue-300 border border-blue-400/40'
+                }`}>
                 {activeChallenge.language}
               </span>
             </div>
@@ -485,11 +478,10 @@ export default function ProgrammingPage() {
               <div className="border-t border-slate-800 bg-slate-900/95 p-5 font-mono text-xs space-y-4">
                 {/* BANNER TỔNG KẾT ĐIỂM */}
                 <div
-                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                    multiTestSummary.allPassed
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
-                      : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-                  }`}
+                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${multiTestSummary.allPassed
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                    : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     {multiTestSummary.allPassed ? (
@@ -534,17 +526,15 @@ export default function ProgrammingPage() {
                     {multiTestSummary.results.map((tr) => (
                       <div
                         key={tr.index}
-                        className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] ${
-                          tr.isCorrect
-                            ? 'bg-slate-950 border-emerald-500/30 text-slate-300'
-                            : 'bg-rose-950/20 border-rose-500/40 text-rose-300'
-                        }`}
+                        className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] ${tr.isCorrect
+                          ? 'bg-slate-950 border-emerald-500/30 text-slate-300'
+                          : 'bg-rose-950/20 border-rose-500/40 text-rose-300'
+                          }`}
                       >
                         <div className="flex items-center gap-2">
                           <span
-                            className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs ${
-                              tr.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                            }`}
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs ${tr.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                              }`}
                           >
                             {tr.index}
                           </span>
@@ -556,11 +546,10 @@ export default function ProgrammingPage() {
                         <div className="flex items-center gap-4 flex-wrap">
                           <span className="text-slate-400">Thời gian: {tr.executionTimeMs} ms</span>
                           <span
-                            className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                              tr.isCorrect
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            }`}
+                            className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${tr.isCorrect
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              }`}
                           >
                             {tr.isCorrect ? 'ACCEPTED' : 'WRONG ANSWER'}
                           </span>
@@ -577,11 +566,10 @@ export default function ProgrammingPage() {
               <div className="border-t border-slate-800 bg-slate-900/95 p-5 font-mono text-xs space-y-3">
                 {/* BANNER KẾT QUẢ TEST CASE */}
                 {execResult.isCorrect !== undefined && (
-                  <div className={`p-3 rounded-2xl border flex items-center justify-between gap-3 ${
-                    execResult.isCorrect 
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300' 
-                      : 'bg-rose-500/10 border-rose-500/40 text-rose-300'
-                  }`}>
+                  <div className={`p-3 rounded-2xl border flex items-center justify-between gap-3 ${execResult.isCorrect
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/40 text-rose-300'
+                    }`}>
                     <div className="flex items-center gap-2">
                       {execResult.isCorrect ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-400" />
