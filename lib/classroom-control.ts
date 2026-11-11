@@ -173,20 +173,39 @@ export function getDefaultClassroomState(): ClassroomControlState {
 }
 
 export function getClassroomState(): ClassroomControlState {
+  const def = getDefaultClassroomState();
   if (typeof window === 'undefined') {
-    return getDefaultClassroomState();
+    return def;
   }
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const def = getDefaultClassroomState();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(def));
       return def;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return {
+      ...def,
+      ...parsed,
+      activityLocks: {
+        discovery: true,
+        practice: true,
+        lab: true,
+        ...(parsed?.activityLocks || {}),
+      },
+      activityDurations: {
+        discovery: 10,
+        practice: 7,
+        lab: 15,
+        ...(parsed?.activityDurations || {}),
+      },
+      machines: Array.isArray(parsed?.machines) && parsed.machines.length === 24 
+        ? parsed.machines 
+        : def.machines,
+    };
   } catch (err) {
-    return getDefaultClassroomState();
+    return def;
   }
 }
 
@@ -197,19 +216,28 @@ export function updateClassroomState(
   const next = updater(current);
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent('truong_classroom_update', { detail: next }));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent('truong_classroom_update', { detail: next }));
+    } catch (e) {}
   }
 
-  // Phát tín hiệu Realtime qua Supabase Broadcast
-  try {
-    const channel = supabase.channel(CHANNEL_NAME);
-    channel.send({
-      type: 'broadcast',
-      event: 'state_change',
-      payload: next,
-    });
-  } catch (err) {}
+  // Chỉ phát tín hiệu Realtime khi có URL Supabase thật
+  const isRealSupabase = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('mock-tin-hoc')
+  );
+
+  if (isRealSupabase) {
+    try {
+      const channel = supabase.channel(CHANNEL_NAME);
+      channel.send({
+        type: 'broadcast',
+        event: 'state_change',
+        payload: next,
+      });
+    } catch (err) {}
+  }
 
   return next;
 }

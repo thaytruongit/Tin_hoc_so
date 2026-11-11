@@ -50,27 +50,27 @@ export default function AdminPage() {
   if (!isUnlocked && currentUser?.role === 'student') {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
-        <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shadow-sm">
           <ShieldAlert className="w-10 h-10" />
         </div>
         <div className="space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-black uppercase">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-bold uppercase">
             Bảo mật phân quyền (RBAC)
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             Truy Cập Bị Từ Chối — Khu Vực Quản Trị
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-            Khu vực này dành riêng cho <strong>Thầy Đỗ Mạnh Trường</strong> quản trị 670 học sinh và cấu hình điểm thi.<br />
-            Tài khoản của em là <strong>{currentUser.studentName}</strong> (Lớp {currentUser.studentClass}) vui lòng quay lại buồng lái học tập!
+          <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+            Khu vực này dành riêng cho <strong>Thầy Đỗ Mạnh Trường</strong> quản trị 670 học sinh và cấu hình hệ thống.<br />
+            Tài khoản của em là <strong>{currentUser.studentName}</strong> (Lớp {currentUser.studentClass}) vui lòng quay lại không gian học tập!
           </p>
         </div>
         <div className="pt-2 flex justify-center gap-3">
           <Link
             href="/in-class"
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-md transition-all"
+            className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
           >
-            Quay Về Buồng Lái Học Tập
+            Quay Về Không Gian Học Tập
           </Link>
         </div>
       </div>
@@ -81,36 +81,36 @@ export default function AdminPage() {
   if (!isUnlocked) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-6">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow-neon-gold/40">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shadow-sm">
           <Crown className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white glow-text-gold">Xác Thực Quản Trị Viên</h1>
-          <p className="text-xs text-slate-400 mt-1">Dành riêng cho Thầy Đỗ Mạnh Trường (Mã 666)</p>
+          <h1 className="text-2xl font-extrabold text-slate-900">Xác Thực Quản Trị Viên</h1>
+          <p className="text-xs text-slate-600 mt-1">Dành riêng cho Thầy Đỗ Mạnh Trường (Mã 666)</p>
         </div>
 
-        <form onSubmit={handleUnlock} className="space-y-4 text-left">
+        <form onSubmit={handleUnlock} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-left">
           {authError && (
-            <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs font-bold">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
               {authError}
             </div>
           )}
           <div>
-            <label className="block text-xs font-bold text-amber-300 mb-1">Mật mã Quản trị đặc quyền</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Mật mã Quản trị đặc quyền</label>
             <div className="relative">
-              <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
                 placeholder="Nhập 666"
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-amber-500/50 bg-slate-900 text-amber-300 text-sm font-black focus:outline-none focus:border-amber-400 tracking-widest"
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-300 bg-white text-slate-900 text-sm font-bold focus:outline-none focus:border-blue-500 tracking-widest"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs shadow-neon-gold/40 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
           >
             <span>Mở Khóa Bảng Quản Trị</span>
             <ArrowRight className="w-4 h-4" />
@@ -122,22 +122,22 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* HEADER */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      {/* HEADER NỀN SÁNG ĐỒNG BỘ */}
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2">
             Khu vực quản trị hệ thống
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Quản Trị Người Dùng & Hệ Thống
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Dành riêng cho Quản trị viên và Giáo viên phụ trách môn Tin học
+          <p className="text-xs text-blue-100 mt-1">
+            Dành riêng cho Quản trị viên và Giáo viên phụ trách môn Tin học — Thầy Đỗ Mạnh Trường
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/20 text-emerald-200 text-xs font-bold border border-emerald-400/30">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Hệ thống ổn định
           </span>

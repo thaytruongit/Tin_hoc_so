@@ -44,7 +44,7 @@ export default function AchievementsPage() {
             onClick={() => setSelectedClass('all')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               selectedClass === 'all'
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-white text-slate-600 border border-slate-200'
             }`}
           >

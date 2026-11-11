@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   BookOpen, 
@@ -32,7 +31,7 @@ import { Lock, Unlock, ShieldAlert, CheckCircle, FileText as FileTextIcon, Chevr
 import CurriculumPeriodModal from '@/components/CurriculumPeriodModal';
 
 function SubjectsContent() {
-  const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<number | 'all'>(7);
   const [activeSection, setActiveSection] = useState<'29periods' | 'files' | 'submit' | 'videos' | 'curriculum'>('29periods');
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
@@ -52,41 +51,47 @@ function SubjectsContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     const user = getCurrentUser();
     setCurrentUser(user);
 
-    const urlGrade = searchParams.get('grade');
-    const urlSection = searchParams.get('section');
-    const urlPeriod = searchParams.get('period');
+    if (typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlGrade = searchParams.get('grade');
+        const urlSection = searchParams.get('section');
+        const urlPeriod = searchParams.get('period');
 
-    let initialGrade = 7;
-    if (user.role === 'student' && user.studentGrade) {
-      initialGrade = user.studentGrade;
-      if (user.studentName) setStudentName(user.studentName);
-      if (user.studentCode) setStudentCode(user.studentCode);
-      if (user.studentClass) {
-        const found = MOCK_CLASSES.find(c => c.name === user.studentClass);
-        if (found) setSubmitClassId(found.id);
-      }
-    } else if (urlGrade) {
-      const g = parseInt(urlGrade, 10);
-      if ([6, 7, 8, 9].includes(g)) initialGrade = g;
-    }
-    setSelectedGrade(initialGrade);
+        let initialGrade = 7;
+        if (user.role === 'student' && user.studentGrade) {
+          initialGrade = user.studentGrade;
+          if (user.studentName) setStudentName(user.studentName);
+          if (user.studentCode) setStudentCode(user.studentCode);
+          if (user.studentClass) {
+            const found = MOCK_CLASSES.find(c => c.name === user.studentClass);
+            if (found) setSubmitClassId(found.id);
+          }
+        } else if (urlGrade) {
+          const g = parseInt(urlGrade, 10);
+          if ([6, 7, 8, 9].includes(g)) initialGrade = g;
+        }
+        setSelectedGrade(initialGrade);
 
-    if (urlSection && ['29periods', 'files', 'submit', 'videos', 'curriculum'].includes(urlSection)) {
-      setActiveSection(urlSection as any);
-    }
+        if (urlSection && ['29periods', 'files', 'submit', 'videos', 'curriculum'].includes(urlSection)) {
+          setActiveSection(urlSection as any);
+        }
 
-    if (urlPeriod) {
-      const pNum = parseInt(urlPeriod, 10);
-      const periods = CURRICULUM_DATA[initialGrade] || [];
-      const foundP = periods.find(p => p.period === pNum);
-      if (foundP) {
-        setViewingPeriod(foundP);
-      }
+        if (urlPeriod) {
+          const pNum = parseInt(urlPeriod, 10);
+          const periods = CURRICULUM_DATA[initialGrade] || [];
+          const foundP = periods.find(p => p.period === pNum);
+          if (foundP) {
+            setViewingPeriod(foundP);
+          }
+        }
+      } catch (e) {}
     }
-  }, [searchParams]);
+  }, []);
 
   const handleSelectGrade = (grade: number) => {
     if (currentUser && currentUser.role === 'student' && currentUser.studentGrade !== grade) {
@@ -1003,9 +1008,5 @@ function SubjectsContent() {
 }
 
 export default function SubjectsPage() {
-  return (
-    <Suspense fallback={<div className="p-12 text-center text-slate-500">Đang tải kho học liệu & cổng thực hành...</div>}>
-      <SubjectsContent />
-    </Suspense>
-  );
+  return <SubjectsContent />;
 }

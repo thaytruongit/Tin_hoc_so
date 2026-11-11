@@ -275,15 +275,15 @@ export default function TeacherDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* BANNER GIÁO VIÊN */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2">
             THAYTRUONGIT-THCS MÃO ĐIỀN · Quản trị lớp học
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Kênh Giáo Viên & Quản Trị Học Sinh
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-blue-100 mt-1">
             Tổng số: <strong>669 học sinh</strong> · <strong>15 lớp</strong> (Khối 6, 7, 8, 9) · Mật khẩu chung: <strong>123</strong>
           </p>
         </div>
@@ -558,7 +558,7 @@ export default function TeacherDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => alert('Đang xuất toàn bộ danh sách nộp bài và điểm số sang Excel...')}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
               >
                 <Download className="w-4 h-4" />
                 <span>Xuất bảng điểm Excel</span>

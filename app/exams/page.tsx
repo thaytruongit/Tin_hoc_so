@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ClipboardCheck, Clock, ShieldAlert, Lock, ArrowRight, CheckCircle2, Crown, Zap, ShieldCheck } from 'lucide-react';
+import { FileCheck2, Clock, ShieldAlert, Lock, ArrowRight, CheckCircle2, ShieldCheck, School } from 'lucide-react';
 import { MOCK_EXAMS } from '@/lib/mock-data';
 
 export default function ExamsPage() {
@@ -13,88 +13,88 @@ export default function ExamsPage() {
     : MOCK_EXAMS.filter(e => e.grade === selectedGrade);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 cyber-grid-bg">
-      {/* HEADER ĐẤU TRƯỜNG BOSS RAID */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex p-3 rounded-2xl bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-neon-crimson/40 mb-1">
-          <Crown className="w-8 h-8 text-amber-300 animate-pulse" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 edu-grid-bg">
+      {/* HEADER BANNER SƯ PHẠM (LIGHT THEME) */}
+      <div className="text-center max-w-3xl mx-auto space-y-3">
+        <div className="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-xs mb-1">
+          <FileCheck2 className="w-8 h-8 text-blue-600" />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight glow-text-cyan">
-          Đấu Trường Kiểm Tra Boss Raid
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Kiểm Tra Đánh Giá Định Kỳ Môn Tin Học
         </h1>
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          8 Bộ đề kiểm tra định kỳ chuẩn Ma trận nhận thức Bộ GD&ĐT (Giữa kỳ &amp; Cuối kỳ Khối 6, 7, 8, 9). Giám sát gian lận chuyển tab đa tầng, phân tích năng lực tức thời — <strong className="text-cyan-300">Thầy Đỗ Mạnh Trường</strong>.
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+          8 Bộ đề kiểm tra định kỳ chuẩn Ma trận nhận thức Bộ GD&amp;ĐT (Giữa kỳ &amp; Cuối kỳ Khối 6, 7, 8, 9). Giám sát thi cử công bằng, phân tích kết quả tức thời — <strong className="text-slate-800 font-bold">Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
-        {/* Grade Filters */}
+        {/* BỘ LỌC KHỐI LỚP */}
         <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
           <button
             onClick={() => setSelectedGrade('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               selectedGrade === 'all'
-                ? 'bg-gradient-to-r from-rose-600 to-purple-600 text-white shadow-neon-crimson/40 border border-rose-400/40'
-                : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Tất cả 8 Boss
+            Tất cả 8 Bộ đề
           </button>
           {[6, 7, 8, 9].map((g) => (
             <button
               key={g}
               onClick={() => setSelectedGrade(g)}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 selectedGrade === g
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-neon-cyan/40 border border-cyan-400/40'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              Boss Khối {g}
+              Khối {g}
             </button>
           ))}
         </div>
       </div>
 
-      {/* EXAMS LIST */}
+      {/* DANH SÁCH BỘ ĐỀ */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredExams.map((exam) => (
           <div
             key={exam.id}
-            className="p-6 rounded-3xl cyber-hud-card border border-rose-500/30 hover:border-rose-400 transition-all flex flex-col justify-between space-y-5 group hover:-translate-y-1 shadow-neon-crimson/10"
+            className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 hover:border-blue-400 transition-all flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black px-3 py-1 rounded-full bg-rose-950 text-rose-300 border border-rose-500/40 uppercase tracking-wider">
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
                   Khối {exam.grade} · {exam.examType}
                 </span>
-                <span className="text-[11px] font-black text-rose-400 flex items-center gap-1 bg-rose-950/60 px-2.5 py-0.5 rounded-full border border-rose-500/30 animate-pulse">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  Khiên chống gian lận
+                <span className="text-xs font-medium text-slate-500 flex items-center gap-1 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  Giám sát chống gian lận
                 </span>
               </div>
-              <h3 className="font-black text-lg text-white group-hover:text-rose-300 transition-colors">
+              <h2 className="font-bold text-lg text-slate-900">
                 {exam.title}
-              </h3>
-              <div className="flex items-center gap-4 text-xs text-slate-400">
-                <span className="flex items-center gap-1 font-bold text-cyan-300">
-                  <Clock className="w-3.5 h-3.5" />
+              </h2>
+              <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
+                <span className="flex items-center gap-1 font-semibold text-slate-700">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
                   {exam.durationMin} phút
                 </span>
                 <span>•</span>
-                <span className="font-bold text-purple-300">{exam.questionsCount} câu trắc nghiệm</span>
+                <span className="font-semibold text-slate-700">{exam.questionsCount} câu trắc nghiệm</span>
                 <span>•</span>
-                <span className="text-[11px] text-amber-400 font-bold">Ma trận: 4-3-2-1</span>
+                <span className="text-xs text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Ma trận 4-3-2-1</span>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="text-xs">
                 {exam.isLocked ? (
-                  <span className="text-slate-500 font-bold flex items-center gap-1">
+                  <span className="text-slate-400 font-medium flex items-center gap-1">
                     <Lock className="w-3.5 h-3.5" /> Đang khóa đề
                   </span>
                 ) : (
-                  <span className="text-emerald-400 font-black flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Sẵn sàng chiến đấu
+                  <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Đã mở làm bài
                   </span>
                 )}
               </div>
@@ -102,16 +102,16 @@ export default function ExamsPage() {
               {exam.isLocked ? (
                 <button
                   disabled
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-slate-600 text-xs font-bold border border-slate-800 cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed"
                 >
                   Chờ Thầy Mở
                 </button>
               ) : (
                 <Link
                   href={`/exams/${exam.id}`}
-                  className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-black shadow-neon-crimson/30 flex items-center gap-2 transition-all border border-rose-400/40 hover:scale-105"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-xs flex items-center gap-2 transition-colors"
                 >
-                  <span>⚔️ Vào Đánh Boss</span>
+                  <span>Bắt Đầu Làm Bài</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               )}
