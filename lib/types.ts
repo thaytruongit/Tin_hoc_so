@@ -91,6 +91,12 @@ export interface ExamResult {
   isEssayReviewed?: boolean;
 }
 
+export interface TestCase {
+  input: string;
+  expectedOutput: string;
+  isSecret?: boolean;
+}
+
 export interface ProgrammingChallenge {
   id: string;
   language: 'C++' | 'Python';
@@ -104,6 +110,7 @@ export interface ProgrammingChallenge {
   sampleOutput: string;
   initialCode: string;
   xpReward: number;
+  testCases?: TestCase[];
 }
 
 export interface PracticeFile {

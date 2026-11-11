@@ -183,3 +183,69 @@ __err_str = captured_stderr.getvalue()
     };
   }
 }
+
+export interface TestCaseResult {
+  index: number;
+  input: string;
+  expectedOutput: string;
+  actualOutput: string;
+  isCorrect: boolean;
+  executionTimeMs: number;
+  errorMessage?: string;
+  isSecret?: boolean;
+}
+
+export interface MultiTestSummary {
+  totalTests: number;
+  passedTests: number;
+  score: number; // thang 10
+  totalTimeMs: number;
+  allPassed: boolean;
+  results: TestCaseResult[];
+}
+
+/**
+ * Chạy tự động lần lượt qua danh sách Test Cases (Chấm điểm chuẩn VNOI/LeetCode)
+ */
+export async function runMultipleTestCases(
+  code: string,
+  testCases: { input: string; expectedOutput: string; isSecret?: boolean }[],
+  onProgress?: (current: number, total: number) => void
+): Promise<MultiTestSummary> {
+  const results: TestCaseResult[] = [];
+  let passedCount = 0;
+  let totalTime = 0;
+
+  for (let i = 0; i < testCases.length; i++) {
+    const tc = testCases[i];
+    if (onProgress) onProgress(i + 1, testCases.length);
+
+    const exec = await runPythonCodeReal(code, tc.input, tc.expectedOutput);
+    totalTime += exec.executionTimeMs;
+
+    const isCorrect = Boolean(exec.success && exec.isCorrect);
+    if (isCorrect) passedCount++;
+
+    results.push({
+      index: i + 1,
+      input: tc.input,
+      expectedOutput: tc.expectedOutput,
+      actualOutput: exec.stdout,
+      isCorrect,
+      executionTimeMs: exec.executionTimeMs,
+      errorMessage: exec.errorMessage || exec.stderr,
+      isSecret: tc.isSecret,
+    });
+  }
+
+  const score = testCases.length > 0 ? Number(((passedCount / testCases.length) * 10).toFixed(1)) : 10;
+
+  return {
+    totalTests: testCases.length,
+    passedTests: passedCount,
+    score,
+    totalTimeMs: totalTime,
+    allPassed: passedCount === testCases.length,
+    results,
+  };
+}

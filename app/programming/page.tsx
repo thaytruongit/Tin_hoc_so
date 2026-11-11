@@ -14,14 +14,25 @@ import {
   Clock, 
   RotateCcw,
   Zap,
-  Sliders
+  Sliders,
+  Download,
+  Send,
+  Check,
+  X,
+  Award
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MOCK_PROGRAMMING_CHALLENGES } from '@/lib/mock-data';
-import { runPythonCodeReal, PythonExecutionResult } from '@/lib/pyodide-runner';
+import { 
+  runPythonCodeReal, 
+  runMultipleTestCases, 
+  PythonExecutionResult, 
+  MultiTestSummary 
+} from '@/lib/pyodide-runner';
 
 export default function ProgrammingPage() {
   const [selectedLang, setSelectedLang] = useState<'all' | 'C++' | 'Python'>('all');
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState<'all' | 'Khối 8' | 'Khối 9' | 'Bồi dưỡng HSG'>('all');
   const [activeChallenge, setActiveChallenge] = useState(MOCK_PROGRAMMING_CHALLENGES[0]);
   const [userCode, setUserCode] = useState(activeChallenge.initialCode);
   const [customInput, setCustomInput] = useState(activeChallenge.sampleInput);
@@ -30,22 +41,101 @@ export default function ProgrammingPage() {
   const [execResult, setExecResult] = useState<PythonExecutionResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const filteredChallenges = selectedLang === 'all'
-    ? MOCK_PROGRAMMING_CHALLENGES
-    : MOCK_PROGRAMMING_CHALLENGES.filter(c => c.language === selectedLang);
+  // Trạng thái chấm Multi Test Cases
+  const [multiTestSummary, setMultiTestSummary] = useState<MultiTestSummary | null>(null);
+  const [isSubmittingMulti, setIsSubmittingMulti] = useState(false);
+  const [submittingProgress, setSubmittingProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const filteredChallenges = MOCK_PROGRAMMING_CHALLENGES.filter((c) => {
+    const matchLang = selectedLang === 'all' || c.language === selectedLang;
+    const matchGrade = selectedGradeFilter === 'all' || c.gradeLevel === selectedGradeFilter;
+    return matchLang && matchGrade;
+  });
 
   const handleSelectChallenge = (c: typeof activeChallenge) => {
     setActiveChallenge(c);
     setUserCode(c.initialCode);
     setCustomInput(c.sampleInput);
     setExecResult(null);
+    setMultiTestSummary(null);
     setStatusMessage('');
   };
 
   const handleResetCode = () => {
     setUserCode(activeChallenge.initialCode);
     setExecResult(null);
+    setMultiTestSummary(null);
     setStatusMessage('');
+  };
+
+  // TẢI FILE MÃ NGUỒN (.PY / .CPP) VỀ MÁY TÍNH
+  const handleDownloadCode = () => {
+    const ext = activeChallenge.language === 'Python' ? 'py' : 'cpp';
+    const blob = new Blob([userCode], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${activeChallenge.id}_solution.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // CHẤM MULTI TEST CASES (CHUẨN VNOI / LEETCODE)
+  const handleSubmitAllTests = async () => {
+    if (activeChallenge.language !== 'Python') {
+      alert('Tính năng chấm tự động qua Test Cases Sandbox hiện hỗ trợ chuẩn hóa cho Python 3.12 WebAssembly!');
+      return;
+    }
+
+    const testCases = activeChallenge.testCases && activeChallenge.testCases.length > 0
+      ? activeChallenge.testCases
+      : [
+          { input: activeChallenge.sampleInput, expectedOutput: activeChallenge.sampleOutput },
+        ];
+
+    setIsSubmittingMulti(true);
+    setMultiTestSummary(null);
+    setExecResult(null);
+    setStatusMessage(`Đang chấm tự động qua ${testCases.length} Test Cases...`);
+
+    try {
+      const summary = await runMultipleTestCases(
+        userCode,
+        testCases,
+        (current, total) => setSubmittingProgress({ current, total })
+      );
+
+      setMultiTestSummary(summary);
+      setStatusMessage('');
+
+      if (summary.allPassed) {
+        confetti({ particleCount: 130, spread: 80, origin: { y: 0.6 } });
+
+        // Lưu kết quả đạt vào LocalStorage
+        if (typeof window !== 'undefined') {
+          try {
+            const history = JSON.parse(localStorage.getItem('truong_programming_submissions') || '[]');
+            history.unshift({
+              challengeId: activeChallenge.id,
+              title: activeChallenge.title,
+              score: summary.score,
+              allPassed: true,
+              submittedAt: new Date().toLocaleTimeString('vi-VN'),
+            });
+            localStorage.setItem('truong_programming_submissions', JSON.stringify(history.slice(0, 50)));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    } catch (err: any) {
+      alert('Có lỗi khi chấm test: ' + err.message);
+    } finally {
+      setIsSubmittingMulti(false);
+      setSubmittingProgress(null);
+    }
   };
 
   // CHẠY THẬT 100% VỚI PYTHON WEBASSEMBLY (PYODIDE)
@@ -138,36 +228,57 @@ export default function ProgrammingPage() {
           Biên dịch và chạy thật 100% bằng <strong>Python WebAssembly (Pyodide)</strong> ngay trên trình duyệt. Góc rèn thuật toán &amp; bồi dưỡng học sinh giỏi môn Tin học — <strong>Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
-        {/* BỘ LỌC NGÔN NGỮ */}
-        <div className="flex justify-center gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setSelectedLang('all')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              selectedLang === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            Tất cả ngôn ngữ
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedLang('Python')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
-              selectedLang === 'Python' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            <span>Python (WebAssembly Thật)</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedLang('C++')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              selectedLang === 'C++' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            C++ (Khối 8, 9, Đội tuyển HSG)
-          </button>
+        {/* BỘ LỌC NGÔN NGỮ & KHỐI LỚP */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          {/* Lọc Ngôn ngữ */}
+          <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setSelectedLang('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                selectedLang === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tất cả ngôn ngữ
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedLang('Python')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                selectedLang === 'Python' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>Python 3.12 (Pyodide)</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedLang('C++')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                selectedLang === 'C++' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              C++ (HSG)
+            </button>
+          </div>
+
+          {/* Lọc Khối Lớp */}
+          <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl">
+            {(['all', 'Khối 8', 'Khối 9', 'Bồi dưỡng HSG'] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setSelectedGradeFilter(g)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  selectedGradeFilter === g
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {g === 'all' ? 'Tất cả khối' : g}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -255,7 +366,17 @@ export default function ProgrammingPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleDownloadCode}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all text-xs flex items-center gap-1"
+                  title="Tải tệp mã nguồn về máy tính"
+                >
+                  <Download className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Tải file</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleResetCode}
@@ -266,21 +387,44 @@ export default function ProgrammingPage() {
                   <span>Đặt lại</span>
                 </button>
 
+                {/* NÚT 1: CHẠY THỬ (CUSTOM INPUT / SAMPLE) */}
                 <button
                   type="button"
                   onClick={handleRunCode}
-                  disabled={isRunning}
-                  className="inline-flex items-center gap-1.5 px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white font-black transition-all shadow-md shadow-emerald-600/30"
+                  disabled={isRunning || isSubmittingMulti}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all text-xs border border-slate-700"
                 >
                   {isRunning ? (
                     <>
                       <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Đang chấm bài...</span>
+                      <span>Đang chạy...</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      <span>Chạy thử &amp; Chấm điểm</span>
+                      <Play className="w-3.5 h-3.5 fill-white text-white" />
+                      <span>Chạy thử (Run)</span>
+                    </>
+                  )}
+                </button>
+
+                {/* NÚT 2: NỘP BÀI CHẤM ĐIỂM MULTI-TEST (SUBMIT) */}
+                <button
+                  type="button"
+                  onClick={handleSubmitAllTests}
+                  disabled={isRunning || isSubmittingMulti}
+                  className="inline-flex items-center gap-1.5 px-5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:bg-slate-700 text-white font-black transition-all shadow-md shadow-emerald-600/30 text-xs"
+                >
+                  {isSubmittingMulti ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>
+                        Chấm Test {submittingProgress?.current}/{submittingProgress?.total}...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>🚀 Nộp Bài Chấm Điểm</span>
                     </>
                   )}
                 </button>
@@ -336,7 +480,99 @@ export default function ProgrammingPage() {
               </div>
             )}
 
-            {/* MÀN HÌNH TERMINAL KẾT QUẢ CHẤM BÀI */}
+            {/* MÀN HÌNH CHẤM TOÀN DIỆN MULTI-TEST CASES */}
+            {multiTestSummary && (
+              <div className="border-t border-slate-800 bg-slate-900/95 p-5 font-mono text-xs space-y-4">
+                {/* BANNER TỔNG KẾT ĐIỂM */}
+                <div
+                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                    multiTestSummary.allPassed
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                      : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {multiTestSummary.allPassed ? (
+                      <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-8 h-8 text-amber-400 shrink-0" />
+                    )}
+                    <div>
+                      <div className="text-base font-black">
+                        {multiTestSummary.allPassed
+                          ? '🎉 TẤT CẢ TEST CASES ĐỀU ĐẠT CHUẨN (ACCEPTED)!'
+                          : `KẾT QUẢ ĐẠT ${multiTestSummary.passedTests}/${multiTestSummary.totalTests} TEST CASES`}
+                      </div>
+                      <div className="text-[11px] opacity-80 mt-0.5">
+                        Tổng thời gian thực thi: {multiTestSummary.totalTimeMs} ms · Môi trường WebAssembly Sandbox
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Điểm Bài Tập:</div>
+                      <div className="text-xl font-black text-amber-400">
+                        {multiTestSummary.score} <span className="text-xs font-normal text-slate-400">/ 10đ</span>
+                      </div>
+                    </div>
+                    {multiTestSummary.allPassed && (
+                      <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>+{activeChallenge.xpReward} XP</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* BẢNG CHI TIẾT TỪNG TEST CASE */}
+                <div className="space-y-2">
+                  <span className="text-slate-400 font-bold block text-[11px] uppercase tracking-wider">
+                    Chi tiết từng Test Case kiểm thử:
+                  </span>
+                  <div className="space-y-1.5">
+                    {multiTestSummary.results.map((tr) => (
+                      <div
+                        key={tr.index}
+                        className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] ${
+                          tr.isCorrect
+                            ? 'bg-slate-950 border-emerald-500/30 text-slate-300'
+                            : 'bg-rose-950/20 border-rose-500/40 text-rose-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs ${
+                              tr.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                            }`}
+                          >
+                            {tr.index}
+                          </span>
+                          <span className="font-bold text-white">
+                            Test #{tr.index} {tr.isSecret ? '(Test Ẩn)' : '(Công Khai)'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <span className="text-slate-400">Thời gian: {tr.executionTimeMs} ms</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                              tr.isCorrect
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            }`}
+                          >
+                            {tr.isCorrect ? 'ACCEPTED' : 'WRONG ANSWER'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MÀN HÌNH TERMINAL KẾT QUẢ CHẠY THỬ (SINGLE RUN) */}
             {execResult && (
               <div className="border-t border-slate-800 bg-slate-900/95 p-5 font-mono text-xs space-y-3">
                 {/* BANNER KẾT QUẢ TEST CASE */}
