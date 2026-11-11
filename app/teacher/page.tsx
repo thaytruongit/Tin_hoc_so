@@ -41,6 +41,7 @@ import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw, RotateCw, ZoomI
 import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
 import ClassroomCommandCenter from '@/components/ClassroomCommandCenter';
 import { fetchClassExamResultsFromCloud, CloudExamResult } from '@/lib/supabase-service';
+import { exportStudentsToExcel } from '@/lib/export-excel';
 
 
 export default function TeacherDashboard() {
@@ -289,14 +290,13 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-            download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          <button
+            onClick={() => exportStudentsToExcel(MOCK_STUDENTS, 'Danh_Sach_669_Hoc_Sinh_THCS_Mao_Dien.xls')}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Tải Excel 669 tài khoản</span>
-          </a>
+          </button>
           <button
             onClick={handleAssignWorksheet}
             className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
@@ -475,15 +475,14 @@ export default function TeacherDashboard() {
                 />
               </div>
 
-              <a
-                href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-                download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all"
-                title="Tải bảng tính Excel toàn trường"
+              <button
+                onClick={() => exportStudentsToExcel(classStudents, `Danh_Sach_${currentClass.name}_THCS_Mao_Dien.xls`)}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all cursor-pointer"
+                title="Tải bảng tính Excel danh sách lớp này"
               >
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                 <span>Xuất Excel</span>
-              </a>
+              </button>
             </div>
           </div>
 

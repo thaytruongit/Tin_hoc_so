@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
+import { exportStudentsToExcel } from '@/lib/export-excel';
+import { getAssetUrl } from '@/lib/asset-path';
 
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
@@ -198,14 +200,13 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-            download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          <button
+            onClick={() => exportStudentsToExcel(filteredStudents, 'So_Diem_Tin_Hoc_669_Hoc_Sinh_Mao_Dien.xls')}
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>1-Click Xuất Sổ Điểm Excel .xls</span>
-          </a>
+          </button>
           <Link
             href="/teacher"
             className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
@@ -421,14 +422,13 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <a
-              href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-              download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
-              className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition-all flex items-center justify-center gap-2"
+            <button
+              onClick={() => exportStudentsToExcel(MOCK_STUDENTS, 'Danh_Sach_669_Hoc_Sinh_THCS_Mao_Dien.xls')}
+              className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Tải file Excel 669 tài khoản</span>
-            </a>
+            </button>
           </div>
         </div>
 

@@ -17,7 +17,8 @@ import {
   UserCheck,
   Home,
   Monitor,
-  Award
+  Award,
+  Cloud
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 
@@ -111,11 +112,11 @@ export default function Navbar() {
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Kho Lập Trình Python',
-      href: '/programming',
-      icon: Code2,
-      badge: 'Multi-Test Cases',
-      badgeClass: 'bg-purple-100 text-purple-700',
+      title: 'Cấu Hình Google Drive',
+      href: '/teacher',
+      icon: Cloud,
+      badge: 'Kho nộp bài',
+      badgeClass: 'bg-teal-100 text-teal-700',
     },
   ];
 
