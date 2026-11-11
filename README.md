@@ -4,23 +4,23 @@
 *Dành riêng cho giáo viên & học sinh trường THCS Mão Điền — Thầy Đỗ Mạnh Trường.*
 
 🔗 **Địa chỉ website trực tuyến (GitHub Pages):**  
-👉 **[https://thaytruongit.github.io/teacher/](https://thaytruongit.github.io/teacher/)**
+👉 **[https://thaytruongit.github.io/Tin_hoc_so/](https://thaytruongit.github.io/Tin_hoc_so/)**
 
 ---
 
 ## 📌 1. Cấu hình & Định hướng chiến lược
 Dự án được xây dựng theo mô hình **GitHub First** và triển khai trực tiếp trên **GitHub Pages**:
 * **1A (Phạm vi):** Chuyên sâu môn Tin học Khối 6, 7, 8, 9 theo Chương trình GDPT 2018.
-* **2A (Đối tượng):** Giáo viên và học sinh các lớp trực tiếp giảng dạy (6A1, 7A1, 8A1, 9A1...).
+* **2A (Đối tượng):** Giáo viên và học sinh các lớp trực tiếp giảng dạy (6A10..9A16 — 670 học sinh THCS Mão Điền).
 * **3A (Kiến trúc kỹ thuật):** Ứng dụng độc lập **Next.js (App Router, Static HTML Export) + Supabase (PostgreSQL, Auth, RLS)** chạy mượt mà trực tiếp trên GitHub Pages.
-* **4A (Đăng nhập học sinh):** Giáo viên cấp Mã học sinh + Mật khẩu riêng cho từng học sinh THCS (tránh phụ thuộc tài khoản Google).
+* **4A (Đăng nhập học sinh):** Giáo viên cấp Mã học sinh + Mật khẩu `123` cho từng học sinh THCS (tránh phụ thuộc tài khoản Google).
 * **5C (Ưu tiên triển khai):** Triển khai đồng bộ cả **Phiếu học tập điện tử + Phòng thi trực tuyến chấm điểm tự động + Gamification (XP, Cấp độ, Huy hiệu, Bảng vàng)**.
 
 ---
 
 ## ⚙️ 2. Kích hoạt GitHub Pages (Thực hiện 1 lần duy nhất)
-Để website chạy trực tuyến tại địa chỉ `https://thaytruongit.github.io/teacher/`:
-1. Vào mục **Settings** của repository `thaytruongit/teacher` trên GitHub.
+Để website chạy trực tuyến tại địa chỉ `https://thaytruongit.github.io/Tin_hoc_so/`:
+1. Vào mục **Settings** của repository `thaytruongit/Tin_hoc_so` trên GitHub.
 2. Chọn menu **Pages** (ở thanh menu bên trái).
 3. Tại mục **Build and deployment -> Source**, chọn: **GitHub Actions**.
 4. GitHub Actions workflow `.github/workflows/deploy-pages.yml` sẽ tự động build và xuất bản trang web.
