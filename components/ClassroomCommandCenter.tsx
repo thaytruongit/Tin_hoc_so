@@ -53,7 +53,8 @@ import {
   resolveHelpRequest,
   awardStarToMachine,
   subscribeToClassroomState,
-  createDefaultMachines
+  createDefaultMachines,
+  broadcastLesson
 } from '@/lib/classroom-control';
 import Virtual3DClassroom from './Virtual3DClassroom';
 
@@ -69,8 +70,9 @@ export default function ClassroomCommandCenter({
   onSelectClass,
 }: ClassroomCommandCenterProps) {
   const [controlState, setControlState] = useState<ClassroomControlState>(getClassroomState());
+  const [broadcastGrade, setBroadcastGrade] = useState<number>(controlState.activeGrade || currentClass.grade || 7);
   const [customBroadcast, setCustomBroadcast] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState<number>(controlState.activePeriod || 1);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(controlState.activePeriod || 6);
   const [inspectingMachine, setInspectingMachine] = useState<LabMachineState | null>(null);
 
   // Bộ lọc & Chế độ xem của Bảng Tổng Hợp 24 Máy
@@ -82,14 +84,16 @@ export default function ClassroomCommandCenter({
   useEffect(() => {
     const unsub = subscribeToClassroomState((newState) => {
       setControlState(newState);
+      if (newState.activeGrade) setBroadcastGrade(newState.activeGrade);
+      if (newState.activePeriod) setSelectedPeriod(newState.activePeriod);
     });
     return () => unsub();
   }, []);
 
-  // Lấy dữ liệu 29 tiết học của khối hiện tại
+  // Lấy dữ liệu 29 tiết học của khối đang chọn phát lệnh
   const gradeCurriculum = useMemo(() => {
-    return CURRICULUM_DATA[currentClass.grade] || CURRICULUM_DATA[6];
-  }, [currentClass.grade]);
+    return CURRICULUM_DATA[broadcastGrade] || CURRICULUM_DATA[7] || [];
+  }, [broadcastGrade]);
 
   // Tiết học hiện tại
   const activeLesson = useMemo(() => {
@@ -98,15 +102,13 @@ export default function ClassroomCommandCenter({
 
   // Đồng bộ thông tin tiết và lớp vào trạng thái điều khiển
   const handleSyncLessonToLab = () => {
-    updateClassroomState((prev) => ({
-      ...prev,
-      activeGrade: currentClass.grade,
-      activeClassId: currentClass.id,
-      activeClassName: currentClass.name,
-      activePeriod: selectedPeriod,
-      lessonTitle: `Tiết ${activeLesson.period}: ${activeLesson.title}`,
-      broadcastMessage: `🔔 Bắt đầu Tiết ${activeLesson.period}: ${activeLesson.title} · ${currentClass.name}`,
-    }));
+    broadcastLesson(
+      broadcastGrade,
+      selectedPeriod,
+      `Tiết ${activeLesson.period}: ${activeLesson.title}`,
+      currentClass.name
+    );
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
   };
 
   // Bật/tắt khóa thủ công từng hoạt động (kèm thời gian ấn định)
@@ -494,37 +496,66 @@ export default function ClassroomCommandCenter({
           </div>
         </div>
 
-        {/* KHỐI 2: CHỌN TIẾT HỌC 29 TIẾT & ĐỒNG BỘ */}
+        {/* KHỐI 2: ĐIỀU PHỐI TIẾT DẠY & PHÁT LỆNH TOÀN PHÒNG */}
         <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-blue-600" />
-              <span>Tiết Học Đang Giảng Dạy</span>
+              <span>Điều Phối Bài Dạy Toàn Phòng</span>
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
-              Khối {currentClass.grade} · {currentClass.name}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">
+              Khối {broadcastGrade} · Tiết {selectedPeriod}
             </span>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 block">
-              Chọn Tiết trong Phân phối chương trình:
-            </label>
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-              className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 bg-white"
-            >
-              {gradeCurriculum.map((l) => (
-                <option key={l.period} value={l.period}>
-                  Tiết {l.period}: {l.title}
-                </option>
-              ))}
-            </select>
+          <div className="space-y-3">
+            {/* Bộ chọn Khối của Thầy */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                1. Chọn Khối Giảng Dạy:
+              </label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[6, 7, 8, 9].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => {
+                      setBroadcastGrade(g);
+                      setSelectedPeriod(1);
+                    }}
+                    className={`py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      broadcastGrade === g
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Khối {g}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
-              <div>Chủ đề: <strong>{activeLesson.topic || 'Tin học cơ bản'}</strong></div>
-              <div>Bài tập: <strong>{activeLesson.practicalTask?.title || 'Bài tập thực hành tại lớp'}</strong></div>
+            {/* Bộ chọn Tiết trong 29 tiết */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                2. Chọn Tiết Phân Phối Chương Trình:
+              </label>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+                className="w-full p-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 bg-white"
+              >
+                {gradeCurriculum.map((l) => (
+                  <option key={l.period} value={l.period}>
+                    Tiết {l.period}: {l.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
+              <div className="truncate">Chủ đề: <strong className="text-blue-700">{activeLesson.topic || 'Tin học cơ bản'}</strong></div>
+              <div className="truncate">Thực hành: <strong className="text-slate-800">{activeLesson.practicalTask?.title || 'Bài tập thực hành tại lớp'}</strong></div>
             </div>
           </div>
 
@@ -534,7 +565,7 @@ export default function ClassroomCommandCenter({
             className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Đồng Bộ Tiết Này Tới Toàn Phòng Máy</span>
+            <span>Phát Lệnh Tiết Này Cho 24 Máy Trạm</span>
           </button>
         </div>
 

@@ -319,6 +319,77 @@ export function sendStudentHelpRequest(
   }));
 }
 
+/**
+ * Giáo viên phát lệnh chuyển tiết học cho toàn bộ 24 máy trạm
+ */
+export function broadcastLesson(
+  grade: number,
+  period: number,
+  lessonTitle: string,
+  className?: string
+): ClassroomControlState {
+  return updateClassroomState((prev) => ({
+    ...prev,
+    activeGrade: grade,
+    activePeriod: period,
+    lessonTitle: lessonTitle,
+    activeClassName: className || prev.activeClassName || `Khối ${grade}`,
+    activityLocks: {
+      discovery: true,
+      practice: true,
+      lab: true,
+    },
+    broadcastMessage: `📢 Thầy Đỗ Mạnh Trường: Bắt đầu Khối ${grade} · ${lessonTitle}. Chúc các em học tập hiệu quả!`,
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
+}
+
+/**
+ * Cập nhật điểm và tiến độ của học sinh tại máy trạm
+ */
+export function updateMachineScore(
+  machineId: number,
+  activity: ClassroomActivityKey,
+  score: number,
+  practicalFileName?: string
+): ClassroomControlState {
+  return updateClassroomState((prev) => {
+    const updated = prev.machines.map((m) => {
+      if (m.machineId === machineId) {
+        const nextScoreH1 = activity === 'discovery' ? score : (m.scoreH1 || 0);
+        const nextScoreH2 = activity === 'practice' ? score : (m.scoreH2 || 0);
+        const nextScoreH3 = activity === 'lab' ? score : (m.scoreH3 || 0);
+        
+        let completed = 0;
+        if (nextScoreH1 > 0) completed += 1;
+        if (nextScoreH2 > 0) completed += 1;
+        if (nextScoreH3 > 0) completed += 1;
+
+        const progress = Math.round((completed / 3) * 100);
+        const tot = Number(((nextScoreH1 * 0.3) + (nextScoreH2 * 0.3) + (nextScoreH3 * 0.4)).toFixed(1));
+
+        return {
+          ...m,
+          scoreH1: nextScoreH1,
+          scoreH2: nextScoreH2,
+          scoreH3: nextScoreH3,
+          totalScore: tot,
+          completedTasks: completed,
+          progress: Math.max(m.progress, progress),
+          status: completed === 3 ? ('submitted' as const) : ('active' as const),
+          practicalFileName: practicalFileName || m.practicalFileName,
+        };
+      }
+      return m;
+    });
+
+    return {
+      ...prev,
+      machines: updated,
+    };
+  });
+}
+
 export function subscribeToClassroomState(callback: (state: ClassroomControlState) => void): () => void {
   if (typeof window === 'undefined') return () => {};
 

@@ -75,3 +75,44 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Hiệu ứng chuyển động mô phỏng cho lưới 24 trạm máy sinh động */
+@keyframes flowGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-flowing-bar {
+  background-size: 200% 200%;
+  animation: flowGradient 3s ease infinite;
+}
+
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+.radar-live-pulse {
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+
+@keyframes urgentShake {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-2px); }
+  75% { transform: translateY(2px); }
+}
+
+.alert-shake-gentle {
+  animation: urgentShake 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmerGlow {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.help-pulse-ring {
+  animation: shimmerGlow 2s infinite;
+}
