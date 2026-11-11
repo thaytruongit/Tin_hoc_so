@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -53,7 +53,7 @@ export default function ExamClient() {
     return () => clearInterval(timer);
   }, [submitted]);
 
-  // Giám sát gian lận: Đếm số lần chuyển tab hoặc ẩn trình duyệt
+  // Giám sát gian lận: Đếm số lần chuyển tab, khóa chuột phải, chống sao chép
   useEffect(() => {
     if (submitted) return;
 
@@ -68,12 +68,31 @@ export default function ExamClient() {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
 
+    // Khóa chuột phải & phím tắt kiểm tra mã nguồn (F12, Ctrl+U, Ctrl+Shift+I)
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
+        (e.ctrlKey && (e.key === 'u' || e.key === 'U'))
+      ) {
+        e.preventDefault();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [submitted]);
 
@@ -144,6 +163,35 @@ export default function ExamClient() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Phân tích ma trận nhận thức sau khi nộp bài
+  const cognitiveBreakdown = useMemo(() => {
+    let nbTotal = 0, nbCorrect = 0;
+    let thTotal = 0, thCorrect = 0;
+    let vdTotal = 0, vdCorrect = 0;
+
+    exam.questions.forEach((q) => {
+      const lvl = q.level || 'Nhận biết';
+      const isRight = answers[q.id] === q.correctAnswer;
+
+      if (lvl === 'Nhận biết') {
+        nbTotal++;
+        if (isRight) nbCorrect++;
+      } else if (lvl === 'Thông hiểu') {
+        thTotal++;
+        if (isRight) thCorrect++;
+      } else {
+        vdTotal++;
+        if (isRight) vdCorrect++;
+      }
+    });
+
+    return {
+      nhanBiet: { total: nbTotal, correct: nbCorrect },
+      thongHieu: { total: thTotal, correct: thCorrect },
+      vanDung: { total: vdTotal, correct: vdCorrect },
+    };
+  }, [exam.questions, answers]);
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* THANH ĐIỀU HƯỚNG PHÒNG THI VỚI ĐỒNG HỒ VÀ BẢO MẬT */}
@@ -206,27 +254,148 @@ export default function ExamClient() {
         </div>
       )}
 
-      {/* BÁO CÁO KẾT QUẢ SAU KHI NỘP BÀI */}
+      {/* BÁO CÁO KẾT QUẢ TOÀN DIỆN SAU KHI NỘP BÀI */}
       {submitted && (
-        <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-xl text-center space-y-4 animate-in fade-in">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-            <Trophy className="w-8 h-8" />
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-6 animate-in fade-in">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+              <Trophy className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              Báo Cáo Kết Quả Bài Kiểm Tra Trực Tuyến
+            </h2>
+            <div className="text-5xl font-black text-indigo-600">
+              {score} <span className="text-2xl text-slate-400 font-normal">/ 10đ</span>
+            </div>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              Điểm thi đã được đồng bộ tự động lên cơ sở dữ liệu học sinh của <strong>Thầy Đỗ Mạnh Trường</strong>.
+            </p>
           </div>
-          <h2 className="text-2xl font-black text-slate-900">
-            Kết Quả Bài Kiểm Tra Trực Tuyến
-          </h2>
-          <div className="text-5xl font-black text-indigo-600">
-            {score} <span className="text-2xl text-slate-400 font-normal">/ 10đ</span>
+
+          {/* KHỐI PHÂN TÍCH MA TRẬN NHẬN THỨC THEO CHUẨN BỘ GD&ĐT */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <span>Phân tích kết quả theo ma trận nhận thức</span>
+              </span>
+              <span className="text-[11px] font-bold text-slate-500">Chuẩn GDPT 2018</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Nhận biết */}
+              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 space-y-1">
+                <span className="text-[11px] font-bold text-blue-800">1. Nhận biết</span>
+                <div className="text-lg font-black text-blue-950">
+                  {cognitiveBreakdown.nhanBiet.correct} / {cognitiveBreakdown.nhanBiet.total}
+                  <span className="text-xs font-normal text-blue-700 ml-1">câu</span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-1.5 rounded-full"
+                    style={{
+                      width: `${
+                        cognitiveBreakdown.nhanBiet.total > 0
+                          ? (cognitiveBreakdown.nhanBiet.correct / cognitiveBreakdown.nhanBiet.total) * 100
+                          : 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Thông hiểu */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+                <span className="text-[11px] font-bold text-emerald-800">2. Thông hiểu</span>
+                <div className="text-lg font-black text-emerald-950">
+                  {cognitiveBreakdown.thongHieu.correct} / {cognitiveBreakdown.thongHieu.total}
+                  <span className="text-xs font-normal text-emerald-700 ml-1">câu</span>
+                </div>
+                <div className="w-full bg-emerald-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-emerald-600 h-1.5 rounded-full"
+                    style={{
+                      width: `${
+                        cognitiveBreakdown.thongHieu.total > 0
+                          ? (cognitiveBreakdown.thongHieu.correct / cognitiveBreakdown.thongHieu.total) * 100
+                          : 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Vận dụng */}
+              <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200 space-y-1">
+                <span className="text-[11px] font-bold text-purple-800">3. Vận dụng</span>
+                <div className="text-lg font-black text-purple-950">
+                  {cognitiveBreakdown.vanDung.correct} / {cognitiveBreakdown.vanDung.total}
+                  <span className="text-xs font-normal text-purple-700 ml-1">câu</span>
+                </div>
+                <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-purple-600 h-1.5 rounded-full"
+                    style={{
+                      width: `${
+                        cognitiveBreakdown.vanDung.total > 0
+                          ? (cognitiveBreakdown.vanDung.correct / cognitiveBreakdown.vanDung.total) * 100
+                          : 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Số lần rời màn hình: <strong>{tabSwitches} lần</strong>. Điểm thi và toàn bộ dữ liệu làm bài đã được tự động lưu trữ an toàn vào cơ sở dữ liệu học sinh của Thầy Đỗ Mạnh Trường.
-          </p>
+
+          {/* BÁO CÁO GIÁM SÁT TRUNG THỰC */}
+          <div className="p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs bg-slate-50 border-slate-200">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className={`w-5 h-5 ${tabSwitches > 0 ? 'text-amber-600' : 'text-emerald-600'}`} />
+              <span>
+                Nhật ký giám thị chống gian lận: <strong>{tabSwitches} lần</strong> rời khỏi màn hình bài thi.
+              </span>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full font-bold text-[11px] ${
+                tabSwitches === 0
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {tabSwitches === 0 ? '✅ Nghiêm túc, không vi phạm' : '⚠️ Có hiện tượng rời tab'}
+            </span>
+          </div>
+
+          {/* LỜI NHẬN XÉT CỦA THẦY ĐỖ MẠNH TRƯỜNG */}
+          <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 text-xs text-indigo-950 space-y-1">
+            <span className="font-bold flex items-center gap-1.5 text-indigo-900">
+              <Sparkles className="w-4 h-4 text-indigo-600" />
+              <span>Lời nhận xét của Thầy Đỗ Mạnh Trường:</span>
+            </span>
+            <p className="leading-relaxed pl-5">
+              {score >= 9.0
+                ? 'Xuất sắc! Em nắm rất vững kiến thức và tư duy phân tích rất nhanh. Tiếp tục phát huy nhé!'
+                : score >= 7.0
+                ? 'Bài làm tốt! Em chỉ cần rà soát thêm một số câu ở phần Vận dụng để đạt điểm tối đa.'
+                : score >= 5.0
+                ? 'Em đã đạt yêu cầu cơ bản. Hãy dành thêm thời gian ôn tập lại các bài học trong SGK và trao đổi thêm với Thầy nhé.'
+                : 'Kết quả chưa đạt như mong đợi. Em cần liên hệ với Thầy để được hướng dẫn ôn tập lại các bài học trọng tâm.'}
+            </p>
+          </div>
+
           <div className="pt-2 flex justify-center gap-3">
             <Link
-              href="/student"
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm hover:bg-indigo-700"
+              href="/exams"
+              className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
             >
-              Về không gian học sinh
+              Danh sách đề thi khác
+            </Link>
+            <Link
+              href="/student"
+              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all"
+            >
+              Về Không Gian Học Sinh
             </Link>
           </div>
         </div>
