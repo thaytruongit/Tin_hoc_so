@@ -1,8 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Settings, Users, Database, Shield, KeyRound, Save, CheckCircle2, RefreshCw, ShieldAlert, ArrowRight, Crown } from 'lucide-react';
+import { 
+  Settings, 
+  Users, 
+  Database, 
+  Shield, 
+  KeyRound, 
+  Save, 
+  CheckCircle2, 
+  RefreshCw, 
+  ShieldAlert, 
+  ArrowRight, 
+  Crown,
+  Download,
+  Search,
+  FileSpreadsheet,
+  GraduationCap,
+  Sparkles,
+  School,
+  Lock,
+  Unlock
+} from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 
@@ -13,6 +33,12 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
 
+  // Bộ lọc danh bạ học sinh
+  const [selectedGrade, setSelectedGrade] = useState<number | 'all'>('all');
+  const [selectedClassId, setSelectedClassId] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [resetPassNotice, setResetPassNotice] = useState<string>('');
+
   useEffect(() => {
     setMounted(true);
     const user = getCurrentUser();
@@ -22,7 +48,7 @@ export default function AdminPage() {
     }
   }, []);
 
-  const [siteTitle, setSiteTitle] = useState('THAYTRUONGIT-THCS MÃO ĐIỀN');
+  const [siteTitle, setSiteTitle] = useState('HỆ SINH THÁI TIN HỌC SỐ · THCS MÃO ĐIỀN');
   const [xpPerCorrect, setXpPerCorrect] = useState(10);
   const [saved, setSaved] = useState(false);
 
@@ -43,6 +69,40 @@ export default function AdminPage() {
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+
+  const handleResetPassword = (studentName: string) => {
+    setResetPassNotice(`Đã đặt lại mật khẩu cho ${studentName} về mặc định: 123`);
+    setTimeout(() => setResetPassNotice(''), 3500);
+  };
+
+  // Danh sách học sinh lọc theo Khối, Lớp, Tìm kiếm
+  const filteredStudents = useMemo(() => {
+    let list = [...MOCK_STUDENTS];
+    if (selectedGrade !== 'all') {
+      list = list.filter(s => {
+        const cls = MOCK_CLASSES.find(c => c.id === s.classId);
+        return cls?.grade === selectedGrade;
+      });
+    }
+    if (selectedClassId !== 'all') {
+      list = list.filter(s => s.classId === selectedClassId);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      list = list.filter(s => 
+        s.fullName.toLowerCase().includes(q) ||
+        s.studentCode.toLowerCase().includes(q) ||
+        (s.dob && s.dob.includes(q))
+      );
+    }
+    return list;
+  }, [selectedGrade, selectedClassId, searchTerm]);
+
+  // Danh sách lớp theo Khối đang chọn
+  const classesForFilter = useMemo(() => {
+    if (selectedGrade === 'all') return MOCK_CLASSES;
+    return MOCK_CLASSES.filter(c => c.grade === selectedGrade);
+  }, [selectedGrade]);
 
   if (!mounted) return null;
 
@@ -122,41 +182,168 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* HEADER NỀN SÁNG ĐỒNG BỘ */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      
+      {/* HEADER BANNER SƯ PHẠM */}
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2">
-            Khu vực quản trị hệ thống
+            Đài Chỉ Huy Giáo Viên · Admin 666
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Quản Trị Người Dùng & Hệ Thống
+            Quản Trị 670 Học Sinh &amp; Hệ Thống
           </h1>
-          <p className="text-xs text-blue-100 mt-1">
-            Dành riêng cho Quản trị viên và Giáo viên phụ trách môn Tin học — Thầy Đỗ Mạnh Trường
+          <p className="text-xs sm:text-sm text-blue-100 mt-1">
+            Tổng số: <strong>669 học sinh</strong> · <strong>15 lớp</strong> (Khối 6, 7, 8, 9) · Mật khẩu đồng bộ: <strong>123</strong>
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-400/20 text-emerald-200 text-xs font-bold border border-emerald-400/30">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Hệ thống ổn định
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+            download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>1-Click Xuất Sổ Điểm Excel .xls</span>
+          </a>
+          <Link
+            href="/teacher"
+            className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <Crown className="w-4 h-4 text-amber-300" />
+            <span>Đài Chỉ Huy 24 Trạm</span>
+          </Link>
         </div>
       </div>
 
-      {saved && (
+      {resetPassNotice && (
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2 shadow-xs">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span>Đã lưu thành công cấu hình hệ thống!</span>
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{resetPassNotice}</span>
         </div>
       )}
 
+      {/* ===================================================================== */}
+      {/* 1. KHỐI DANH BẠ 670 HỌC SINH 4 KHỐI (THEO SƠ ĐỒ ĐÀI CHỈ HUY)         */}
+      {/* ===================================================================== */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <span>Danh Bạ 4 Khối 6, 7, 8, 9 — THCS Mão Điền</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Hiển thị {filteredStudents.length} học sinh phù hợp bộ lọc
+            </p>
+          </div>
+
+          {/* THANH TÌM KIẾM NHANH */}
+          <div className="relative min-w-[260px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm theo Tên, Mã HS, Ngày sinh..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-500 font-medium"
+            />
+          </div>
+        </div>
+
+        {/* BỘ LỌC KHỐI & LỚP */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-600 mr-1">Khối:</span>
+          {(['all', 6, 7, 8, 9] as const).map((g) => (
+            <button
+              key={g}
+              onClick={() => {
+                setSelectedGrade(g);
+                setSelectedClassId('all');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                selectedGrade === g
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {g === 'all' ? 'Tất cả 4 khối' : `Khối ${g}`}
+            </button>
+          ))}
+
+          <span className="text-xs font-bold text-slate-600 ml-4 mr-1">Lớp:</span>
+          <select
+            value={selectedClassId}
+            onChange={(e) => setSelectedClassId(e.target.value)}
+            className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-blue-500"
+          >
+            <option value="all">Tất cả lớp ({classesForFilter.length} lớp)</option>
+            {classesForFilter.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.studentCount} HS)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* BẢNG DANH SÁCH HỌC SINH */}
+        <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 text-slate-900 font-bold border-b border-slate-200">
+              <tr>
+                <th className="p-3.5">Mã HS</th>
+                <th className="p-3.5">Họ và Tên</th>
+                <th className="p-3.5">Lớp</th>
+                <th className="p-3.5">Ngày Sinh</th>
+                <th className="p-3.5">Điểm TB</th>
+                <th className="p-3.5">XP Tích Lũy</th>
+                <th className="p-3.5 text-right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium">
+              {filteredStudents.slice(0, 50).map((st) => (
+                <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="p-3.5 font-mono font-bold text-blue-700">{st.studentCode}</td>
+                  <td className="p-3.5 font-bold text-slate-900">{st.fullName}</td>
+                  <td className="p-3.5">
+                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[11px]">
+                      {st.className}
+                    </span>
+                  </td>
+                  <td className="p-3.5 text-slate-500">{st.dob || '2012'}</td>
+                  <td className="p-3.5 font-bold text-emerald-700">{st.averageGrade} / 10đ</td>
+                  <td className="p-3.5 font-bold text-amber-600">{st.totalXp} XP</td>
+                  <td className="p-3.5 text-right">
+                    <button
+                      onClick={() => handleResetPassword(st.fullName)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:text-amber-800 text-slate-600 text-[11px] font-bold transition-all border border-slate-200"
+                    >
+                      Đặt lại pass 123
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredStudents.length > 50 && (
+          <p className="text-xs text-slate-500 text-center font-medium italic">
+            Đang hiển thị 50 / {filteredStudents.length} học sinh. Dùng bộ lọc hoặc tải tệp Excel để xem trọn vẹn 669 tài khoản.
+          </p>
+        )}
+      </div>
+
+      {/* ===================================================================== */}
+      {/* 2. CẤU HÌNH HỆ THỐNG & KẾT NỐI DATABASE                                */}
+      {/* ===================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* SYSTEM CONFIGURATION */}
+        
+        {/* THIẾT LẬP CHUNG */}
         <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
             <Settings className="w-5 h-5 text-blue-600" />
-            <h2 className="font-bold text-lg text-slate-900">Thiết lập chung</h2>
+            <h2 className="font-bold text-lg text-slate-900">Thiết Lập Hệ Sinh Thái Tin Học Số</h2>
           </div>
 
           <form onSubmit={handleSave} className="space-y-5 text-xs sm:text-sm">
@@ -181,7 +368,7 @@ export default function AdminPage() {
                   type="number"
                   value={xpPerCorrect}
                   onChange={(e) => setXpPerCorrect(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 font-bold"
                 />
               </div>
 
@@ -191,9 +378,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue="2025-2026"
+                  defaultValue="2024-2025"
                   disabled
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-bold"
                 />
               </div>
             </div>
@@ -203,46 +390,50 @@ export default function AdminPage() {
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
-              <span>Lưu thay đổi</span>
+              <span>Lưu Cấu Hình Hệ Thống</span>
             </button>
           </form>
         </div>
 
-        {/* DATABASE & USERS STATUS */}
+        {/* THÔNG TIN DATABASE & ĐẶC TẢ */}
         <div className="space-y-6">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
               <Database className="w-5 h-5 text-indigo-600" />
-              Cơ sở dữ liệu Supabase
+              Cơ Sở Dữ Liệu Supabase
             </h3>
             <p className="text-xs text-slate-500">
-              Đã thiết kế 18 bảng theo bản đặc tả `TK.docx` (mục 8)
+              Đồng bộ dữ liệu thời gian thực giữa 24 máy trạm và đài chỉ huy
             </p>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-600">Số lớp học:</span>
-                <span className="font-bold text-slate-900">{MOCK_CLASSES.length} lớp</span>
+                <span className="font-bold text-slate-900">{MOCK_CLASSES.length} lớp chính khóa</span>
               </div>
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-600">Tài khoản học sinh:</span>
                 <span className="font-bold text-slate-900">{MOCK_STUDENTS.length} tài khoản</span>
               </div>
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-600">Bảo mật RLS:</span>
-                <span className="font-bold text-emerald-600">Đã kích hoạt</span>
+                <span className="text-slate-600">Bảo mật phân quyền (RBAC):</span>
+                <span className="font-bold text-emerald-600">Hoạt động</span>
               </div>
             </div>
 
-            <button
-              onClick={() => alert('Đang sao lưu dự phòng toàn bộ cơ sở dữ liệu...')}
-              className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+            <a
+              href="/teacher/downloads/Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+              download="Danh_Sach_Tai_Khoan_Hoc_Sinh_THCS_Mao_Dien.xlsx"
+              className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition-all flex items-center justify-center gap-2"
             >
-              Sao lưu dữ liệu (Backup SQL)
-            </button>
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Tải file Excel 669 tài khoản</span>
+            </a>
           </div>
         </div>
+
       </div>
+
     </div>
   );
 }

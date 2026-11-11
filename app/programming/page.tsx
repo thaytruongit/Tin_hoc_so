@@ -222,10 +222,10 @@ export default function ProgrammingPage() {
           <Code2 className="w-8 h-8 text-blue-600" />
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Luyện Lập Trình Python &amp; C++
+          Võ Đài Python (Pyodide 3.12 WebAssembly)
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-          Thực thi trực tiếp bằng <strong className="text-blue-600 font-bold">Python 3.12 WebAssembly (Pyodide)</strong> ngay trên trình duyệt (không cần cài phần mềm). Tự động chấm điểm Multi-Test Cases chuẩn mực — <strong className="text-slate-800 font-bold">Thầy Đỗ Mạnh Trường</strong>.
+          Thực thi trực tiếp bằng <strong className="text-emerald-700 font-bold">Python 3.12 WebAssembly (Pyodide)</strong> ngay trên trình duyệt (không cần cài phần mềm). Chấm Multi-Test Cases tự động — <strong className="text-slate-800 font-bold">Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
         {/* BỘ LỌC NGÔN NGỮ & KHỐI LỚP */}

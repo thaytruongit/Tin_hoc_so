@@ -20,7 +20,12 @@ import {
   ChevronRight,
   ShieldCheck,
   School,
-  BookOpen
+  Database,
+  Cloud,
+  Eye,
+  Radio,
+  Zap,
+  Crown
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { MOCK_STUDENTS } from '@/lib/mock-data';
@@ -36,283 +41,328 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-12 pb-16 edu-grid-bg">
+    <div className="space-y-10 pb-16 edu-grid-bg min-h-screen">
+      
       {/* ==================================================================== */}
-      {/* 1. HERO BANNER: NỀN SÁNG, HIỆN ĐẠI, KHOA HỌC, CHUẨN SƯ PHẠM */}
+      {/* 1. KHỐI TRUNG TÂM TỔNG CHỈ HUY: HỆ SINH THÁI TIN HỌC SỐ · THCS MÃO ĐIỀN */}
       {/* ==================================================================== */}
-      <section className="relative overflow-hidden bg-white border-b border-slate-200 py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          
-          {/* Huy hiệu trường học */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs sm:text-sm font-bold tracking-wide">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 text-center">
+        
+        {/* HỘP TIÊU ĐỀ ĐỈNH CHÓP THEO SƠ ĐỒ THẦY TRƯỜNG */}
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-300 shadow-md relative">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
             <School className="w-4 h-4 text-blue-600" />
-            <span>TRƯỜNG THCS MÃO ĐIỀN · THỊ XÃ THUẬN THÀNH · BẮC NINH</span>
+            <span>Trường THCS Mão Điền · Thị Xã Thuận Thành · Bắc Ninh</span>
           </div>
 
-          {/* Tiêu đề chính */}
-          <div className="space-y-3 max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              HỆ SINH THÁI HỌC TẬP SỐ{' '}
-              <span className="text-blue-600">
-                MÔN TIN HỌC THCS
-              </span>
-            </h1>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-3xl mx-auto font-normal">
-              Cổng học tập tương tác trực tiếp theo Chương trình GDPT 2018 (Khối 6, 7, 8, 9).
-              Tích hợp phòng thực hành 24 máy trạm cặp đôi, luyện lập trình Python trực tuyến và kiểm tra đánh giá tự động.
-            </p>
-          </div>
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
+            HỆ SINH THÁI TIN HỌC SỐ · THCS MÃO ĐIỀN
+          </h1>
+          <p className="text-sm sm:text-base font-extrabold text-blue-700 mt-1.5 flex items-center justify-center gap-2">
+            <Crown className="w-4 h-4 text-amber-500" />
+            <span>(Tổng Chỉ Huy: Thầy Đỗ Mạnh Trường)</span>
+          </p>
 
-          {/* Chỉ số tổng quan */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto pt-2">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <div className="text-2xl sm:text-3xl font-black text-blue-600">670</div>
-              <div className="text-xs font-semibold text-slate-600 mt-0.5">Học Sinh 4 Khối</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <div className="text-2xl sm:text-3xl font-black text-teal-600">24 Máy</div>
-              <div className="text-xs font-semibold text-slate-600 mt-0.5">Phòng Thực Hành</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <div className="text-2xl sm:text-3xl font-black text-amber-600">29 Tiết</div>
-              <div className="text-xs font-semibold text-slate-600 mt-0.5">Tích Hợp NLS & AI</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-600">100%</div>
-              <div className="text-xs font-semibold text-slate-600 mt-0.5">Chấm Tự Động</div>
-            </div>
-          </div>
-
-          {/* 2 CỔNG ĐĂNG NHẬP THEO PHÂN QUYỀN THỰC TẾ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-6 text-left">
-            
-            {/* CỔNG 1: HỌC SINH */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-white border-2 border-blue-200 hover:border-blue-400 transition-all shadow-sm hover:shadow-md flex flex-col justify-between group">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                    <Laptop className="w-6 h-6" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                    Mật khẩu mặc định: 123
-                  </span>
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    Dành Cho Học Sinh Phòng Máy
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                    Đăng nhập theo Lớp và chọn Máy trạm (Máy 01 – Máy 24). Tác chiến theo cặp 2 bạn cùng máy, hoàn thành 3 hoạt động lớp và nộp bài trực tiếp về Google Drive.
-                  </p>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>Làm bài khám phá ghép thẻ logic & Củng cố 7 câu</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>Luyện viết mã Python 3.12 & Làm bài thi định kỳ</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                href="/login"
-                className="mt-6 w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors shadow-xs"
-              >
-                <span>Vào Phòng Thực Hành Học Sinh</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* CỔNG 2: GIÁO VIÊN */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-white border-2 border-amber-200 hover:border-amber-400 transition-all shadow-sm hover:shadow-md flex flex-col justify-between group">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-                    Mật mã Quản trị: 666
-                  </span>
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
-                    Dành Cho Giáo Viên Phụ Trách
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                    Dành riêng cho <strong>Thầy Đỗ Mạnh Trường</strong>. Nắm quyền điều hành trực tiếp 24 trạm máy trong tiết dạy, tặng Sao khen thưởng, khóa máy và 1-click xuất sổ điểm Excel.
-                  </p>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Giám sát tiến độ 24 máy theo sơ đồ thực tế Ziczac</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Quản lý danh sách 670 học sinh & Xuất file Excel .xls</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                href="/login?role=teacher"
-                className="mt-6 w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2 transition-colors shadow-xs"
-              >
-                <span>Mở Đài Quản Lý Tiết Dạy (Mã 666)</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 2. BỐ TRÍ KHÔNG GIAN HỌC TẬP KHOA HỌC: HỌC SINH & GIÁO VIÊN */}
-      {/* ==================================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            KHÔNG GIAN HỌC TẬP & QUẢN TRỊ SƯ PHẠM
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Phân định rõ ràng chức năng và nhiệm vụ, tạo môi trường học tập tập trung, sạch đẹp và văn minh
+          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto mt-2 leading-relaxed">
+            Hệ thống dạy học số hóa môn Tin học theo chuẩn GDPT 2018. Phân định rõ 2 không gian tác nghiệp thực tế: <strong>Không Gian Của Học Sinh</strong> và <strong>Đài Chỉ Huy Của Giáo Viên</strong>.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* ĐƯỜNG LIÊN KẾT PHÂN NHÁNH KIẾN TRÚC */}
+        <div className="flex flex-col items-center my-4">
+          <div className="w-0.5 h-6 bg-slate-400"></div>
+          <div className="w-full max-w-2xl h-0.5 bg-slate-300 relative">
+            <div className="absolute left-0 -bottom-2 w-0 h-0 border-x-4 border-x-transparent border-t-8 border-t-slate-400"></div>
+            <div className="absolute right-0 -bottom-2 w-0 h-0 border-x-4 border-x-transparent border-t-8 border-t-slate-400"></div>
+          </div>
+        </div>
+
+      </section>
+
+      {/* ==================================================================== */}
+      {/* 2. MA TRẬN 2 KHÔNG GIAN ĐỘC LẬP TỐI ƯU HOÀN TOÀN THEO SƠ ĐỒ THẦY TRƯỜNG */}
+      {/* ==================================================================== */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           
-          {/* CỘT HỌC SINH */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                <Laptop className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">Quyền Hạn Người Học</span>
-                <h3 className="text-lg font-bold text-slate-900">Học Sinh Thực Hiện Các Hoạt Động Nào?</h3>
+          {/* ================================================================ */}
+          {/* NHÁNH 1: KHÔNG GIAN CỦA HỌC SINH (Chiến Binh Số · Buồng Lái Kép 123) */}
+          {/* ================================================================ */}
+          <div className="bg-white rounded-3xl border-2 border-blue-400 shadow-md p-6 sm:p-7 space-y-6 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-2xl pointer-events-none"></div>
+
+            {/* HEADER NHÁNH HỌC SINH */}
+            <div className="border-b border-blue-100 pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-sm">
+                    <Laptop className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                      KHÔNG GIAN CỦA HỌC SINH
+                    </h2>
+                    <p className="text-xs font-bold text-blue-700">
+                      (Chiến Binh Số · Buồng Lái Kép 123)
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/login?role=student"
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs font-bold transition-all border border-blue-200 shrink-0"
+                >
+                  Đăng Nhập (123)
+                </Link>
               </div>
             </div>
 
-            <div className="space-y-3.5">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-blue-800 mb-1">
-                  <Laptop className="w-4 h-4 text-blue-600" />
-                  <span>1. Thực hành cặp đôi tại phòng máy (2 bạn/máy)</span>
+            {/* 4 MODULE CHỨC NĂNG HỌC SINH */}
+            <div className="space-y-4">
+              
+              {/* 1. BUỒNG LÁI LỚP HỌC */}
+              <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200 hover:border-blue-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-xs font-black flex items-center justify-center">1</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Buồng Lái Lớp Học (<code className="text-blue-700 text-xs">/in-class</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/in-class"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <span>Vào lớp</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Ngồi theo số máy được phân công, có nút đổi vai thao tác. Hoàn thành 3 hoạt động: <em>Khám phá bài học</em>, <em>Luyện tập 7 câu chuẩn Bộ</em>, và <em>Nộp file thực hành trực tiếp về thư mục Google Drive của Thầy Trường</em>.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Ghép cặp 2 bạn:</strong> Phân vai Kỹ thuật viên & Thư ký (Cơ trưởng - Cơ phó) tại 1 máy trạm.</li>
+                  <li><strong>3 Hoạt động lớp:</strong> Khám phá logic đôi + Luyện tập 7 câu chuẩn Bộ + Nộp bài Drive thời gian thực.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-emerald-800 mb-1">
-                  <Code2 className="w-4 h-4 text-emerald-600" />
-                  <span>2. Luyện lập trình Python trực tuyến</span>
+              {/* 2. VÕ ĐÀI PYTHON */}
+              <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200 hover:border-emerald-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-black flex items-center justify-center">2</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Võ Đài Python (<code className="text-emerald-700 text-xs">/programming</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/programming"
+                    className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1"
+                  >
+                    <span>Viết mã</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Chạy code Python trực tiếp trên trình duyệt bằng Pyodide WebAssembly (không cần cài phần mềm). Tự động chấm điểm theo từng Test Case chuẩn xác cho Khối 8, 9 và đội tuyển học sinh giỏi.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Pyodide 3.12 WebAssembly:</strong> Chạy code trực tiếp trên trình duyệt, không cần cài phần mềm.</li>
+                  <li><strong>Chấm Multi-Test Cases tự động:</strong> Kiểm tra tự động từng trường hợp kiểm thử, phản hồi tức thì.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-rose-800 mb-1">
-                  <FileCheck2 className="w-4 h-4 text-rose-600" />
-                  <span>3. Tham gia phòng kiểm tra định kỳ</span>
+              {/* 3. ĐẤU BOSS THI CỬ */}
+              <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200 hover:border-rose-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-rose-600 text-white text-xs font-black flex items-center justify-center">3</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Đấu Boss Thi Cử (<code className="text-rose-700 text-xs">/exams</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/exams"
+                    className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1"
+                  >
+                    <span>Vào thi</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Làm bài thi Giữa kỳ và Cuối kỳ. Hệ thống kích hoạt radar cảnh báo chuyển tab, khóa phím tắt để đảm bảo tính công bằng và trả kết quả phổ điểm ngay sau khi nộp.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Đề kiểm tra định kỳ có bảo mật:</strong> 8 Bộ đề Giữa kỳ & Cuối kỳ chuẩn Ma trận nhận thức Bộ GD&ĐT.</li>
+                  <li><strong>Radar cảnh báo chống chuyển tab:</strong> Khóa phím tắt, ghi nhận vi phạm để đảm bảo tính minh bạch.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-amber-800 mb-1">
-                  <Award className="w-4 h-4 text-amber-600" />
-                  <span>4. Theo dõi góc học tập & Bảng thành tích</span>
+              {/* 4. HỒ SƠ & BẢNG VÀNG */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 hover:border-amber-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-amber-600 text-white text-xs font-black flex items-center justify-center">4</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Hồ Sơ & Bảng Vàng (<code className="text-amber-800 text-xs">/student</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/student"
+                    className="text-xs font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1"
+                  >
+                    <span>Xem hồ sơ</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Xem điểm số từng tiết học, tích lũy điểm chuyên cần, nhận huy hiệu thi đua và phấn đấu vào Top học sinh tiêu biểu của lớp và toàn trường.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Theo dõi tiến độ học tập:</strong> Lưu lịch sử điểm số 29 tiết học SGK Kết nối tri thức.</li>
+                  <li><strong>XP, Cấp độ, Huy hiệu:</strong> Bảng thi đua top học sinh xuất sắc và chuỗi ngày chăm chỉ.</li>
+                </ul>
               </div>
+
             </div>
 
+            {/* NÚT TRUY CẬP NHANH HỌC SINH */}
             <Link
               href="/in-class"
-              className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              <span>Xem Giao Diện Thực Hành Của Học Sinh</span>
-              <ChevronRight className="w-4 h-4" />
+              <Laptop className="w-4 h-4" />
+              <span>VÀO BUỒNG LÁI LỚP HỌC (CHIẾN BINH SỐ)</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          {/* CỘT GIÁO VIÊN */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                <Monitor className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Trách Nhiệm & Quyền Hạn</span>
-                <h3 className="text-lg font-bold text-slate-900">Giáo Viên Giữ Vai Trò Quản Trị Gì?</h3>
+          {/* ================================================================ */}
+          {/* NHÁNH 2: ĐÀI CHỈ HUY CỦA GIÁO VIÊN (Thầy Đỗ Mạnh Trường · Admin 666) */}
+          {/* ================================================================ */}
+          <div className="bg-white rounded-3xl border-2 border-amber-400 shadow-md p-6 sm:p-7 space-y-6 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl pointer-events-none"></div>
+
+            {/* HEADER NHÁNH GIÁO VIÊN */}
+            <div className="border-b border-amber-100 pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-black shadow-sm">
+                    <Crown className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                      ĐÀI CHỈ HUY CỦA GIÁO VIÊN
+                    </h2>
+                    <p className="text-xs font-bold text-amber-800">
+                      (Thầy Đỗ Mạnh Trường · Admin 666)
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/login?role=teacher"
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold transition-all border border-amber-300 shrink-0"
+                >
+                  Mở Khóa (666)
+                </Link>
               </div>
             </div>
 
-            <div className="space-y-3.5">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-1">
-                  <Monitor className="w-4 h-4 text-amber-600" />
-                  <span>1. Giám sát 24 máy trạm theo sơ đồ Ziczac thực tế</span>
+            {/* 4 MODULE CHỨC TRÁCH GIÁO VIÊN */}
+            <div className="space-y-4">
+              
+              {/* 1. ĐÀI CHỈ HUY 24 TRẠM */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 hover:border-amber-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-amber-600 text-white text-xs font-black flex items-center justify-center">1</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Đài Chỉ Huy 24 Trạm (<code className="text-amber-800 text-xs">/teacher</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/teacher"
+                    className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1"
+                  >
+                    <span>Điều hành</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Quan sát toàn bộ 24 máy trạm theo sơ đồ phòng máy (Hàng 1: 4-3-2-1; Hàng 2: 5-6-7-8...). Biết chính xác máy nào đang làm bài, máy nào đã nộp và máy nào cần trợ giúp.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Giám sát Realtime sơ đồ Ziczac:</strong> Lưới 24 trạm máy chuẩn phòng THCS Mão Điền (4-3-2-1 / 5-6-7-8...).</li>
+                  <li><strong>Buff Sao Vàng, Khóa/Mở trạm máy:</strong> Điều khiển đồng loạt hoặc can thiệp từng cặp máy tức thì.</li>
+                  <li><strong>Chiếu Hologram bài mẫu xuất sắc:</strong> Trình chiếu sản phẩm tiêu biểu lên màn hình lớn cả phòng.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-1">
-                  <Star className="w-4 h-4 text-amber-600" />
-                  <span>2. Khen thưởng Sao Vàng & Trình chiếu bài mẫu</span>
+              {/* 2. QUẢN TRỊ 670 HS */}
+              <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200 hover:border-blue-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-xs font-black flex items-center justify-center">2</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Quản Trị 670 HS (<code className="text-blue-700 text-xs">/admin</code>)
+                    </h3>
+                  </div>
+                  <Link
+                    href="/admin"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <span>Quản trị</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Bấm tặng Sao Vàng khen thưởng kịp thời để khích lệ học sinh. Chọn sản phẩm thực hành xuất sắc để chiếu phóng to lên màn hình lớn cho cả lớp cùng học hỏi.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Danh bạ 4 khối 6, 7, 8, 9:</strong> Quản lý danh sách 669 học sinh của 15 lớp chính khóa THCS Mão Điền.</li>
+                  <li><strong>1-Click Xuất Sổ Điểm Excel .xls:</strong> Xuất toàn bộ điểm số thực hành, trắc nghiệm chuẩn biểu mẫu.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-1">
-                  <Lock className="w-4 h-4 text-amber-600" />
-                  <span>3. Khóa / Mở máy đồng loạt theo tiến trình tiết dạy</span>
+              {/* 3. ĐIỀU PHỐI TIẾT DẠY & NGÂN HÀNG ĐỀ */}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 hover:border-indigo-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-black flex items-center justify-center">3</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Điều Phối Tiết Dạy &amp; Ngân Hàng Đề
+                    </h3>
+                  </div>
+                  <Link
+                    href="/teacher"
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                  >
+                    <span>Ngân hàng đề</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  1-Click khóa màn hình máy học sinh khi Thầy cần hướng dẫn lý thuyết tập trung; mở máy khi đến giờ thực hành; tiếp nhận chuông báo SOS cần hỗ trợ kỹ thuật.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Kích hoạt đợt thi:</strong> Mở hoặc đóng phòng kiểm tra trực tuyến có chống gian lận.</li>
+                  <li><strong>Xem phổ điểm &amp; Phân tích nhận thức:</strong> Thống kê phổ điểm 3D theo 3 mức độ (Biết - Hiểu - Vận dụng).</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-1">
-                  <FileSpreadsheet className="w-4 h-4 text-amber-600" />
-                  <span>4. Quản lý 670 học sinh & Xuất Sổ Điểm Excel .xls</span>
+              {/* 4. CẤU HÌNH GOOGLE DRIVE THỰC HÀNH */}
+              <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200 hover:border-teal-300 transition-all space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-teal-600 text-white text-xs font-black flex items-center justify-center">4</span>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Cấu Hình Google Drive Thực Hành
+                    </h3>
+                  </div>
+                  <Link
+                    href="/teacher"
+                    className="text-xs font-bold text-teal-600 hover:text-teal-800 flex items-center gap-1"
+                  >
+                    <span>Kết nối</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Quản lý danh sách học sinh 4 khối (6, 7, 8, 9). Tự động tổng hợp điểm Hoạt động 1, Hoạt động 2, Hoạt động 3 và 1-click xuất sổ điểm điện tử chuẩn quy định Bộ GD&ĐT.
-                </p>
+                <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
+                  <li><strong>Đồng bộ kho nộp bài phòng máy:</strong> Tự động đẩy file thực hành lên Google Drive của Thầy Trường.</li>
+                  <li><strong>Google Apps Script Web App:</strong> Kiểm tra kết nối và bảo mật luồng tải dữ liệu trực tiếp.</li>
+                </ul>
               </div>
+
             </div>
 
+            {/* NÚT TRUY CẬP NHANH GIÁO VIÊN */}
             <Link
               href="/teacher"
-              className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 px-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              <span>Vào Bàn Quản Lý Giáo Viên (Thầy Trường)</span>
-              <ChevronRight className="w-4 h-4" />
+              <Crown className="w-4 h-4" />
+              <span>MỞ ĐÀI CHỈ HUY 24 TRẠM (THẦY TRƯỜNG - MÃ 666)</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -320,9 +370,9 @@ export default function HomePage() {
       </section>
 
       {/* ==================================================================== */}
-      {/* 3. BẢNG VINH DANH HỌC TỐT MÔN TIN HỌC */}
+      {/* 3. BẢNG VÀNG VINH DANH HỌC TỐT MÔN TIN HỌC (TÍCH HỢP TỰ NHIÊN)        */}
       {/* ==================================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -334,9 +384,13 @@ export default function HomePage() {
                 <p className="text-xs text-slate-500">Tuyên dương học sinh có thành tích xuất sắc và tích cực nhất trường THCS Mão Điền</p>
               </div>
             </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 self-start sm:self-center">
-              Năm học 2024 - 2025
-            </span>
+            <Link
+              href="/student"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              <span>Xem chi tiết xếp hạng toàn trường</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -354,7 +408,7 @@ export default function HomePage() {
                 </div>
                 <div className="font-bold text-slate-900 text-base">{st.fullName}</div>
                 <div className="text-xs text-blue-700 font-semibold mt-0.5">Lớp {st.className} · Khối {st.className.charAt(0)}</div>
-                <div className="mt-2 text-xs font-bold text-amber-700 bg-amber-100/60 inline-block px-2.5 py-1 rounded-full">
+                <div className="mt-2 text-xs font-bold text-amber-800 bg-amber-100/70 inline-block px-2.5 py-1 rounded-full">
                   {st.totalXp.toLocaleString()} Điểm Tích Lũy
                 </div>
               </div>
@@ -363,54 +417,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 4. QUY TRÌNH 6 BƯỚC SƯ PHẠM VÀNG (ID: #quy-trinh-6-buoc) */}
-      {/* ==================================================================== */}
-      <section id="quy-trinh-6-buoc" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4">
-        <div className="border-b border-slate-200 pb-4">
-          <span className="text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
-            Quy Trình Nghiên Cứu Sư Phạm Chuẩn Y
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2">
-            6 BƯỚC TỔ CHỨC DẠY HỌC TIN HỌC HIỆN ĐẠI
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Quy trình chuẩn hóa giúp giáo viên và học sinh vận hành trơn tru từng tiết dạy tại phòng máy
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-blue-600 block">Bước 1: Danh Sách & Căn Cước 670 HS</span>
-            <p className="text-xs text-slate-600">Định danh mã học sinh, mật khẩu 123, tài khoản quản trị Thầy Trường 666.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-teal-600 block">Bước 2: Phòng Thực Hành 24 Máy Trạm</span>
-            <p className="text-xs text-slate-600">Sơ đồ 24 máy ziczac (4-3-2-1 / 5-6-7-8), ghép cặp 2 học sinh cùng máy đổi vai.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-emerald-600 block">Bước 3: 3 Hoạt Động Trực Tiếp Trên Lớp</span>
-            <p className="text-xs text-slate-600">Khám phá ghép thẻ logic + Luyện tập 7 câu chuẩn Bộ + Nộp bài Drive thời gian thực.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-amber-600 block">Bước 4: Đài Quản Lý Tiết Dạy Của Thầy</span>
-            <p className="text-xs text-slate-600">Giám sát 24 trạm, khen thưởng Sao Vàng, khóa máy & 1-click xuất sổ điểm Excel.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-purple-600 block">Bước 5: Luyện Lập Trình Python Trực Tuyến</span>
-            <p className="text-xs text-slate-600">Pyodide 3.12 WebAssembly chạy thuần trình duyệt, tự động chấm Multi-Test Cases.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-            <span className="text-xs font-bold text-rose-600 block">Bước 6: Phòng Thi Đánh Giá Định Kỳ</span>
-            <p className="text-xs text-slate-600">8 Đề thi Giữa/Cuối kỳ chuẩn Ma trận nhận thức Bộ GD&ĐT, giám sát chống gian lận.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="text-center pt-8 border-t border-slate-200 text-xs text-slate-500">
-        <p className="font-semibold text-slate-700">TRƯỜNG TRUNG HỌC CƠ SỞ MÃO ĐIỀN · BẮC NINH</p>
-        <p className="text-slate-500 mt-1">Phụ trách chuyên môn & Quản trị hệ thống: Thầy Đỗ Mạnh Trường</p>
+      {/* FOOTER ĐỒNG BỘ */}
+      <footer className="text-center pt-8 border-t border-slate-200 text-xs text-slate-500 max-w-7xl mx-auto px-4">
+        <p className="font-bold text-slate-800">TRƯỜNG TRUNG HỌC CƠ SỞ MÃO ĐIỀN · BẮC NINH</p>
+        <p className="text-slate-500 mt-1">Phụ trách chuyên môn &amp; Quản trị hệ thống: Thầy Đỗ Mạnh Trường (Mã 666)</p>
       </footer>
     </div>
   );

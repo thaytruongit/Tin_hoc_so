@@ -20,10 +20,10 @@ export default function ExamsPage() {
           <FileCheck2 className="w-8 h-8 text-blue-600" />
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Kiểm Tra Đánh Giá Định Kỳ Môn Tin Học
+          Đấu Boss Thi Cử (Phòng Thi Định Kỳ Chuẩn Bộ)
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-          8 Bộ đề kiểm tra định kỳ chuẩn Ma trận nhận thức Bộ GD&amp;ĐT (Giữa kỳ &amp; Cuối kỳ Khối 6, 7, 8, 9). Giám sát thi cử công bằng, phân tích kết quả tức thời — <strong className="text-slate-800 font-bold">Thầy Đỗ Mạnh Trường</strong>.
+          8 Bộ đề kiểm tra định kỳ có bảo mật chuẩn Ma trận nhận thức Bộ GD&amp;ĐT (Khối 6, 7, 8, 9). Radar cảnh báo chống chuyển tab &amp; gian lận — <strong className="text-slate-800 font-bold">Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
         {/* BỘ LỌC KHỐI LỚP */}

@@ -31,32 +31,29 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 2: Khối lớp */}
+          {/* Column 2: Không gian học sinh */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-              Chương trình Tin học
+              Không Gian Học Sinh (123)
             </h4>
             <ul className="space-y-2 text-sm text-slate-600">
-              <li><Link href="/subjects?grade=6" className="hover:text-blue-600 transition-colors">Tin học Khối 6 (CT 2018)</Link></li>
-              <li><Link href="/subjects?grade=7" className="hover:text-blue-600 transition-colors">Tin học Khối 7 (Bảng tính Excel)</Link></li>
-              <li><Link href="/subjects?grade=8" className="hover:text-blue-600 transition-colors">Tin học Khối 8 (Thuật toán & Lập trình)</Link></li>
-              <li><Link href="/subjects?grade=9" className="hover:text-blue-600 transition-colors">Tin học Khối 9 (An toàn số & Mạng)</Link></li>
-              <li><Link href="/programming" className="hover:text-blue-600 transition-colors">Luyện Lập Trình: Python / C++</Link></li>
+              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">1. Buồng Lái Lớp Học (3 HĐ)</Link></li>
+              <li><Link href="/programming" className="hover:text-blue-600 transition-colors">2. Võ Đài Python (Wasm 3.12)</Link></li>
+              <li><Link href="/exams" className="hover:text-blue-600 transition-colors">3. Đấu Boss Thi Cử (Chống lận)</Link></li>
+              <li><Link href="/student" className="hover:text-blue-600 transition-colors">4. Hồ Sơ &amp; Bảng Vàng (XP)</Link></li>
             </ul>
           </div>
 
-          {/* Column 3: Chức năng */}
+          {/* Column 3: Đài chỉ huy giáo viên */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-              Tính năng chính
+              Đài Chỉ Huy Giáo Viên (666)
             </h4>
             <ul className="space-y-2 text-sm text-slate-600">
-              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">Hoạt động trên lớp</Link></li>
-              <li><Link href="/worksheets" className="hover:text-blue-600 transition-colors">Phiếu học tập điện tử</Link></li>
-              <li><Link href="/exams" className="hover:text-blue-600 transition-colors">Phòng kiểm tra trực tuyến</Link></li>
-              <li><Link href="/achievements" className="hover:text-blue-600 transition-colors">Bảng vàng thi đua</Link></li>
-              <li><Link href="/student" className="hover:text-blue-600 transition-colors">Không gian học sinh</Link></li>
-              <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">Kênh Giáo viên (Thầy Trường)</Link></li>
+              <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">1. Đài Chỉ Huy 24 Trạm (Ziczac)</Link></li>
+              <li><Link href="/admin" className="hover:text-blue-600 transition-colors">2. Quản Trị 670 HS (Xuất Excel)</Link></li>
+              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">3. Điều Phối Tiết Dạy &amp; Đề Thi</Link></li>
+              <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">4. Cấu Hình Google Drive Thực Hành</Link></li>
             </ul>
           </div>
         </div>

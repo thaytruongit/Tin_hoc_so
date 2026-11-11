@@ -2,33 +2,33 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { 
-  Laptop, 
-  CheckCircle2, 
-  HelpCircle, 
-  FileSpreadsheet, 
-  Download, 
-  UploadCloud, 
-  Sparkles, 
-  Award, 
-  Layers, 
-  Check, 
-  X, 
-  Monitor, 
-  BookOpen, 
-  Clock, 
-  AlertCircle, 
-  ArrowRight, 
-  Users, 
-  Repeat, 
-  Trophy, 
-  ArrowLeftRight, 
-  Send, 
-  Presentation, 
-  ChevronLeft, 
-  ChevronRight, 
-  Maximize2, 
-  Minimize2, 
+import {
+  Laptop,
+  CheckCircle2,
+  HelpCircle,
+  FileSpreadsheet,
+  Download,
+  UploadCloud,
+  Sparkles,
+  Award,
+  Layers,
+  Check,
+  X,
+  Monitor,
+  BookOpen,
+  Clock,
+  AlertCircle,
+  ArrowRight,
+  Users,
+  Repeat,
+  Trophy,
+  ArrowLeftRight,
+  Send,
+  Presentation,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
   FolderOpen,
   Lock,
   Unlock,
@@ -38,11 +38,11 @@ import {
 import confetti from 'canvas-confetti';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
-import { 
-  ClassroomControlState, 
-  getClassroomState, 
+import {
+  ClassroomControlState,
+  getClassroomState,
   getDefaultClassroomState,
-  subscribeToClassroomState 
+  subscribeToClassroomState
 } from '@/lib/classroom-control';
 import { uploadPracticalToDriveOnline } from '@/lib/google-drive-service';
 import { CognitiveLevel, PracticalSubmission } from '@/lib/types';
@@ -52,7 +52,7 @@ function InClassContent() {
   const [mounted, setMounted] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [controlState, setControlState] = useState<ClassroomControlState>(getDefaultClassroomState());
-  
+
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
   const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'worksheet' | 'reinforcement' | 'practice' | 'slide'>('worksheet');
@@ -133,7 +133,7 @@ function InClassContent() {
         if (urlTab && ['worksheet', 'reinforcement', 'practice', 'slide'].includes(urlTab)) {
           setActiveTab(urlTab as any);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }, []);
 
@@ -376,7 +376,7 @@ function InClassContent() {
         submittedAt: 'Vừa xong',
         status: 'graded',
         score: 10,
-        teacherFeedback: driveRes.status === 'ok' 
+        teacherFeedback: driveRes.status === 'ok'
           ? `Đã nhận sản phẩm thành công lên Google Drive của Thầy Đỗ Mạnh Trường: ${driveRes.folderPath}. Đạt chuẩn kỹ thuật thao tác!`
           : 'Đã ghi nhận nộp bài thực hành thành công!',
       };
@@ -425,10 +425,10 @@ function InClassContent() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            Phòng Thực Hành Tin Học Tương Tác
+            Buồng Lái Lớp Học (Chiến Binh Số · Buồng Lái Kép 123)
           </h1>
           <p className="text-xs sm:text-sm text-slate-600">
-            Chương trình GDPT 2018 THCS Mão Điền: <strong className="text-blue-600">1. Khám phá kiến thức</strong> ➔ <strong className="text-indigo-600">2. Luyện tập 7 câu</strong> ➔ <strong className="text-emerald-600">3. Thực hành &amp; Nộp Drive</strong>.
+            Ghép cặp 2 bạn (Cơ trưởng - Cơ phó) · 3 HĐ: <strong className="text-blue-600">Khám phá logic đôi</strong> ➔ <strong className="text-indigo-600">Luyện tập 7 câu chuẩn Bộ</strong> ➔ <strong className="text-emerald-600">Nộp Drive thời gian thực</strong>.
           </p>
         </div>
 
@@ -479,13 +479,12 @@ function InClassContent() {
                 <button
                   key={g}
                   onClick={() => handleSelectGrade(g)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isCur
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : isAllowed
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${isCur
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : isAllowed
                       ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       : 'bg-slate-50 text-slate-400 cursor-not-allowed border border-dashed border-slate-200'
-                  }`}
+                    }`}
                   title={!isAllowed ? `Khóa: Học sinh chỉ được chọn Khối ${currentUser?.studentGrade}` : `Khối ${g}`}
                 >
                   {!isAllowed ? <Lock className="w-3 h-3 text-slate-400" /> : <Unlock className="w-3 h-3 text-blue-600" />}
@@ -509,11 +508,10 @@ function InClassContent() {
               <button
                 key={p.id}
                 onClick={() => handleSelectPeriod(p.period)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                  selectedPeriodNum === p.period
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${selectedPeriodNum === p.period
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
                 title={p.title}
               >
                 <span>T.{p.period}</span>
@@ -531,11 +529,10 @@ function InClassContent() {
         {/* TAB 1: KHÁM PHÁ CẶP ĐÔI */}
         <button
           onClick={() => setActiveTab('worksheet')}
-          className={`pb-3 flex items-center gap-2 transition-all relative ${
-            activeTab === 'worksheet'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-bold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 flex items-center gap-2 transition-all relative ${activeTab === 'worksheet'
+            ? 'border-b-2 border-blue-600 text-blue-600 font-bold'
+            : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <Users className="w-4 h-4 text-blue-600" />
           <span>HĐ 1: Khám phá kiến thức</span>
@@ -553,11 +550,10 @@ function InClassContent() {
         {/* TAB 2: LUYỆN TẬP */}
         <button
           onClick={() => setActiveTab('reinforcement')}
-          className={`pb-3 flex items-center gap-2 transition-all relative ${
-            activeTab === 'reinforcement'
-              ? 'border-b-2 border-indigo-600 text-indigo-600 font-bold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 flex items-center gap-2 transition-all relative ${activeTab === 'reinforcement'
+            ? 'border-b-2 border-indigo-600 text-indigo-600 font-bold'
+            : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <Sparkles className="w-4 h-4 text-indigo-600" />
           <span>HĐ 2: Luyện tập 7 câu chuẩn Bộ</span>
@@ -575,11 +571,10 @@ function InClassContent() {
         {/* TAB 3: THỰC HÀNH TRÊN MÁY */}
         <button
           onClick={() => setActiveTab('practice')}
-          className={`pb-3 flex items-center gap-2 transition-all relative ${
-            activeTab === 'practice'
-              ? 'border-b-2 border-emerald-600 text-emerald-600 font-bold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 flex items-center gap-2 transition-all relative ${activeTab === 'practice'
+            ? 'border-b-2 border-emerald-600 text-emerald-600 font-bold'
+            : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <Laptop className="w-4 h-4 text-emerald-600" />
           <span>HĐ 3: Thực hành &amp; Nộp Drive</span>
@@ -597,11 +592,10 @@ function InClassContent() {
         {/* TAB 4: SLIDE BÀI GIẢNG */}
         <button
           onClick={() => setActiveTab('slide')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'slide'
-              ? 'border-b-2 border-amber-600 text-amber-700 font-bold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 flex items-center gap-2 transition-all ${activeTab === 'slide'
+            ? 'border-b-2 border-amber-600 text-amber-700 font-bold'
+            : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <Presentation className="w-4 h-4 text-amber-600" />
           <span>Slide Bài Giảng</span>
@@ -722,13 +716,12 @@ function InClassContent() {
               return (
                 <div
                   key={q.id}
-                  className={`p-6 rounded-3xl border transition-all ${
-                    isSubmitted
-                      ? isCorrect
-                        ? 'border-emerald-200 bg-emerald-50/20'
-                        : 'border-rose-200 bg-rose-50/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
-                  }`}
+                  className={`p-6 rounded-3xl border transition-all ${isSubmitted
+                    ? isCorrect
+                      ? 'border-emerald-200 bg-emerald-50/20'
+                      : 'border-rose-200 bg-rose-50/20'
+                    : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-center gap-2">
@@ -1094,9 +1087,8 @@ function InClassContent() {
             </div>
 
             {/* TRÌNH PHÁT SLIDE */}
-            <div className={`rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 text-white shadow-2xl transition-all ${
-              isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
-            }`}>
+            <div className={`rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 text-white shadow-2xl transition-all ${isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
+              }`}>
               <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
@@ -1179,11 +1171,10 @@ function InClassContent() {
                       key={sIdx}
                       type="button"
                       onClick={() => setCurrentSlideIndex(sIdx)}
-                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center justify-center ${
-                        currentSlideIndex === sIdx
-                          ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-400'
-                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                      }`}
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center justify-center ${currentSlideIndex === sIdx
+                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-400'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
                     >
                       {sIdx + 1}
                     </button>

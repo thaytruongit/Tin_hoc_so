@@ -55,106 +55,92 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // MENU HỌC SINH (GIAO DIỆN SÁNG SỦA, THÂN THIỆN)
+  // MENU HỌC SINH (CHIẾN BINH SỐ · BUỒNG LÁI KÉP 123)
   const STUDENT_MENUS = [
     {
-      title: 'Phòng Thực Hành',
+      title: 'Buồng Lái Lớp Học',
       href: '/in-class',
       icon: Laptop,
-      badge: '3 Hoạt động',
+      badge: '3 HĐ',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Luyện Lập Trình',
+      title: 'Võ Đài Python',
       href: '/programming',
       icon: Code2,
-      badge: 'Python 3.12',
+      badge: 'Pyodide 3.12',
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Kiểm Tra Định Kỳ',
+      title: 'Đấu Boss Thi Cử',
       href: '/exams',
       icon: FileCheck2,
-      badge: '8 Bộ đề',
+      badge: 'Radar chống lận',
       badgeClass: 'bg-rose-100 text-rose-700',
     },
     {
-      title: 'Góc Học Tập & Điểm',
+      title: 'Hồ Sơ & Bảng Vàng',
       href: '/student',
       icon: Award,
-      badge: 'Thành tích',
+      badge: 'XP & Cấp độ',
       badgeClass: 'bg-amber-100 text-amber-700',
     },
   ];
 
-  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG)
+  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · ADMIN 666)
   const TEACHER_MENUS = [
     {
-      title: 'Quản Lý Phòng Máy',
+      title: 'Đài Chỉ Huy 24 Trạm',
       href: '/teacher',
       icon: Monitor,
-      badge: '24 Trạm',
+      badge: 'Radar Ziczac',
       badgeClass: 'bg-amber-100 text-amber-700',
     },
     {
-      title: 'Danh Sách Học Sinh',
+      title: 'Quản Trị 670 HS',
       href: '/admin',
       icon: Users,
-      badge: '670 HS',
+      badge: 'Xuất Excel .xls',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Điều Phối Bài Học',
+      title: 'Điều Phối & Đề Thi',
       href: '/in-class',
       icon: Layers,
-      badge: '29 Tiết',
+      badge: '29 Tiết chuẩn',
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Kho Bài Lập Trình',
+      title: 'Kho Lập Trình Python',
       href: '/programming',
       icon: Code2,
-      badge: 'Python',
+      badge: 'Multi-Test Cases',
       badgeClass: 'bg-purple-100 text-purple-700',
-    },
-    {
-      title: 'Ngân Hàng Đề Thi',
-      href: '/exams',
-      icon: FileCheck2,
-      badge: 'Bộ GD&ĐT',
-      badgeClass: 'bg-rose-100 text-rose-700',
     },
   ];
 
   // MENU KHÁCH (CHƯA ĐĂNG NHẬP)
   const GUEST_MENUS = [
     {
-      title: 'Trang Chủ',
+      title: 'Tổng Quan Hệ Thống',
       href: '/',
       icon: Home,
-      badge: 'Cổng thông tin',
+      badge: 'Sơ đồ',
       badgeClass: 'bg-slate-100 text-slate-700',
     },
     {
-      title: 'Quy Trình Sư Phạm',
-      href: '/#quy-trinh-6-buoc',
-      icon: Layers,
-      badge: '6 Bước',
+      title: 'Không Gian Học Sinh',
+      href: '/login?role=student',
+      icon: Laptop,
+      badge: 'Mã 123',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Thực Hành Python',
-      href: '/programming',
-      icon: Code2,
-      badge: 'Trực tuyến',
-      badgeClass: 'bg-emerald-100 text-emerald-700',
-    },
-    {
-      title: 'Đề Thi Mẫu',
-      href: '/exams',
-      icon: FileCheck2,
-      badge: 'Khối 6-9',
-      badgeClass: 'bg-rose-100 text-rose-700',
+      title: 'Đài Chỉ Huy Giáo Viên',
+      href: '/login?role=teacher',
+      icon: Monitor,
+      badge: 'Mã 666',
+      badgeClass: 'bg-amber-100 text-amber-700',
     },
   ];
 

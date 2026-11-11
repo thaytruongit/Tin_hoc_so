@@ -433,6 +433,17 @@ export default function TeacherDashboard() {
           <ClipboardCheck className="w-4 h-4" />
           <span>Đóng / Mở đề thi</span>
         </button>
+        <button
+          onClick={() => setActiveTab('drive_config')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'drive_config'
+              ? 'border-b-2 border-teal-600 text-teal-700 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Cloud className="w-4 h-4 text-teal-600" />
+          <span>Cấu hình Google Drive</span>
+        </button>
       </div>
 
       {/* TAB 1: ROSTER & CẤP TÀI KHOẢN (MÔ HÌNH 4A CHUẨN) */}
@@ -1278,6 +1289,103 @@ export default function TeacherDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB: CẤU HÌNH GOOGLE DRIVE THỰC HÀNH */}
+      {activeTab === 'drive_config' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold border border-teal-200">
+              <Cloud className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Cấu Hình Google Drive Thực Hành Phòng Máy
+              </h3>
+              <p className="text-xs text-slate-500">
+                Đồng bộ trực tiếp tệp nộp bài (.xlsx, .docx, .py, .cpp) của 24 máy trạm về Google Drive của Thầy Đỗ Mạnh Trường
+              </p>
+            </div>
+          </div>
+
+          {saveGasMsg && (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{saveGasMsg}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Google Apps Script Web App URL:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={gasUrlInput}
+                    onChange={(e) => setGasUrlInput(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-mono text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                  <button
+                    onClick={handleSaveGasUrl}
+                    className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs"
+                  >
+                    Lưu URL
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  URL triển khai từ Google Apps Script với quyền truy cập Anyone (bất kỳ ai có đường link).
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleTestDriveConnection}
+                  disabled={connectionStatus.loading}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-2 border border-slate-200"
+                >
+                  <RefreshCw className={`w-4 h-4 ${connectionStatus.loading ? 'animate-spin text-teal-600' : 'text-slate-600'}`} />
+                  <span>{connectionStatus.loading ? 'Đang kiểm tra kết nối...' : 'Kiểm tra kết nối Google Drive'}</span>
+                </button>
+
+                {connectionStatus.result && (
+                  <div className={`mt-3 p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                    connectionStatus.result.success
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}>
+                    {connectionStatus.result.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{connectionStatus.result.message}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* HỘP HƯỚNG DẪN CẤU TRÚC THƯ MỤC DRIVE */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+                <FolderCheck className="w-4 h-4 text-teal-600" />
+                <span>Quy chuẩn thư mục tự động:</span>
+              </h4>
+              <p className="text-slate-600 leading-relaxed text-[11px]">
+                Khi học sinh nộp bài từ bất kỳ máy nào trong 24 trạm, hệ thống sẽ tự động tạo cấu trúc thư mục trên Google Drive của Thầy Trường:
+              </p>
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 font-mono text-[10px] text-slate-700 space-y-1">
+                <div>📁 THCS_Mao_Dien_Tin_Hoc/</div>
+                <div className="pl-3">📁 Khoi_7/</div>
+                <div className="pl-6">📁 Tiet_08_Thuc_Hanh_Excel/</div>
+                <div className="pl-9 text-teal-700">📄 7A10_May08_An_Mai.xlsx</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -94,6 +94,9 @@ export default function StudentDashboard() {
             />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider">
+                  Hồ Sơ &amp; Bảng Vàng
+                </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">
                   {studentDisplayCode}
                 </span>
