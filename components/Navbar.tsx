@@ -6,19 +6,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Laptop,
   Code2,
-  Crown,
-  Trophy,
-  Radio,
+  FileCheck2,
+  GraduationCap,
   Users,
   Layers,
   LogIn,
   LogOut,
   Menu,
   X,
-  ShieldCheck,
-  Sparkles,
+  UserCheck,
   Home,
-  Monitor
+  Monitor,
+  Award
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 
@@ -56,114 +55,109 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // =========================================================================
-  // BỐ TRÍ MENU THEO ĐÚNG NGỮ CẢNH THỰC TẾ & PHÂN QUYỀN KHOA HỌC
-  // =========================================================================
-
-  // 1. MENU DÀNH CHO HỌC SINH (Chiến Binh Số THCS Mão Điền)
+  // MENU HỌC SINH (GIAO DIỆN SÁNG SỦA, THÂN THIỆN)
   const STUDENT_MENUS = [
     {
-      title: 'Buồng Lái Lớp Học',
+      title: 'Phòng Thực Hành',
       href: '/in-class',
       icon: Laptop,
-      badge: '3 Hoạt Động',
-      color: 'from-cyan-500 to-teal-500',
+      badge: '3 Hoạt động',
+      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Võ Đài Python',
+      title: 'Luyện Lập Trình',
       href: '/programming',
       icon: Code2,
-      badge: 'Chấm tự động',
-      color: 'from-purple-500 to-indigo-500',
+      badge: 'Python 3.12',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Đấu Boss Thi Cử',
+      title: 'Kiểm Tra Định Kỳ',
       href: '/exams',
-      icon: Crown,
-      badge: 'Chống gian lận',
-      color: 'from-rose-500 to-red-500',
+      icon: FileCheck2,
+      badge: '8 Bộ đề',
+      badgeClass: 'bg-rose-100 text-rose-700',
     },
     {
-      title: 'Hồ Sơ & Thành Tích',
+      title: 'Góc Học Tập & Điểm',
       href: '/student',
-      icon: Trophy,
-      badge: 'Bảng Vàng XP',
-      color: 'from-amber-500 to-yellow-500',
+      icon: Award,
+      badge: 'Thành tích',
+      badgeClass: 'bg-amber-100 text-amber-700',
     },
   ];
 
-  // 2. MENU DÀNH CHO GIÁO VIÊN (Thầy Đỗ Mạnh Trường - Tổng Chỉ Huy Admin)
+  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG)
   const TEACHER_MENUS = [
     {
-      title: 'Đài Chỉ Huy 24 Trạm',
+      title: 'Quản Lý Phòng Máy',
       href: '/teacher',
-      icon: Radio,
-      badge: 'Realtime',
-      color: 'from-amber-500 to-orange-500',
+      icon: Monitor,
+      badge: '24 Trạm',
+      badgeClass: 'bg-amber-100 text-amber-700',
     },
     {
-      title: 'Quản Trị 670 HS',
+      title: 'Danh Sách Học Sinh',
       href: '/admin',
       icon: Users,
-      badge: '4 Khối',
-      color: 'from-blue-500 to-cyan-500',
+      badge: '670 HS',
+      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Điều Phối Tiết Dạy',
+      title: 'Điều Phối Bài Học',
       href: '/in-class',
       icon: Layers,
-      badge: '29 Tiết GDPT',
-      color: 'from-teal-500 to-emerald-500',
+      badge: '29 Tiết',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Võ Đài Lập Trình',
+      title: 'Kho Bài Lập Trình',
       href: '/programming',
       icon: Code2,
-      badge: 'Multi-test',
-      color: 'from-purple-500 to-indigo-500',
+      badge: 'Python',
+      badgeClass: 'bg-purple-100 text-purple-700',
     },
     {
       title: 'Ngân Hàng Đề Thi',
       href: '/exams',
-      icon: Crown,
-      badge: '8 Đề Boss',
-      color: 'from-rose-500 to-red-500',
+      icon: FileCheck2,
+      badge: 'Bộ GD&ĐT',
+      badgeClass: 'bg-rose-100 text-rose-700',
     },
   ];
 
-  // 3. MENU DÀNH CHO KHÁCH (Chưa Đăng Nhập)
+  // MENU KHÁCH (CHƯA ĐĂNG NHẬP)
   const GUEST_MENUS = [
     {
       title: 'Trang Chủ',
       href: '/',
       icon: Home,
-      badge: 'Metaverse',
-      color: 'from-cyan-500 to-blue-500',
+      badge: 'Cổng thông tin',
+      badgeClass: 'bg-slate-100 text-slate-700',
     },
     {
-      title: 'Quy Trình 6 Bước',
+      title: 'Quy Trình Sư Phạm',
       href: '/#quy-trinh-6-buoc',
       icon: Layers,
-      badge: 'Chuẩn Bộ',
-      color: 'from-teal-500 to-emerald-500',
+      badge: '6 Bước',
+      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Võ Đài Python Demo',
+      title: 'Thực Hành Python',
       href: '/programming',
       icon: Code2,
-      badge: 'Wasm 3.12',
-      color: 'from-purple-500 to-indigo-500',
+      badge: 'Trực tuyến',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Đấu Boss Thi Cử',
+      title: 'Đề Thi Mẫu',
       href: '/exams',
-      icon: Crown,
-      badge: '8 Bộ Đề',
-      color: 'from-rose-500 to-red-500',
+      icon: FileCheck2,
+      badge: 'Khối 6-9',
+      badgeClass: 'bg-rose-100 text-rose-700',
     },
   ];
 
-  // Xác định mảng Menu dựa trên Vai trò người dùng thực tế
   const activeMenus = !mounted || user.role === 'guest'
     ? GUEST_MENUS
     : user.role === 'teacher'
@@ -171,31 +165,31 @@ export default function Navbar() {
     : STUDENT_MENUS;
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/95 border-b border-cyan-500/25 shadow-2xl shadow-cyan-950/40">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
           
-          {/* LOGO CHÍNH THỨC */}
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-cyan-400 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-neon-cyan/50 group-hover:scale-105 transition-all border border-cyan-300/50">
-              <Laptop className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse text-cyan-200" />
+          {/* LOGO CHÍNH THỨC SƯ PHẠM */}
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm group-hover:bg-blue-700 transition-colors">
+              <Laptop className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm sm:text-base text-white tracking-wider glow-text-cyan">
+                <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
                   TIN HỌC SỐ
                 </span>
-                <span className="px-1.5 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-[9px] sm:text-[10px] text-cyan-300 font-extrabold uppercase">
-                  MÃO ĐIỀN
+                <span className="px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[10px] text-blue-700 font-bold uppercase">
+                  Mão Điền
                 </span>
               </div>
-              <span className="text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider block">
-                {user.role === 'teacher' ? 'ĐÀI TỔNG CHỈ HUY · THẦY TRƯỜNG' : 'THẦY ĐỖ MẠNH TRƯỜNG'}
+              <span className="text-xs text-slate-500 font-medium block">
+                {user.role === 'teacher' ? 'Quản Lý Tiết Dạy · Thầy Đỗ Mạnh Trường' : 'THCS Mão Điền · Thầy Đỗ Mạnh Trường'}
               </span>
             </div>
           </Link>
 
-          {/* THANH ĐIỀU HƯỚNG THEO NGỮ CẢNH VAI TRÒ */}
+          {/* MENU DESKTOP */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {activeMenus.map((item) => {
               const Icon = item.icon;
@@ -205,15 +199,15 @@ export default function Navbar() {
                 <Link
                   key={item.title}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black transition-all relative border ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all border ${
                     isActive
-                      ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400 shadow-neon-cyan/40 scale-105'
-                      : 'text-slate-300 hover:text-white bg-slate-900/60 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-50'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-300 animate-pulse' : 'text-slate-400'}`} />
-                  <span className="whitespace-nowrap">{item.title}</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase text-white bg-gradient-to-r ${item.color}`}>
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span>{item.title}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${item.badgeClass}`}>
                     {item.badge}
                   </span>
                 </Link>
@@ -221,80 +215,76 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* GÓC PHẢI: KHU VỰC ĐỊNH DANH PHÂN QUYỀN */}
+          {/* GÓC PHẢI: TRẠNG THÁI NGƯỜI DÙNG */}
           <div className="flex items-center gap-2 shrink-0">
             {!mounted || !user.isLoggedIn ? (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-neon-cyan/40 transition-all border border-cyan-300/40 hover:scale-105"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all hover:scale-[1.02]"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Vào Buồng Lái</span>
+                <LogIn className="w-4 h-4" />
+                <span>Đăng Nhập Phòng Máy</span>
               </Link>
             ) : user.role === 'teacher' ? (
-              /* GIAO DIỆN TỔNG CHỈ HUY THẦY TRƯỜNG */
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/60 border border-amber-500/40 text-xs shadow-neon-gold/20">
-                  <Crown className="w-4 h-4 text-amber-400 animate-pulse" />
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                  <UserCheck className="w-4 h-4 text-amber-600" />
                   <div className="text-left">
-                    <span className="block font-black text-amber-300 text-xs leading-none">Thầy Đỗ Mạnh Trường</span>
-                    <span className="text-[9px] font-bold text-amber-400/80 uppercase">Tổng Chỉ Huy (Admin)</span>
+                    <span className="block font-bold text-slate-800 text-xs leading-none">Thầy Đỗ Mạnh Trường</span>
+                    <span className="text-[10px] text-amber-700 font-semibold">Giáo Viên Phụ Trách</span>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
                   title="Đăng xuất khỏi hệ thống"
-                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-rose-500/20 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-400 transition-all"
+                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition-colors border border-slate-200"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              /* GIAO DIỆN PHI HÀNH ĐOÀN HỌC SINH (BUỒNG LÁI KÉP) */
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-xs shadow-neon-cyan/20">
-                  <div className="w-6 h-6 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-black text-[10px] text-cyan-300">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs">
+                  <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-[10px]">
                     {machineNum ? `M${machineNum.padStart(2, '0')}` : 'HS'}
                   </div>
-                  <div className="text-left max-w-[140px] truncate">
-                    <span className="block font-black text-cyan-200 text-xs leading-none truncate">
+                  <div className="text-left max-w-[150px] truncate">
+                    <span className="block font-bold text-slate-900 text-xs truncate">
                       {user.pairNames || user.studentName}
                     </span>
-                    <span className="text-[9px] font-bold text-cyan-400/80 uppercase">
+                    <span className="text-[10px] text-blue-700 font-medium">
                       Lớp {user.studentClass || 'Mão Điền'}
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  title="Đăng xuất khỏi buồng lái"
-                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-rose-500/20 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-400 transition-all"
+                  title="Đăng xuất"
+                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition-colors border border-slate-200"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             )}
 
-            {/* NÚT MỞ MOBILE MENU */}
+            {/* MOBILE TOGGLE */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+              className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
               aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
+
         </div>
       </div>
 
       {/* MOBILE MENU */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-cyan-500/20 bg-slate-950/98 px-4 py-4 space-y-2 max-h-[calc(100vh-5rem)] overflow-y-auto">
-          <div className="text-[11px] font-black uppercase text-cyan-400 tracking-wider px-2 pb-1 border-b border-cyan-500/20 flex items-center justify-between">
-            <span>
-              {user.role === 'teacher' ? 'Bàn Chỉ Huy Giáo Viên' : user.role === 'student' ? 'Buồng Lái Học Sinh' : 'Hệ Sinh Thái Tin Học Số'}
-            </span>
-            <span className="text-[10px] text-slate-400">THCS Mão Điền</span>
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-2 shadow-lg">
+          <div className="text-xs font-bold uppercase text-slate-400 px-2 pb-1 border-b border-slate-100">
+            {user.role === 'teacher' ? 'Quản Trị Giáo Viên' : user.role === 'student' ? 'Học Sinh Phòng Máy' : 'Menu Điều Hướng'}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
             {activeMenus.map((item) => {
@@ -306,17 +296,17 @@ export default function Navbar() {
                   key={item.title}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                     isActive
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-cyan-500/40'
+                      ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4 text-cyan-400" />
-                    <span className="font-bold text-sm text-white">{item.title}</span>
+                    <Icon className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-semibold">{item.title}</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase text-white bg-gradient-to-r ${item.color}`}>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.badgeClass}`}>
                     {item.badge}
                   </span>
                 </Link>
