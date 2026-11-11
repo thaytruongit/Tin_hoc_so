@@ -57,8 +57,13 @@ export default function ClassroomSyncWatcher() {
     return null;
   }
 
-  // Nếu người dùng là Giáo viên hoặc đang ở trang giáo viên thì không cần xem thông báo phòng máy
+  // Nếu người dùng chưa đăng nhập, hoặc đang ở trang chủ/login, hoặc là Giáo viên thì không hiện các thông báo phòng máy
+  const isAuthPage = pathname === '/' || pathname === '/login' || pathname.startsWith('/login');
   const isTeacher = currentUser?.role === 'teacher' || pathname.startsWith('/teacher') || pathname.startsWith('/admin');
+  
+  if (!currentUser?.isLoggedIn || isTeacher || isAuthPage) {
+    return null;
+  }
 
   const handleSendHelp = (e: React.FormEvent) => {
     e.preventDefault();

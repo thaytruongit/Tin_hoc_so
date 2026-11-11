@@ -18,7 +18,8 @@ import {
   Home,
   Monitor,
   Award,
-  Cloud
+  Cloud,
+  School
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 
@@ -120,30 +121,8 @@ export default function Navbar() {
     },
   ];
 
-  // MENU KHÁCH (CHƯA ĐĂNG NHẬP)
-  const GUEST_MENUS = [
-    {
-      title: 'Tổng Quan Hệ Thống',
-      href: '/',
-      icon: Home,
-      badge: 'Sơ đồ',
-      badgeClass: 'bg-slate-100 text-slate-700',
-    },
-    {
-      title: 'Không Gian Học Sinh',
-      href: '/login?role=student',
-      icon: Laptop,
-      badge: 'Mã 123',
-      badgeClass: 'bg-blue-100 text-blue-700',
-    },
-    {
-      title: 'Bàn Quản Lý Giáo Viên',
-      href: '/login?role=teacher',
-      icon: Monitor,
-      badge: 'Mã 666',
-      badgeClass: 'bg-amber-100 text-amber-700',
-    },
-  ];
+  // MENU KHÁCH (CHƯA ĐĂNG NHẬP: KHÔNG HIỂN THỊ MENU RƯỜM RÀ TRÊN HEADER)
+  const GUEST_MENUS: any[] = [];
 
   const activeMenus = !mounted || user.role === 'guest'
     ? GUEST_MENUS
@@ -205,13 +184,10 @@ export default function Navbar() {
           {/* GÓC PHẢI: TRẠNG THÁI NGƯỜI DÙNG */}
           <div className="flex items-center gap-2 shrink-0">
             {!mounted || !user.isLoggedIn ? (
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all hover:scale-[1.02]"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Đăng Nhập Phòng Máy</span>
-              </Link>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 font-bold">
+                <School className="w-4 h-4 text-blue-600" />
+                <span>Phòng Thực Hành 24 Máy · 670 HS</span>
+              </div>
             ) : user.role === 'teacher' ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">

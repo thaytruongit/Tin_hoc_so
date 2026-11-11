@@ -363,7 +363,7 @@ export default function ClassroomCommandCenter({
     <div className="space-y-6">
       {/* 1. BẢNG ĐIỀU HÀNH 3 CÔNG TẮC & ĐIỀU KHIỂN NHỊP TIẾT DẠY */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* KHỐI 1: BỘ 3 CÔNG TẮC KHÓA/MỞ THỦ CÔNG KÈM THỜI GIAN ẤN ĐỊNH */}
         <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -378,11 +378,10 @@ export default function ClassroomCommandCenter({
 
           <div className="space-y-3">
             {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI (10 phút) */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.discovery
-                ? 'bg-indigo-50/60 border-indigo-200 text-indigo-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.discovery
+              ? 'bg-indigo-50/60 border-indigo-200 text-indigo-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Users className="w-4 h-4 text-indigo-600" />
@@ -396,11 +395,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('discovery')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.discovery
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.discovery
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.discovery ? (
                   <>
@@ -417,11 +415,10 @@ export default function ClassroomCommandCenter({
             </div>
 
             {/* HOẠT ĐỘNG 2: LUYỆN TẬP 7 CÂU (7 phút) */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.practice
-                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.practice
+              ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
@@ -435,11 +432,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('practice')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.practice
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.practice
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.practice ? (
                   <>
@@ -456,11 +452,10 @@ export default function ClassroomCommandCenter({
             </div>
 
             {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY (15 phút) */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.lab
-                ? 'bg-purple-50/60 border-purple-200 text-purple-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.lab
+              ? 'bg-purple-50/60 border-purple-200 text-purple-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Laptop className="w-4 h-4 text-purple-600" />
@@ -474,11 +469,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('lab')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.lab
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.lab
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.lab ? (
                   <>
@@ -523,11 +517,10 @@ export default function ClassroomCommandCenter({
                       setBroadcastGrade(g);
                       setSelectedPeriod(1);
                     }}
-                    className={`py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                      broadcastGrade === g
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
+                    className={`py-1.5 rounded-xl text-xs font-bold transition-all border ${broadcastGrade === g
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
                   >
                     Khối {g}
                   </button>
@@ -614,27 +607,24 @@ export default function ClassroomCommandCenter({
             <button
               type="button"
               onClick={() => setViewMode('both')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === 'both' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'both' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               👁️ Xem Song Song Cả Hai
             </button>
             <button
               type="button"
               onClick={() => setViewMode('3d')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === '3d' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${viewMode === '3d' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               🎨 Phòng Học 3D Isometric
             </button>
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === 'table' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               📊 Bảng Điểm 24 Máy &amp; Xuất Excel
             </button>
@@ -831,7 +821,7 @@ export default function ClassroomCommandCenter({
                         )}
                       </td>
                       <td className="py-3 px-4 text-slate-600 font-semibold">{m.student2Name || '—'}</td>
-                      
+
                       {/* ĐIỂM HĐ1 */}
                       <td className="py-3 px-3 text-center">
                         <span className="font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
