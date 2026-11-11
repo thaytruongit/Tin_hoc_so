@@ -181,15 +181,13 @@ export default function InteractiveDiscoveryPair({
               </button>
             </div>
             <div className="space-y-1 text-[11px]">
-              <div className={`p-1.5 rounded-xl flex items-center gap-2 ${
-                currentRoleTurn === 'A' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-blue-100'
-              }`}>
+              <div className={`p-1.5 rounded-xl flex items-center gap-2 ${currentRoleTurn === 'A' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-blue-100'
+                }`}>
                 <span>🖱️ Thành viên 1 (Thao tác máy):</span>
                 <strong>{student1Name}</strong>
               </div>
-              <div className={`p-1.5 rounded-xl flex items-center gap-2 ${
-                currentRoleTurn === 'B' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-blue-100'
-              }`}>
+              <div className={`p-1.5 rounded-xl flex items-center gap-2 ${currentRoleTurn === 'B' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-blue-100'
+                }`}>
                 <span>📖 Thành viên 2 (Đối soát SGK):</span>
                 <strong>{student2Name || 'Chưa ghép bạn'}</strong>
               </div>
@@ -364,13 +362,12 @@ export default function InteractiveDiscoveryPair({
                       disabled={isSubmitted || isLocked}
                       value={currentChoice}
                       onChange={(e) => handleSelectDropdown(idx, e.target.value)}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                        isSubmitted
-                          ? currentChoice === fb.correctAnswer
-                            ? 'bg-emerald-100 border-emerald-400 text-emerald-800 font-bold'
-                            : 'bg-rose-100 border-rose-400 text-rose-800 line-through'
-                          : 'bg-white border-blue-400 text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20'
-                      }`}
+                      className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${isSubmitted
+                        ? currentChoice === fb.correctAnswer
+                          ? 'bg-emerald-100 border-emerald-400 text-emerald-800 font-bold'
+                          : 'bg-rose-100 border-rose-400 text-rose-800 line-through'
+                        : 'bg-white border-blue-400 text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+                        }`}
                     >
                       <option value="">-- Chọn từ khuyết --</option>
                       {(wordBank || [fb.correctAnswer, 'Khác', 'Không xác định']).map((w) => (
@@ -420,13 +417,12 @@ export default function InteractiveDiscoveryPair({
                     type="button"
                     disabled={isSubmitted || isLocked}
                     onClick={() => handleSelectLeft(pair.left)}
-                    className={`w-full p-3 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
-                      isSelected
-                        ? 'bg-purple-100 border-purple-500 text-purple-900 ring-2 ring-purple-400/40 shadow-xs'
-                        : isConnected
+                    className={`w-full p-3 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${isSelected
+                      ? 'bg-purple-100 border-purple-500 text-purple-900 ring-2 ring-purple-400/40 shadow-xs'
+                      : isConnected
                         ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300'
-                    }`}
+                      }`}
                   >
                     <span>{pair.left}</span>
                     {isConnected && <Check className="w-4 h-4 text-emerald-600" />}

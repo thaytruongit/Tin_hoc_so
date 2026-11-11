@@ -34,6 +34,7 @@ export default function Navbar() {
   const [user, setUser] = useState<UserSession>({ isLoggedIn: false, role: 'guest' });
   const [machineNum, setMachineNum] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentTabQuery, setCurrentTabQuery] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -41,6 +42,11 @@ export default function Navbar() {
     setUser(currentUser);
     const mId = localStorage.getItem('truong_machine_id');
     if (mId) setMachineNum(mId);
+
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      setCurrentTabQuery(sp.get('tab') || 'in-class');
+    }
   }, [pathname]);
 
   const handleLogout = () => {
@@ -108,12 +114,10 @@ export default function Navbar() {
       title: 'Lập Trình HSG',
       href: '/programming',
       icon: Code2,
-      badge: 'HSG',
-      badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold',
     });
   }
 
-  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666)
+  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666) - 5 CHỨC NĂNG CỐT LÕI
   const TEACHER_MENUS: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Quản Lý Lớp Học Số',
@@ -137,15 +141,8 @@ export default function Navbar() {
     },
     {
       title: 'Bảng Điểm Học Kỳ',
-      href: '/gradebook',
+      href: '/teacher?tab=gradebook',
       icon: FileSpreadsheet,
-    },
-    {
-      title: 'Lập Trình Python HSG',
-      href: '/programming',
-      icon: Code2,
-      badge: 'HSG',
-      badgeClass: 'bg-indigo-100 text-indigo-700 font-bold',
     },
   ];
 
@@ -190,7 +187,13 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 flex-nowrap overflow-x-auto no-scrollbar py-1">
             {activeMenus.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== '/' && !item.href.includes('#') && !item.href.includes('?') && pathname.startsWith(item.href));
+              const isTeacherLinkActive = user.role === 'teacher' && pathname === '/teacher' && (
+                (item.href === '/teacher' && (!currentTabQuery || currentTabQuery === 'in-class')) ||
+                (item.href.includes('tab=') && item.href.includes(`tab=${currentTabQuery}`))
+              );
+              const isActive = isTeacherLinkActive || (user.role !== 'teacher' && (
+                pathname === item.href || (item.href !== '/' && !item.href.includes('#') && !item.href.includes('?') && pathname.startsWith(item.href))
+              ));
 
               return (
                 <Link

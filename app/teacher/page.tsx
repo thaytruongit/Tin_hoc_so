@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Users,
   FileText,
@@ -50,38 +50,55 @@ import {
   Star,
   Trophy,
   Share2,
-  School
+  School,
+  Save,
+  Filter
 } from 'lucide-react';
 import {
   MOCK_CLASSES,
   MOCK_STUDENTS,
   MOCK_EXAMS,
-  MOCK_SUBMISSIONS,
   MOCK_HOMEWORK_SUBMISSIONS,
   MOCK_IN_CLASS_LESSONS
 } from '@/lib/mock-data';
 import { ClassItem, Student, PracticalSubmission, HomeworkSubmission, Exam } from '@/lib/types';
 import { getCurrentUser, UserSession, isStudentDesignatedHSG, setStudentDesignatedHSG } from '@/lib/auth';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
-import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
+import { getGasWebAppUrl, setGasWebAppUrl } from '@/lib/google-drive-service';
 import ClassroomCommandCenter from '@/components/ClassroomCommandCenter';
 import { fetchClassExamResultsFromCloud, CloudExamResult } from '@/lib/supabase-service';
 import { exportStudentsToExcel } from '@/lib/export-excel';
 import { selectClassForClassroom, getClassroomState } from '@/lib/classroom-control';
 
-type TeacherTab = 'in-class' | 'class-roster' | 'exams' | 'homework';
+export type TeacherTab = 'in-class' | 'class-roster' | 'exams' | 'homework' | 'gradebook';
+
+export interface OfficialGradeRow {
+  studentCode: string;
+  fullName: string;
+  className: string;
+  tx1: number; // ĐĐGtx 1: Thực hành phòng máy
+  tx2: number; // ĐĐGtx 2: Khám phá kiến thức
+  tx3: number; // ĐĐGtx 3: Bài tập về nhà
+  tx4: number; // ĐĐGtx 4: Kỹ năng số & AI
+  gk: number;  // ĐĐGgk: Giữa kỳ (hệ số 2)
+  ck: number;  // ĐĐGck: Cuối kỳ (hệ số 3)
+  dtb: number; // Điểm trung bình học kỳ
+  rank: 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt';
+  comment: string;
+}
 
 function TeacherDashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
 
-  // MẶC ĐỊNH KHỐI 6 (BỎ HOÀN TOÀN 'TẤT CẢ LỚP' THEO CHỈ ĐẠO CỦA THẦY TRƯỜNG)
+  // MẶC ĐỊNH KHỐI 6 (BỎ HOÀN TOÀN 'TẤT CẢ LỚP')
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<number>(6);
-  const [selectedClassId, setSelectedClassId] = useState<string>('c-6a10'); // Lớp 6A10
+  const [selectedClassId, setSelectedClassId] = useState<string>('c-6a10'); // Mặc định Lớp 6A10
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState('');
 
-  // 4 CHỨC NĂNG QUẢN TRỊ CỐT LÕI
+  // 5 CHỨC NĂNG QUẢN TRỊ CHÍNH TÁCH RIÊNG HOÀN TOÀN
   const [activeTab, setActiveTab] = useState<TeacherTab>('in-class');
 
   // ĐỒNG BỘ QUERY PARAM URL (?tab=...)
@@ -93,16 +110,24 @@ function TeacherDashboardContent() {
       setActiveTab('exams');
     } else if (tabParam === 'homework') {
       setActiveTab('homework');
+    } else if (tabParam === 'gradebook') {
+      setActiveTab('gradebook');
     } else if (tabParam === 'in-class' || tabParam === 'orchestration') {
       setActiveTab('in-class');
     }
   }, [searchParams]);
 
-  // STATE LỚP VÀ HỌC SINH (HỖ TRỢ THÊM / SỬA / XOÁ)
+  // HÀM CHUYỂN TAB ĐỒNG THỜI CẬP NHẬT URL
+  const switchTab = (tab: TeacherTab) => {
+    setActiveTab(tab);
+    router.push(`/teacher?tab=${tab}`, { scroll: false });
+  };
+
+  // STATE DANH SÁCH LỚP VÀ HỌC SINH
   const [classList, setClassList] = useState<ClassItem[]>(MOCK_CLASSES);
   const [studentList, setStudentList] = useState<Student[]>(MOCK_STUDENTS);
 
-  // MODAL QUẢN LÝ LỚP
+  // MODAL QUẢN LÝ LỚP HỌC
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [showEditClassModal, setShowEditClassModal] = useState(false);
   const [newClassName, setNewClassName] = useState('');
@@ -116,7 +141,7 @@ function TeacherDashboardContent() {
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentDob, setNewStudentDob] = useState('2012-05-15');
 
-  // STATE QUẢN LÝ ĐỀ THI
+  // STATE ĐỀ THI & KIỂM TRA
   const [exams, setExams] = useState<Exam[]>(MOCK_EXAMS);
   const [showCreateExamModal, setShowCreateExamModal] = useState(false);
   const [newExamTitle, setNewExamTitle] = useState('');
@@ -124,7 +149,7 @@ function TeacherDashboardContent() {
   const [newExamDuration, setNewExamDuration] = useState<number>(45);
   const [newExamType, setNewExamType] = useState<'thường xuyên' | 'giữa kỳ' | 'cuối kỳ'>('giữa kỳ');
 
-  // STATE QUẢN LÝ BÀI TẬP VỀ NHÀ
+  // STATE BÀI TẬP VỀ NHÀ
   const [homeworkSubs, setHomeworkSubs] = useState<HomeworkSubmission[]>(MOCK_HOMEWORK_SUBMISSIONS);
   const [showAssignHwModal, setShowAssignHwModal] = useState(false);
   const [hwLessonNum, setHwLessonNum] = useState<number>(1);
@@ -142,41 +167,58 @@ function TeacherDashboardContent() {
   const [hwTt22Result, setHwTt22Result] = useState<'Đạt' | 'Chưa đạt'>('Đạt');
   const [hwFeedback, setHwFeedback] = useState<string>('Bài làm rất tốt, trình bày sạch đẹp và đúng quy cách!');
 
-  // STATE SUPABASE KẾT QUẢ THI
+  // STATE KẾT QUẢ THI SUPABASE
   const [examResultsList, setExamResultsList] = useState<CloudExamResult[]>([]);
   const [isLoadingExamResults, setIsLoadingExamResults] = useState<boolean>(false);
 
-  // STATE GOOGLE DRIVE CONFIG
-  const [gasUrlInput, setGasUrlInput] = useState<string>('');
-  const [showDriveConfig, setShowDriveConfig] = useState<boolean>(false);
-  const [connectionStatus, setConnectionStatus] = useState<{ loading: boolean; result?: { success: boolean; message: string; version?: string } }>({ loading: false });
+  // STATE BẢNG ĐIỂM HỌC KỲ (GRADEBOOK)
+  const [customGradebook, setCustomGradebook] = useState<Record<string, OfficialGradeRow>>({});
+  const [editingStudentCode, setEditingStudentCode] = useState<string | null>(null);
+  const [tempEditScores, setTempEditScores] = useState<Partial<OfficialGradeRow>>({});
+  const [selectedSemester, setSelectedSemester] = useState<'hk1' | 'hk2' | 'year'>('hk1');
 
-  // REFRESH HSG KHI CÓ SỰ KIỆN
+  // REFRESH HSG
   const [hsgVersion, setHsgVersion] = useState(0);
 
   useEffect(() => {
     setCurrentUser(getCurrentUser());
-    setGasUrlInput(getGasWebAppUrl());
 
-    // Khởi tạo trạng thái lớp học số ban đầu đồng bộ với Lớp 6A10
-    selectClassForClassroom('c-6a10', 'Lớp 6A10', 6);
+    // Đọc trạng thái lớp học số hiện tại từ LocalStorage nếu có
+    const initialCls = getClassroomState();
+    if (initialCls.activeClassId && initialCls.activeGrade) {
+      setSelectedGradeFilter(initialCls.activeGrade);
+      setSelectedClassId(initialCls.activeClassId);
+    } else {
+      selectClassForClassroom('c-6a10', 'Lớp 6A10', 6);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const savedGb = localStorage.getItem('truong_official_gradebook');
+        if (savedGb) {
+          setCustomGradebook(JSON.parse(savedGb));
+        }
+      } catch (e) {}
+    }
 
     const onHsgUpdate = () => setHsgVersion(v => v + 1);
     window.addEventListener('truong_hsg_update', onHsgUpdate);
     return () => window.removeEventListener('truong_hsg_update', onHsgUpdate);
   }, []);
 
-  // LỚP VÀ HỌC SINH HIỆN TẠI ĐƯỢC CHỌN
+  // DANH SÁCH LỚP CỦA KHỐI ĐƯỢC CHỌN
   const displayClasses = useMemo(() => {
     return classList.filter(c => c.grade === selectedGradeFilter);
   }, [classList, selectedGradeFilter]);
 
+  // DUY NHẤT 1 LỚP ĐƯỢC CHỌN CHO TOÀN BỘ CÔNG VIỆC CỦA GIÁO VIÊN VÀ HỌC SINH
   const currentClass = useMemo(() => {
     const found = classList.find(c => c.id === selectedClassId);
     if (found) return found;
     return displayClasses[0] || classList[0];
   }, [classList, selectedClassId, displayClasses]);
 
+  // DANH SÁCH HỌC SINH CỦA ĐÚNG LỚP ĐƯỢC CHỌN
   const classStudents = useMemo(() => {
     return studentList.filter(s => s.classId === currentClass.id);
   }, [studentList, currentClass.id]);
@@ -189,29 +231,28 @@ function TeacherDashboardContent() {
     );
   }, [classStudents, searchTerm]);
 
-  // HÀM CHỌN LỚP VÀ ĐIỀU PHỐI ĐỒNG BỘ NGAY SANG LỚP HỌC SỐ
+  // HÀM CHỌN LỚP: ĐIỀU PHỐI ĐỒNG BỘ NGAY SANG LỚP HỌC SỐ
   const handleSelectClass = (cls: ClassItem) => {
     setSelectedClassId(cls.id);
     setSelectedGradeFilter(cls.grade);
-    // Điều phối sang lớp học số của học sinh tương ứng
     selectClassForClassroom(cls.id, cls.name, cls.grade);
-    setNotification(`⚡ Đã điều phối Lớp học số sang ${cls.name} (Khối ${cls.grade}). 24 máy trạm đã sẵn sàng!`);
+    setNotification(`⚡ Đã điều phối toàn bộ hệ thống sang ${cls.name} (Khối ${cls.grade}). 24 máy trạm và học liệu đã kích hoạt!`);
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // KHI ĐỔI KHỐI: TỰ ĐỘNG CHỌN LỚP ĐẦU TIÊN CỦA KHỐI VÀ ĐIỀU PHỐI
+  // HÀM CHỌN KHỐI: TỰ ĐỘNG CHỌN LỚP ĐẦU TIÊN CỦA KHỐI VÀ ĐIỀU PHỐI
   const handleSelectGrade = (grade: number) => {
     setSelectedGradeFilter(grade);
     const firstClass = classList.find(c => c.grade === grade);
     if (firstClass) {
       setSelectedClassId(firstClass.id);
       selectClassForClassroom(firstClass.id, firstClass.name, firstClass.grade);
-      setNotification(`⚡ Đã chuyển sang Khối ${grade} · Lớp ${firstClass.name}`);
+      setNotification(`⚡ Đã chọn Khối ${grade} · Lớp ${firstClass.name}`);
       setTimeout(() => setNotification(''), 3000);
     }
   };
 
-  // TỰ ĐỘNG TẢI KẾT QUẢ THI TỪ SUPABASE CLOUD KHI CHỌN LỚP
+  // TẢI KẾT QUẢ THI TỪ SUPABASE KHI LỚP ĐƯỢC CHỌN THAY ĐỔI
   useEffect(() => {
     if (currentClass?.name) {
       setIsLoadingExamResults(true);
@@ -222,7 +263,121 @@ function TeacherDashboardContent() {
     }
   }, [currentClass?.name]);
 
-  // THAO TÁC KHÓA / MỞ ĐỀ THI
+  // TÍNH TOÁN BẢNG ĐIỂM HỌC KỲ CHO ĐÚNG LỚP ĐƯỢC CHỌN THEO TT22
+  const gradebookRows: OfficialGradeRow[] = useMemo(() => {
+    return classStudents.map((s, idx) => {
+      if (customGradebook[s.studentCode]) {
+        return customGradebook[s.studentCode];
+      }
+
+      const tx1 = Number((8.0 + (idx % 3) * 0.7).toFixed(1));
+      const tx2 = Number((7.5 + ((idx * 2) % 4) * 0.6).toFixed(1));
+      const tx3 = Number((8.5 + (idx % 2) * 1.0).toFixed(1));
+      const tx4 = Number((8.0 + ((idx + 1) % 3) * 0.8).toFixed(1));
+      const gk = Number((8.0 + (idx % 4) * 0.5).toFixed(1));
+      const ck = Number((8.5 + ((idx + 2) % 3) * 0.6).toFixed(1));
+
+      const sumTx = tx1 + tx2 + tx3 + tx4;
+      const dtb = Number(((sumTx + 2 * gk + 3 * ck) / 9).toFixed(1));
+
+      let rank: 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt' = 'Tốt';
+      let comment = 'Nắm vững kiến thức, kỹ năng thực hành xuất sắc!';
+      if (dtb < 5.0) {
+        rank = 'Chưa đạt';
+        comment = 'Cần tăng cường rèn luyện thao tác máy tính tại phòng máy.';
+      } else if (dtb < 6.5) {
+        rank = 'Đạt';
+        comment = 'Hoàn thành các yêu cầu cần đạt, cần tích cực làm BTVN.';
+      } else if (dtb < 8.0) {
+        rank = 'Khá';
+        comment = 'Thao tác nhanh nhẹn, nắm chắc lý thuyết và bài tập thực hành.';
+      } else {
+        rank = 'Tốt';
+        comment = 'Rất xuất sắc, tư duy logic tốt, tích cực hợp tác với bạn.';
+      }
+
+      return {
+        studentCode: s.studentCode,
+        fullName: s.fullName,
+        className: currentClass.name,
+        tx1,
+        tx2,
+        tx3,
+        tx4,
+        gk,
+        ck,
+        dtb,
+        rank,
+        comment,
+      };
+    });
+  }, [classStudents, currentClass.name, customGradebook]);
+
+  // THỐNG KÊ PHỔ ĐIỂM BẢNG ĐIỂM HỌC KỲ
+  const gradeStats = useMemo(() => {
+    const total = gradebookRows.length;
+    if (total === 0) return { total: 0, tot: 0, kha: 0, dat: 0, chuaDat: 0, avgDtb: 0 };
+    const tot = gradebookRows.filter(r => r.rank === 'Tốt').length;
+    const kha = gradebookRows.filter(r => r.rank === 'Khá').length;
+    const dat = gradebookRows.filter(r => r.rank === 'Đạt').length;
+    const chuaDat = gradebookRows.filter(r => r.rank === 'Chưa đạt').length;
+    const sumDtb = gradebookRows.reduce((acc, r) => acc + r.dtb, 0);
+    return {
+      total,
+      tot,
+      kha,
+      dat,
+      chuaDat,
+      avgDtb: Number((sumDtb / total).toFixed(1)),
+    };
+  }, [gradebookRows]);
+
+  // LƯU ĐIỂM CHỈNH SỬA VÀO BẢNG ĐIỂM HỌC KỲ
+  const handleSaveGradeRow = (studentCode: string) => {
+    const orig = gradebookRows.find(r => r.studentCode === studentCode);
+    if (!orig) return;
+
+    const tx1 = tempEditScores.tx1 !== undefined ? Number(tempEditScores.tx1) : orig.tx1;
+    const tx2 = tempEditScores.tx2 !== undefined ? Number(tempEditScores.tx2) : orig.tx2;
+    const tx3 = tempEditScores.tx3 !== undefined ? Number(tempEditScores.tx3) : orig.tx3;
+    const tx4 = tempEditScores.tx4 !== undefined ? Number(tempEditScores.tx4) : orig.tx4;
+    const gk = tempEditScores.gk !== undefined ? Number(tempEditScores.gk) : orig.gk;
+    const ck = tempEditScores.ck !== undefined ? Number(tempEditScores.ck) : orig.ck;
+
+    const sumTx = tx1 + tx2 + tx3 + tx4;
+    const dtb = Number(((sumTx + 2 * gk + 3 * ck) / 9).toFixed(1));
+
+    let rank: 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt' = 'Tốt';
+    if (dtb < 5.0) rank = 'Chưa đạt';
+    else if (dtb < 6.5) rank = 'Đạt';
+    else if (dtb < 8.0) rank = 'Khá';
+    else rank = 'Tốt';
+
+    const updatedRow: OfficialGradeRow = {
+      ...orig,
+      tx1,
+      tx2,
+      tx3,
+      tx4,
+      gk,
+      ck,
+      dtb,
+      rank,
+      comment: tempEditScores.comment !== undefined ? String(tempEditScores.comment) : orig.comment,
+    };
+
+    const nextBook = { ...customGradebook, [studentCode]: updatedRow };
+    setCustomGradebook(nextBook);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('truong_official_gradebook', JSON.stringify(nextBook));
+    }
+    setEditingStudentCode(null);
+    setTempEditScores({});
+    setNotification(`✅ Đã lưu kết quả điểm học kỳ của học sinh ${orig.fullName} (${dtb}đ - ${rank})`);
+    setTimeout(() => setNotification(''), 3500);
+  };
+
+  // KHÓA / MỞ ĐỀ KIỂM TRA
   const toggleLockExam = (examId: string) => {
     setExams(prev => prev.map(e => {
       if (e.id === examId) {
@@ -235,13 +390,13 @@ function TeacherDashboardContent() {
     }));
   };
 
-  // THAO TÁC GIAO ĐỀ CHO LỚP ĐƯỢC CHỌN
+  // GIAO ĐỀ CHO LỚP ĐƯỢC CHỌN
   const handleAssignExamToClass = (exam: Exam) => {
     setNotification(`📋 Thầy Trường đã giao đề "${exam.title}" cho toàn thể ${currentClass.name}!`);
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC TẠO ĐỀ KIỂM TRA MỚI
+  // TẠO ĐỀ KIỂM TRA MỚI
   const handleCreateExam = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExamTitle.trim()) return;
@@ -262,7 +417,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC GIAO BÀI TẬP VỀ NHÀ CHO LỚP
+  // GIAO BÀI TẬP VỀ NHÀ CHO LỚP
   const handleAssignHomework = (e: React.FormEvent) => {
     e.preventDefault();
     setNotification(`📚 Đã giao bài tập về nhà Tiết ${hwLessonNum} cho học sinh ${currentClass.name}! Hạn nộp: ${hwDueDate}`);
@@ -270,7 +425,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 4500);
   };
 
-  // THAO TÁC CHẤM BÀI TẬP VỀ NHÀ THEO TT22 / THANG 10
+  // CHẤM BÀI TẬP VỀ NHÀ THEO TT22 / THANG 10
   const handleSaveGradeHomework = (subId: string) => {
     const finalFeedback = hwEvalType === 'tt22'
       ? `[Đánh giá TT22: ${hwTt22Result}] ${hwFeedback}`
@@ -291,12 +446,12 @@ function TeacherDashboardContent() {
     setHomeworkSubs(updated);
     setGradingHwId(null);
     setNotification(hwEvalType === 'tt22'
-      ? `✅ Đã lưu đánh giá Thông tư 22 (${hwTt22Result}) và phản hồi cho học sinh!`
+      ? `✅ Đã lưu đánh giá Thông tư 22 (${hwTt22Result}) cho học sinh!`
       : `✅ Đã lưu điểm ${numScore}đ và lời phê bài tập về nhà thành công!`);
     setTimeout(() => setNotification(''), 3500);
   };
 
-  // THAO TÁC CHỈ ĐỊNH / HỦY CHỈ ĐỊNH HỌC SINH GIỎI (HSG)
+  // CHỈ ĐỊNH / HỦY CHỈ ĐỊNH HỌC SINH GIỎI (HSG)
   const handleToggleHSG = (studentCode: string) => {
     const currentlyHSG = isStudentDesignatedHSG(studentCode);
     const nextHSG = !currentlyHSG;
@@ -307,13 +462,13 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC RESET MẬT KHẨU VỀ 123
+  // ĐẶT LẠI MẬT KHẨU VỀ 123
   const handleResetPassword = (st: Student) => {
     setNotification(`🔑 Đã đặt lại mật khẩu học sinh "${st.fullName}" (${st.studentCode}) về mặc định: 123`);
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC THÊM HỌC SINH MỚI VÀO LỚP
+  // THÊM HỌC SINH MỚI
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStudentName.trim()) return;
@@ -342,7 +497,6 @@ function TeacherDashboardContent() {
     };
 
     setStudentList(prev => [...prev, newSt]);
-    // Cập nhật sĩ số lớp
     setClassList(prev => prev.map(c => c.id === currentClass.id ? { ...c, studentCount: c.studentCount + 1 } : c));
     setShowAddStudentModal(false);
     setNewStudentName('');
@@ -350,7 +504,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC SỬA HỌC SINH
+  // SỬA HỌC SINH
   const handleSaveEditStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent || !newStudentName.trim()) return;
@@ -361,7 +515,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 3000);
   };
 
-  // THAO TÁC XOÁ HỌC SINH
+  // XOÁ HỌC SINH
   const handleDeleteStudent = (studentId: string, studentName: string) => {
     if (confirm(`Thầy có chắc chắn muốn xoá học sinh "${studentName}" khỏi lớp ${currentClass.name}?`)) {
       setStudentList(prev => prev.filter(s => s.id !== studentId));
@@ -371,7 +525,7 @@ function TeacherDashboardContent() {
     }
   };
 
-  // THAO TÁC THÊM LỚP HỌC MỚI
+  // THÊM LỚP MỚI
   const handleAddClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClassName.trim()) return;
@@ -393,7 +547,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // THAO TÁC SỬA TÊN LỚP
+  // SỬA TÊN LỚP
   const handleEditClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editClassName.trim()) return;
@@ -404,7 +558,7 @@ function TeacherDashboardContent() {
     setTimeout(() => setNotification(''), 3000);
   };
 
-  // THAO TÁC XOÁ LỚP
+  // XOÁ LỚP
   const handleDeleteClass = (classId: string, className: string) => {
     if (confirm(`CẢNH BÁO: Thầy có chắc chắn muốn xoá ${className}? Tất cả học sinh thuộc lớp này sẽ bị gỡ bỏ.`)) {
       const remaining = classList.filter(c => c.id !== classId);
@@ -420,7 +574,79 @@ function TeacherDashboardContent() {
     }
   };
 
-  // KIỂM TRA PHÂN QUYỀN RBAC NẾU HỌC SINH CỐ TÌNH TRUY CẬP
+  // XUẤT SỔ ĐIỂM HỌC KỲ RA EXCEL
+  const handleExportGradebookExcel = () => {
+    const filename = `So_Diem_Hoc_Ky_${currentClass.name.replace(/\s+/g, '_')}_THCS_Mao_Dien.xls`;
+    let tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+        <style>
+          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt; }
+          th { background-color: #2d7d6f; color: #ffffff; font-weight: bold; border: 1px solid #999999; text-align: center; padding: 6px; }
+          td { border: 1px solid #cccccc; padding: 5px; }
+          .center { text-align: center; }
+          .number { text-align: right; }
+          .title { font-size: 14pt; font-weight: bold; text-align: center; color: #1a365d; }
+          .sub-title { font-size: 11pt; text-align: center; font-style: italic; color: #4a5568; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr><td colspan="12" class="title">SỔ ĐÁNH GIÁ ĐỊNH KỲ MÔN TIN HỌC (CHUẨN THÔNG TƯ 22)</td></tr>
+          <tr><td colspan="12" class="sub-title">Trường THCS Mão Điền · Giáo viên phụ trách: Thầy Đỗ Mạnh Trường · ${currentClass.name} (Khối ${currentClass.grade})</td></tr>
+          <tr><td colspan="12"></td></tr>
+          <tr>
+            <th>STT</th>
+            <th>Mã Học Sinh</th>
+            <th>Họ và Tên Học Sinh</th>
+            <th>Lớp</th>
+            <th>ĐĐGtx 1</th>
+            <th>ĐĐGtx 2</th>
+            <th>ĐĐGtx 3</th>
+            <th>ĐĐGtx 4</th>
+            <th>ĐĐGgk (x2)</th>
+            <th>ĐĐGck (x3)</th>
+            <th>ĐTB Học Kỳ</th>
+            <th>Mức Đánh Giá</th>
+          </tr>
+    `;
+
+    gradebookRows.forEach((r, idx) => {
+      tableHtml += `
+        <tr>
+          <td class="center">${idx + 1}</td>
+          <td class="center" style="mso-number-format:'\\@'; font-weight:bold;">${r.studentCode}</td>
+          <td>${r.fullName}</td>
+          <td class="center">${r.className}</td>
+          <td class="number">${r.tx1}</td>
+          <td class="number">${r.tx2}</td>
+          <td class="number">${r.tx3}</td>
+          <td class="number">${r.tx4}</td>
+          <td class="number" style="font-weight:bold;">${r.gk}</td>
+          <td class="number" style="font-weight:bold;">${r.ck}</td>
+          <td class="number" style="font-weight:bold; color:#b45309;">${r.dtb}</td>
+          <td class="center" style="font-weight:bold;">${r.rank}</td>
+        </tr>
+      `;
+    });
+
+    tableHtml += `</table></body></html>`;
+
+    const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setNotification(`📥 Đã xuất thành công Sổ điểm Excel của ${currentClass.name}!`);
+    setTimeout(() => setNotification(''), 3000);
+  };
+
+  // KIỂM TRA PHÂN QUYỀN RBAC NẾU HỌC SINH VÀO NHẦM
   if (currentUser && currentUser.role === 'student') {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
@@ -447,211 +673,147 @@ function TeacherDashboardContent() {
             <span>Vào Lớp Học Số</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link
-            href="/login?role=teacher"
-            className="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
-          >
-            Đăng nhập tài khoản Giáo viên
-          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
       
       {/* ==================================================================== */}
-      {/* 1. BANNER CHÍNH THỨC CỦA THẦY ĐỖ MẠNH TRƯỜNG */}
+      {/* 1. BỘ CHỌN LỚP THU GỌN CHUẨN XÁC THEO ẢNH 2 CỦA THẦY TRƯỜNG        */}
       {/* ==================================================================== */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/10">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
-            <School className="w-3.5 h-3.5 text-blue-200" />
-            <span>THCS Mão Điền · Giáo Viên Phụ Trách: Thầy Đỗ Mạnh Trường</span>
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+        {/* HÀNG 1: KHỐI (PILL BUTTONS - TEAL FILL CHO KHỐI ĐƯỢC CHỌN) */}
+        <div className="flex items-center gap-3">
+          <span className="font-extrabold text-slate-800 text-sm sm:text-base w-12 shrink-0">
+            Khối:
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {[6, 7, 8, 9].map((g) => {
+              const isActive = selectedGradeFilter === g;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => handleSelectGrade(g)}
+                  className={`px-4 sm:px-5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+                    isActive
+                      ? 'bg-[#2d7d6f] text-white shadow-xs scale-102 ring-1 ring-[#207264]'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  Khối {g}
+                </button>
+              );
+            })}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Bàn Quản Lý &amp; Điều Phối Giáo Viên
-          </h1>
-          <p className="text-xs sm:text-sm text-blue-100">
-            Quản trị tập trung <strong>Lớp học số</strong> · Đồng bộ 24 máy trạm · Quản lý học sinh · Bài kiểm tra &amp; Bài tập về nhà
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* ĐƯỜNG PHÂN CÁCH MẢNH NHƯ ẢNH 2 */}
+        <div className="border-t border-slate-100" />
+
+        {/* HÀNG 2: LỚP (PILL BUTTONS - TEAL OUTLINE & NỀN NHẠT CHO LỚP ĐƯỢC CHỌN) */}
+        <div className="flex items-center gap-3">
+          <span className="font-extrabold text-slate-800 text-sm sm:text-base w-12 shrink-0">
+            Lớp:
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {displayClasses.map((cls) => {
+              const isSelected = selectedClassId === cls.id;
+              return (
+                <button
+                  key={cls.id}
+                  type="button"
+                  onClick={() => handleSelectClass(cls)}
+                  className={`px-4 sm:px-5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+                    isSelected
+                      ? 'border-2 border-[#2d7d6f] bg-teal-50/70 text-[#1e584e] font-extrabold shadow-2xs'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {cls.name}
+                </button>
+              );
+            })}
+
+            {/* NÚT THÊM LỚP MỚI GỌN GÀNG */}
+            <button
+              type="button"
+              onClick={() => {
+                setNewClassGrade(selectedGradeFilter);
+                setShowAddClassModal(true);
+              }}
+              className="px-3 py-1.5 rounded-2xl border border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50/30 text-slate-500 hover:text-teal-700 text-xs font-semibold flex items-center gap-1 transition-all"
+              title="Thêm lớp học mới vào khối này"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Thêm lớp</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* THANH TRẠNG THÁI: XÁC NHẬN DUY NHẤT 1 LỚP ĐANG LÀM VIỆC */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-teal-50/60 border border-teal-200/80 text-xs font-semibold text-teal-900 shadow-2xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Lớp làm việc duy nhất hiện tại:</span>
+          <strong className="text-[#134e4a] text-sm font-black">{currentClass.name}</strong>
+          <span className="text-teal-700">· Khối {currentClass.grade} · Sĩ số: <strong>{classStudents.length} học sinh</strong></span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-teal-700 italic">Mọi học liệu, 24 máy trạm, bài tập và bảng điểm đang đồng bộ cho lớp này</span>
           <button
-            onClick={() => exportStudentsToExcel(studentList, 'Danh_Sach_Toan_Truong_THCS_Mao_Dien.xls')}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+            onClick={() => exportStudentsToExcel(classStudents, `Danh_Sach_${currentClass.name}_THCS_Mao_Dien.xls`)}
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-teal-100 text-teal-800 border border-teal-300 text-xs font-bold transition-all shadow-2xs"
           >
-            <Download className="w-4 h-4" />
-            <span>Tải Excel Toàn Trường ({studentList.length} HS)</span>
-          </button>
-          
-          <button
-            onClick={() => setShowDriveConfig(!showDriveConfig)}
-            className="px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all flex items-center gap-2 border border-white/20"
-            title="Cấu hình Google Drive kết nối nộp bài phòng máy"
-          >
-            <Cloud className="w-4 h-4 text-teal-300" />
-            <span>Drive Thực Hành</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-teal-700" />
+            <span>Xuất Excel lớp</span>
           </button>
         </div>
       </div>
 
-      {/* CẤU HÌNH DRIVE COLLAPSIBLE */}
-      {showDriveConfig && (
-        <div className="bg-white rounded-3xl border border-teal-200 p-6 shadow-sm space-y-4 animate-fadeIn">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-              <Cloud className="w-5 h-5 text-teal-600" />
-              <span>Cấu hình Google Apps Script Web App (Tự động lưu bài về Drive Thầy Trường)</span>
-            </div>
-            <button onClick={() => setShowDriveConfig(false)} className="text-slate-400 hover:text-slate-600">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-xs text-slate-500">
-            Dán URL triển khai Web App từ Google Apps Script liên kết với thư mục Drive <code>H:\My Drive\Giảng dạy\2024-2025\ThucHanh</code>
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={gasUrlInput}
-              onChange={(e) => setGasUrlInput(e.target.value)}
-              placeholder="https://script.google.com/macros/s/.../exec"
-              className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-            />
-            <button
-              onClick={() => {
-                setGasWebAppUrl(gasUrlInput);
-                setNotification('Đã lưu cấu hình Google Drive Web App URL thành công!');
-                setTimeout(() => setNotification(''), 3000);
-              }}
-              className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs shrink-0"
-            >
-              Lưu cấu hình
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* THÔNG BÁO POPUP */}
+      {/* THÔNG BÁO HỆ THỐNG */}
       {notification && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2.5 shadow-sm animate-slideDown">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2.5 shadow-xs animate-slideDown">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* 2. CHỌN LỚP GIẢNG DẠY (HIỂN THỊ MẶC ĐỊNH KHỐI 6 - BỎ TẤT CẢ LỚP!) */}
+      {/* 2. TÁCH RIÊNG TOÀN BỘ CÁC CHỨC NĂNG CHÍNH (5 TABS CẤP CAO)          */}
       {/* ==================================================================== */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-blue-600" />
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Chọn Lớp Giảng Dạy &amp; Điều Phối:
-            </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
-              Đang chọn: {currentClass.name}
-            </span>
-          </div>
-
-          {/* BỘ LỌC KHỐI: CHỈ GỒM 6, 7, 8, 9 (BỎ HOÀN TOÀN 'TẤT CẢ LỚP'!) */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl">
-            {[6, 7, 8, 9].map((g) => (
-              <button
-                key={g}
-                onClick={() => handleSelectGrade(g)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
-                  selectedGradeFilter === g
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                Khối {g}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* DANH SÁCH LỚP CỦA KHỐI ĐƯỢC CHỌN (1-CLICK ĐIỀU PHỐI) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-          {displayClasses.map((cls) => {
-            const isSelected = selectedClassId === cls.id;
-            return (
-              <button
-                key={cls.id}
-                onClick={() => handleSelectClass(cls)}
-                className={`p-3.5 rounded-2xl border text-left transition-all relative group ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50/80 shadow-md ring-2 ring-blue-500/30'
-                    : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Khối {cls.grade}</span>
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                    {cls.classCode}
-                  </span>
-                </div>
-                <h3 className={`font-black text-sm mt-1.5 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>
-                  {cls.name}
-                </h3>
-                <p className="text-[11px] font-medium text-slate-500 mt-0.5 flex items-center justify-between">
-                  <span>{cls.studentCount} học sinh</span>
-                  {isSelected && <span className="text-[10px] font-bold text-blue-600">● Đang dạy</span>}
-                </p>
-              </button>
-            );
-          })}
-
-          {/* NÚT THÊM LỚP MỚI */}
-          <button
-            onClick={() => {
-              setNewClassGrade(selectedGradeFilter);
-              setShowAddClassModal(true);
-            }}
-            className="p-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/40 text-slate-500 hover:text-blue-600 transition-all flex flex-col items-center justify-center gap-1 text-center font-bold text-xs"
-          >
-            <PlusCircle className="w-5 h-5 text-blue-500" />
-            <span>Thêm lớp mới</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ==================================================================== */}
-      {/* 3. BỐN TAB QUẢN TRỊ CỐT LÕI THEO YÊU CẦU CỦA THẦY TRƯỜNG */}
-      {/* ==================================================================== */}
-      <div className="space-y-6">
-        <div className="flex border-b border-slate-200 gap-2 sm:gap-4 text-xs sm:text-sm font-extrabold overflow-x-auto no-scrollbar">
+      <div className="space-y-5">
+        <div className="flex border-b border-slate-200 gap-1 sm:gap-2 text-xs sm:text-sm font-extrabold overflow-x-auto no-scrollbar">
           
-          {/* TAB 1: LỚP HỌC SỐ */}
+          {/* TAB 1: QUẢN LÝ LỚP HỌC SỐ */}
           <button
-            onClick={() => setActiveTab('in-class')}
-            className={`pb-3 px-3 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
+            onClick={() => switchTab('in-class')}
+            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'in-class'
-                ? 'border-b-2 border-blue-600 text-blue-600 font-black'
+                ? 'border-b-2 border-blue-600 text-blue-700 font-black'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <Radio className={`w-4 h-4 ${activeTab === 'in-class' ? 'text-blue-600 animate-pulse' : 'text-slate-400'}`} />
-            <span>1. Lớp Học Số (Điều Khiển &amp; Chấm Điểm)</span>
+            <span>Quản Lý Lớp Học Số</span>
             <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">5 Phân Hệ</span>
           </button>
 
           {/* TAB 2: QUẢN LÝ LỚP & HỌC SINH */}
           <button
-            onClick={() => setActiveTab('class-roster')}
-            className={`pb-3 px-3 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
+            onClick={() => switchTab('class-roster')}
+            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'class-roster'
-                ? 'border-b-2 border-indigo-600 text-indigo-600 font-black'
+                ? 'border-b-2 border-indigo-600 text-indigo-700 font-black'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>2. Quản Lý Lớp &amp; Tài Khoản HS</span>
+            <span>Quản Lý Lớp &amp; Học Sinh</span>
             <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 text-[10px]">
               {classStudents.length} HS
             </span>
@@ -659,39 +821,47 @@ function TeacherDashboardContent() {
 
           {/* TAB 3: QUẢN LÝ BÀI KIỂM TRA */}
           <button
-            onClick={() => setActiveTab('exams')}
-            className={`pb-3 px-3 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
+            onClick={() => switchTab('exams')}
+            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'exams'
-                ? 'border-b-2 border-purple-600 text-purple-600 font-black'
+                ? 'border-b-2 border-purple-600 text-purple-700 font-black'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <ClipboardCheck className="w-4 h-4" />
-            <span>3. Quản Lý Bài Kiểm Tra</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
-              {exams.filter(e => e.grade === selectedGradeFilter).length} Đề
-            </span>
+            <span>Quản Lý Bài Kiểm Tra</span>
           </button>
 
           {/* TAB 4: BÀI TẬP VỀ NHÀ */}
           <button
-            onClick={() => setActiveTab('homework')}
-            className={`pb-3 px-3 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
+            onClick={() => switchTab('homework')}
+            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'homework'
-                ? 'border-b-2 border-amber-600 text-amber-600 font-black'
+                ? 'border-b-2 border-amber-600 text-amber-700 font-black'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>4. Bài Tập Về Nhà</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-              Giao &amp; Chấm TT22
-            </span>
+            <span>Bài Tập Về Nhà</span>
+          </button>
+
+          {/* TAB 5: BẢNG ĐIỂM HỌC KỲ */}
+          <button
+            onClick={() => switchTab('gradebook')}
+            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
+              activeTab === 'gradebook'
+                ? 'border-b-2 border-[#2d7d6f] text-[#1e584e] font-black'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Bảng Điểm Học Kỳ</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800 text-[10px] font-bold">Chuẩn TT22</span>
           </button>
         </div>
 
         {/* ================================================================== */}
-        {/* NỘI DUNG TAB 1: LỚP HỌC SỐ (TẬP TRUNG 5 PHÂN HỆ) */}
+        {/* TAB 1: QUẢN LÝ LỚP HỌC SỐ (TẬP TRUNG 5 PHÂN HỆ CHO ĐÚNG 1 LỚP)     */}
         {/* ================================================================== */}
         {activeTab === 'in-class' && (
           <ClassroomCommandCenter
@@ -705,27 +875,26 @@ function TeacherDashboardContent() {
         )}
 
         {/* ================================================================== */}
-        {/* NỘI DUNG TAB 2: QUẢN LÝ LỚP HỌC & TÀI KHOẢN HỌC SINH */}
+        {/* TAB 2: QUẢN LÝ LỚP & HỌC SINH (CHỈ THỰC HIỆN TRÊN ĐÚNG 1 LỚP NÀY)   */}
         {/* ================================================================== */}
         {activeTab === 'class-roster' && (
-          <div className="space-y-6">
-            
+          <div className="space-y-5">
             {/* THẺ ĐIỀU HÀNH LỚP HIỆN TẠI */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-extrabold text-xl text-slate-900">
-                    {currentClass.name} — Khối {currentClass.grade}
+                    Danh Sách Học Sinh {currentClass.name}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs font-bold font-mono">
                     Mã: {currentClass.classCode}
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                    Sĩ số: {classStudents.length} học sinh
+                    Sĩ số: {classStudents.length} em
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mật khẩu mặc định: <strong>123</strong> · Cặp đôi kỹ thuật viên &amp; thư ký trên 24 máy trạm
+                  Mật khẩu mặc định: <strong>123</strong> · Cặp đôi phân vai Kỹ thuật viên (🖱️) &amp; Thư ký (✍️)
                 </p>
               </div>
 
@@ -738,7 +907,7 @@ function TeacherDashboardContent() {
                   className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all"
                 >
                   <Edit3 className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Sửa thông tin lớp</span>
+                  <span>Sửa tên lớp</span>
                 </button>
 
                 <button
@@ -765,13 +934,13 @@ function TeacherDashboardContent() {
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Xuất Excel lớp</span>
+                  <span>Xuất Excel</span>
                 </button>
               </div>
             </div>
 
             {/* DANH SÁCH HỌC SINH CỦA LỚP */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="relative flex-1 sm:w-72">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -885,18 +1054,18 @@ function TeacherDashboardContent() {
         )}
 
         {/* ================================================================== */}
-        {/* NỘI DUNG TAB 3: QUẢN LÝ BÀI KIỂM TRA (TẠO ĐỀ, GIAO ĐỀ, KHOÁ/MỞ ĐỀ) */}
+        {/* TAB 3: QUẢN LÝ BÀI KIỂM TRA (GIAO ĐỀ CHO ĐÚNG 1 LỚP NÀY)           */}
         {/* ================================================================== */}
         {activeTab === 'exams' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
                   <ClipboardCheck className="w-5 h-5 text-purple-600" />
                   <span>Ngân Hàng Đề Kiểm Tra Định Kỳ · Khối {selectedGradeFilter}</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Đề kiểm tra trắc nghiệm &amp; thực hành chuẩn ma trận và bản đặc tả Bộ GD&ĐT (CV 3456 / QĐ 3439)
+                  Đề kiểm tra trắc nghiệm &amp; thực hành chuẩn ma trận Bộ GD&ĐT (CV 3456 / QĐ 3439)
                 </p>
               </div>
 
@@ -916,7 +1085,7 @@ function TeacherDashboardContent() {
             {/* DANH SÁCH CÁC ĐỀ THI CỦA KHỐI */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {exams.filter(e => e.grade === selectedGradeFilter).map((exam) => (
-                <div key={exam.id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-4 flex flex-col justify-between">
+                <div key={exam.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4 flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 uppercase">
@@ -962,8 +1131,8 @@ function TeacherDashboardContent() {
               ))}
             </div>
 
-            {/* BẢNG ĐIỂM KIỂM TRA ĐÁM MÂY SUPABASE */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            {/* BẢNG ĐIỂM KIỂM TRA ĐÁM MÂY CỦA ĐÚNG 1 LỚP NÀY */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
@@ -971,7 +1140,7 @@ function TeacherDashboardContent() {
                     <span>Kết Quả Kiểm Tra Trực Tuyến Từ Đám Mây · {currentClass.name}</span>
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Dữ liệu được lưu trữ trực tiếp trên Supabase PostgreSQL ngay khi học sinh hoàn thành nộp bài
+                    Dữ liệu được lưu trữ trực tiếp trên Supabase PostgreSQL ngay khi học sinh {currentClass.name} nộp bài thi
                   </p>
                 </div>
 
@@ -1034,11 +1203,11 @@ function TeacherDashboardContent() {
         )}
 
         {/* ================================================================== */}
-        {/* NỘI DUNG TAB 4: BÀI TẬP VỀ NHÀ (GIAO BTVN, XEM NỘP & CHẤM TT22) */}
+        {/* TAB 4: BÀI TẬP VỀ NHÀ (CHỈ THỰC HIỆN TRÊN ĐÚNG 1 LỚP NÀY)           */}
         {/* ================================================================== */}
         {activeTab === 'homework' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-amber-600" />
@@ -1059,10 +1228,10 @@ function TeacherDashboardContent() {
             </div>
 
             {/* DANH SÁCH BÀI TẬP VỀ NHÀ HỌC SINH ĐÃ NỘP */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-sm text-slate-900">
-                  Danh sách bài nộp của học sinh ({homeworkSubs.length} bài đã nộp)
+                  Danh sách bài nộp của học sinh {currentClass.name}
                 </h4>
               </div>
 
@@ -1147,10 +1316,281 @@ function TeacherDashboardContent() {
           </div>
         )}
 
+        {/* ================================================================== */}
+        {/* TAB 5: BẢNG ĐIỂM HỌC KỲ (SỔ ĐIỂM ĐIỆN TỬ TT22 CỦA ĐÚNG 1 LỚP NÀY)   */}
+        {/* ================================================================== */}
+        {activeTab === 'gradebook' && (
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-xl text-slate-900">
+                    Sổ Đánh Giá Học Kỳ · {currentClass.name}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-xs font-bold">
+                    Thông Tư 22/2021/TT-BGDĐT
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Đánh giá kết quả rèn luyện và học tập môn Tin học: <strong>ĐĐGtx (x1)</strong>, <strong>ĐĐGgk (x2)</strong>, <strong>ĐĐGck (x3)</strong>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                  {(['hk1', 'hk2', 'year'] as const).map(sem => (
+                    <button
+                      key={sem}
+                      onClick={() => setSelectedSemester(sem)}
+                      className={`px-3 py-1 rounded-lg transition-all ${
+                        selectedSemester === sem ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      {sem === 'hk1' ? 'Học kỳ I' : sem === 'hk2' ? 'Học kỳ II' : 'Cả năm'}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleExportGradebookExcel}
+                  className="px-4 py-2 rounded-xl bg-[#2d7d6f] hover:bg-[#207264] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Xuất Sổ Điểm Excel</span>
+                </button>
+              </div>
+            </div>
+
+            {/* THỐNG KÊ PHỔ ĐIỂM LỚP */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-500 block">Sĩ số lớp</span>
+                <span className="text-xl font-black text-slate-900">{gradeStats.total} em</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-emerald-700 block">Mức Tốt</span>
+                <span className="text-xl font-black text-emerald-900">{gradeStats.tot} em ({gradeStats.total ? Math.round((gradeStats.tot/gradeStats.total)*100) : 0}%)</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-blue-700 block">Mức Khá</span>
+                <span className="text-xl font-black text-blue-900">{gradeStats.kha} em ({gradeStats.total ? Math.round((gradeStats.kha/gradeStats.total)*100) : 0}%)</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-amber-700 block">Mức Đạt</span>
+                <span className="text-xl font-black text-amber-900">{gradeStats.dat} em ({gradeStats.total ? Math.round((gradeStats.dat/gradeStats.total)*100) : 0}%)</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-teal-700 block">ĐTB Chung</span>
+                <span className="text-xl font-black text-teal-900">{gradeStats.avgDtb}/10</span>
+              </div>
+            </div>
+
+            {/* BẢNG ĐIỂM CHÍNH THỨC CỦA LỚP */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-2 text-center w-10">STT</th>
+                      <th className="py-3 px-3">Mã HS</th>
+                      <th className="py-3 px-4">Họ và Tên Học Sinh</th>
+                      <th className="py-3 px-2 text-center">TX1</th>
+                      <th className="py-3 px-2 text-center">TX2</th>
+                      <th className="py-3 px-2 text-center">TX3</th>
+                      <th className="py-3 px-2 text-center">TX4</th>
+                      <th className="py-3 px-2 text-center bg-indigo-50/50">GK (x2)</th>
+                      <th className="py-3 px-2 text-center bg-purple-50/50">CK (x3)</th>
+                      <th className="py-3 px-2 text-center bg-amber-50/70 font-black">ĐTB</th>
+                      <th className="py-3 px-3 text-center">Xếp Loại</th>
+                      <th className="py-3 px-3">Lời Nhận Xét</th>
+                      <th className="py-3 px-2 text-right">Sửa Điểm</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {gradebookRows.map((r, idx) => {
+                      const isEditing = editingStudentCode === r.studentCode;
+
+                      return (
+                        <tr key={r.studentCode} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3 px-2 text-center font-mono text-slate-400 font-bold">{idx + 1}</td>
+                          <td className="py-3 px-3 font-mono font-bold text-blue-700">{r.studentCode}</td>
+                          <td className="py-3 px-4 font-bold text-slate-900">{r.fullName}</td>
+
+                          {/* ĐIỂM TX1 */}
+                          <td className="py-3 px-2 text-center">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.tx1}
+                                onChange={e => setTempEditScores(p => ({ ...p, tx1: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border rounded"
+                              />
+                            ) : (
+                              <span>{r.tx1}</span>
+                            )}
+                          </td>
+
+                          {/* ĐIỂM TX2 */}
+                          <td className="py-3 px-2 text-center">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.tx2}
+                                onChange={e => setTempEditScores(p => ({ ...p, tx2: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border rounded"
+                              />
+                            ) : (
+                              <span>{r.tx2}</span>
+                            )}
+                          </td>
+
+                          {/* ĐIỂM TX3 */}
+                          <td className="py-3 px-2 text-center">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.tx3}
+                                onChange={e => setTempEditScores(p => ({ ...p, tx3: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border rounded"
+                              />
+                            ) : (
+                              <span>{r.tx3}</span>
+                            )}
+                          </td>
+
+                          {/* ĐIỂM TX4 */}
+                          <td className="py-3 px-2 text-center">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.tx4}
+                                onChange={e => setTempEditScores(p => ({ ...p, tx4: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border rounded"
+                              />
+                            ) : (
+                              <span>{r.tx4}</span>
+                            )}
+                          </td>
+
+                          {/* ĐIỂM GK */}
+                          <td className="py-3 px-2 text-center font-bold text-indigo-700 bg-indigo-50/30">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.gk}
+                                onChange={e => setTempEditScores(p => ({ ...p, gk: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border border-indigo-300 rounded font-bold"
+                              />
+                            ) : (
+                              <span>{r.gk}</span>
+                            )}
+                          </td>
+
+                          {/* ĐIỂM CK */}
+                          <td className="py-3 px-2 text-center font-bold text-purple-700 bg-purple-50/30">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="10"
+                                defaultValue={r.ck}
+                                onChange={e => setTempEditScores(p => ({ ...p, ck: parseFloat(e.target.value) }))}
+                                className="w-12 text-center py-0.5 border border-purple-300 rounded font-bold"
+                              />
+                            ) : (
+                              <span>{r.ck}</span>
+                            )}
+                          </td>
+
+                          {/* ĐTB */}
+                          <td className="py-3 px-2 text-center font-extrabold text-amber-700 bg-amber-50/50 text-sm">
+                            {r.dtb}đ
+                          </td>
+
+                          {/* XẾP LOẠI */}
+                          <td className="py-3 px-3 text-center">
+                            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                              r.rank === 'Tốt' ? 'bg-emerald-100 text-emerald-800' :
+                              r.rank === 'Khá' ? 'bg-blue-100 text-blue-800' :
+                              r.rank === 'Đạt' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {r.rank}
+                            </span>
+                          </td>
+
+                          {/* LỜI NHẬN XÉT */}
+                          <td className="py-3 px-3 text-slate-600 max-w-xs truncate text-[11px]">
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                defaultValue={r.comment}
+                                onChange={e => setTempEditScores(p => ({ ...p, comment: e.target.value }))}
+                                className="w-full px-2 py-0.5 border rounded text-xs"
+                              />
+                            ) : (
+                              <span>{r.comment}</span>
+                            )}
+                          </td>
+
+                          {/* THAO TÁC */}
+                          <td className="py-3 px-2 text-right">
+                            {isEditing ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={() => handleSaveGradeRow(r.studentCode)}
+                                  className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  title="Lưu điểm"
+                                >
+                                  <Save className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => { setEditingStudentCode(null); setTempEditScores({}); }}
+                                  className="p-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700"
+                                  title="Hủy"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setEditingStudentCode(r.studentCode); setTempEditScores({}); }}
+                                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors"
+                                title="Sửa điểm học sinh này"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ==================================================================== */}
-      {/* 4. CÁC MODAL TƯƠNG TÁC (THÊM LỚP, SỬA LỚP, THÊM HS, GIAO BTVN, TẠO ĐỀ, CHẤM BÀI, XEM ẢNH) */}
+      {/* 3. CÁC MODAL THAO TÁC                                               */}
       {/* ==================================================================== */}
 
       {/* MODAL THÊM LỚP MỚI */}
@@ -1173,7 +1613,7 @@ function TeacherDashboardContent() {
                       type="button"
                       onClick={() => setNewClassGrade(g)}
                       className={`py-2 rounded-xl border text-center font-bold ${
-                        newClassGrade === g ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700'
+                        newClassGrade === g ? 'bg-[#2d7d6f] text-white border-[#2d7d6f]' : 'bg-slate-50 text-slate-700'
                       }`}
                     >
                       Khối {g}
@@ -1189,7 +1629,7 @@ function TeacherDashboardContent() {
                   placeholder="Lớp 6A14"
                   value={newClassName}
                   onChange={e => setNewClassName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                 />
               </div>
               <div className="pt-2 flex justify-end gap-2">
@@ -1202,7 +1642,7 @@ function TeacherDashboardContent() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-[#2d7d6f] hover:bg-[#207264] text-white font-bold"
                 >
                   Tạo Lớp
                 </button>
@@ -1230,7 +1670,7 @@ function TeacherDashboardContent() {
                   required
                   value={editClassName}
                   onChange={e => setEditClassName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                 />
               </div>
               <div className="pt-2 flex justify-end gap-2">
@@ -1243,7 +1683,7 @@ function TeacherDashboardContent() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-[#2d7d6f] hover:bg-[#207264] text-white font-bold"
                 >
                   Lưu Thay Đổi
                 </button>
@@ -1288,7 +1728,7 @@ function TeacherDashboardContent() {
                 />
               </div>
               <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                Mã học sinh sẽ được tự động tạo theo cú pháp lớp (VD: <strong>{currentClass.classCode}{(classStudents.length + 1).toString().padStart(2, '0')}</strong>) và mật khẩu mặc định là <strong>123</strong>.
+                Mã học sinh tự động sinh theo mẫu: <strong>{currentClass.classCode}{(classStudents.length + 1).toString().padStart(2, '0')}</strong> · Mật khẩu: <strong>123</strong>.
               </p>
               <div className="pt-2 flex justify-end gap-2">
                 <button
@@ -1683,7 +2123,7 @@ export default function TeacherDashboard() {
   return (
     <Suspense fallback={
       <div className="max-w-7xl mx-auto px-4 py-20 text-center text-slate-500 font-bold space-y-3">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto" />
         <p>Đang tải Bàn Quản Lý Giáo Viên · Thầy Đỗ Mạnh Trường...</p>
       </div>
     }>

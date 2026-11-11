@@ -22,6 +22,7 @@ import {
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
 import { Student } from '@/lib/types';
+import { getClassroomState } from '@/lib/classroom-control';
 
 export interface OfficialGradeRow {
   studentCode: string;
@@ -67,6 +68,12 @@ export default function GradebookPage() {
       if (matchCls) {
         setSelectedGrade(matchCls.grade);
         setSelectedClassId(matchCls.id);
+      }
+    } else if (user.role === 'teacher') {
+      const clsState = getClassroomState();
+      if (clsState.activeClassId && clsState.activeGrade) {
+        setSelectedGrade(clsState.activeGrade);
+        setSelectedClassId(clsState.activeClassId);
       }
     }
 
