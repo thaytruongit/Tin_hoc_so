@@ -144,7 +144,9 @@ export interface PracticalSubmission {
   submittedAt: string;
   fileDataUrl?: string;
   grade?: number;
+  score?: number;
   feedback?: string;
+  teacherFeedback?: string;
   status: 'submitted' | 'graded';
 }
 

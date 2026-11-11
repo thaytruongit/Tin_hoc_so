@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
-// Nếu chạy trên GitHub Pages repo /teacher thì cần basePath: '/teacher'
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || (isProd ? '/teacher' : '');
+const isVercel = Boolean(process.env.VERCEL);
+// Khi chạy trên Vercel: basePath là '' (trực tiếp tại root domain).
+// Khi chạy trên GitHub Pages repo thaytruongit/teacher: basePath là '/teacher'.
+// Có thể tùy biến qua biến môi trường NEXT_PUBLIC_BASE_PATH nếu cần.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH !== undefined
+  ? process.env.NEXT_PUBLIC_BASE_PATH
+  : (isVercel ? '' : (isProd ? '/teacher' : ''));
 
 const nextConfig = {
   output: 'export',
