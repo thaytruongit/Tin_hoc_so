@@ -105,3 +105,41 @@ export function canAccessTeacher(): boolean {
   const user = getCurrentUser();
   return user.role === 'teacher';
 }
+
+/**
+ * Danh sách mã học sinh được Thầy Đỗ Mạnh Trường chỉ định vào đội tuyển Học sinh giỏi (HSG)
+ */
+export function getAdvancedStudentCodes(): string[] {
+  const defaultHSGCodes = ['7A1101', '7A1102', '8A1101', '8A1102', '9A1301', '9A1302', '6A1001'];
+  if (typeof window === 'undefined') return defaultHSGCodes;
+  try {
+    const stored = localStorage.getItem('truong_hsg_student_codes');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return defaultHSGCodes;
+}
+
+/**
+ * Kiểm tra xem học sinh có được Thầy chỉ định vào nhóm HSG để mở chức năng Lập trình hay không
+ */
+export function isStudentDesignatedHSG(studentCode?: string): boolean {
+  if (!studentCode) return false;
+  const codes = getAdvancedStudentCodes();
+  return codes.includes(studentCode);
+}
+
+/**
+ * Thầy Đỗ Mạnh Trường chỉ định hoặc bỏ chỉ định học sinh vào nhóm HSG
+ */
+export function setStudentDesignatedHSG(studentCode: string, isHSG: boolean): void {
+  if (typeof window === 'undefined') return;
+  const codes = getAdvancedStudentCodes();
+  const next = isHSG 
+    ? Array.from(new Set([...codes, studentCode]))
+    : codes.filter(c => c !== studentCode);
+  localStorage.setItem('truong_hsg_student_codes', JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent('truong_hsg_update', { detail: next }));
+}

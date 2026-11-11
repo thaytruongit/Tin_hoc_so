@@ -22,10 +22,12 @@ import {
   School,
   Lock,
   Unlock,
-  UserCheck
+  UserCheck,
+  Star,
+  Code2
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
-import { getCurrentUser, UserSession } from '@/lib/auth';
+import { getCurrentUser, UserSession, getAdvancedStudentCodes, setStudentDesignatedHSG } from '@/lib/auth';
 import { exportStudentsToExcel } from '@/lib/export-excel';
 import { getAssetUrl } from '@/lib/asset-path';
 
@@ -41,6 +43,8 @@ export default function AdminPage() {
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [resetPassNotice, setResetPassNotice] = useState<string>('');
+  const [hsgCodes, setHsgCodes] = useState<string[]>([]);
+  const [onlyHSGFilter, setOnlyHSGFilter] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -49,7 +53,21 @@ export default function AdminPage() {
     if (user.role === 'teacher') {
       setIsUnlocked(true);
     }
+    setHsgCodes(getAdvancedStudentCodes());
   }, []);
+
+  const handleToggleHSG = (studentCode: string, studentName: string) => {
+    const isCurrentlyHSG = hsgCodes.includes(studentCode);
+    setStudentDesignatedHSG(studentCode, !isCurrentlyHSG);
+    const updated = getAdvancedStudentCodes();
+    setHsgCodes(updated);
+    setResetPassNotice(
+      !isCurrentlyHSG
+        ? `⭐ Thầy đã tuyển chọn em ${studentName} (${studentCode}) vào Đội tuyển HSG (Mở quyền Lập trình Python 3.12)`
+        : `Đã rút em ${studentName} (${studentCode}) khỏi Đội tuyển HSG`
+    );
+    setTimeout(() => setResetPassNotice(''), 4000);
+  };
 
   const [siteTitle, setSiteTitle] = useState('HỆ SINH THÁI TIN HỌC SỐ · THCS MÃO ĐIỀN');
   const [xpPerCorrect, setXpPerCorrect] = useState(10);
@@ -90,6 +108,9 @@ export default function AdminPage() {
     if (selectedClassId !== 'all') {
       list = list.filter(s => s.classId === selectedClassId);
     }
+    if (onlyHSGFilter) {
+      list = list.filter(s => hsgCodes.includes(s.studentCode));
+    }
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase().trim();
       list = list.filter(s => 
@@ -99,7 +120,7 @@ export default function AdminPage() {
       );
     }
     return list;
-  }, [selectedGrade, selectedClassId, searchTerm]);
+  }, [selectedGrade, selectedClassId, onlyHSGFilter, hsgCodes, searchTerm]);
 
   // Danh sách lớp theo Khối đang chọn
   const classesForFilter = useMemo(() => {
@@ -286,6 +307,20 @@ export default function AdminPage() {
               </option>
             ))}
           </select>
+
+          {/* NÚT LỌC NHANH ĐỘI TUYỂN HSG */}
+          <button
+            type="button"
+            onClick={() => setOnlyHSGFilter(!onlyHSGFilter)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 sm:ml-auto ${
+              onlyHSGFilter
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-900 border border-slate-200'
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${onlyHSGFilter ? 'fill-white text-white' : 'text-amber-500'}`} />
+            <span>Chỉ xem Đội tuyển HSG ({hsgCodes.length} em)</span>
+          </button>
         </div>
 
         {/* BẢNG DANH SÁCH HỌC SINH */}
@@ -299,6 +334,7 @@ export default function AdminPage() {
                 <th className="p-3.5">Ngày Sinh</th>
                 <th className="p-3.5">Điểm TB</th>
                 <th className="p-3.5">XP Tích Lũy</th>
+                <th className="p-3.5 text-center">Đội Tuyển HSG</th>
                 <th className="p-3.5 text-right">Thao Tác</th>
               </tr>
             </thead>
@@ -315,6 +351,27 @@ export default function AdminPage() {
                   <td className="p-3.5 text-slate-500">{st.dob || '2012'}</td>
                   <td className="p-3.5 font-bold text-emerald-700">{st.averageGrade} / 10đ</td>
                   <td className="p-3.5 font-bold text-amber-600">{st.totalXp} XP</td>
+                  <td className="p-3.5 text-center">
+                    {hsgCodes.includes(st.studentCode) ? (
+                      <button
+                        onClick={() => handleToggleHSG(st.studentCode, st.fullName)}
+                        title="Click để rút khỏi Đội tuyển HSG"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[11px] hover:bg-rose-100 hover:text-rose-800 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                        <span>Đội tuyển HSG</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleHSG(st.studentCode, st.fullName)}
+                        title="Click để tuyển chọn vào Đội tuyển HSG (Mở quyền Lập trình)"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-semibold text-[11px] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-all cursor-pointer"
+                      >
+                        <Code2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>+ Chỉ định HSG</span>
+                      </button>
+                    )}
+                  </td>
                   <td className="p-3.5 text-right">
                     <button
                       onClick={() => handleResetPassword(st.fullName)}

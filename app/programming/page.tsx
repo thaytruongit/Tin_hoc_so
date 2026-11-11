@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Code2,
   Terminal,
@@ -19,7 +20,12 @@ import {
   Send,
   Check,
   X,
-  Award
+  Award,
+  Lock,
+  Laptop,
+  PlayCircle,
+  Trophy,
+  FileSpreadsheet
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MOCK_PROGRAMMING_CHALLENGES } from '@/lib/mock-data';
@@ -29,8 +35,17 @@ import {
   PythonExecutionResult,
   MultiTestSummary
 } from '@/lib/pyodide-runner';
+import { getCurrentUser, isStudentDesignatedHSG, UserSession } from '@/lib/auth';
 
 export default function ProgrammingPage() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setCurrentUser(getCurrentUser());
+  }, []);
+
   const [selectedLang, setSelectedLang] = useState<'all' | 'C++' | 'Python'>('all');
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<'all' | 'Khối 8' | 'Khối 9' | 'Bồi dưỡng HSG'>('all');
   const [activeChallenge, setActiveChallenge] = useState(MOCK_PROGRAMMING_CHALLENGES[0]);
@@ -213,6 +228,71 @@ export default function ProgrammingPage() {
       }, 700);
     }
   };
+
+  const isAuthorized = !currentUser || currentUser.role === 'teacher' || 
+    isStudentDesignatedHSG(currentUser.studentCode) || 
+    isStudentDesignatedHSG(currentUser.partnerCode);
+
+  if (mounted && currentUser && currentUser.role === 'student' && !isAuthorized) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-20 h-20 mx-auto rounded-3xl bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shadow-sm">
+          <Lock className="w-10 h-10" />
+        </div>
+        <div className="space-y-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider">
+            Chuyên Mục Bồi Dưỡng Học Sinh Giỏi
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Khu Vực Lập Trình Dành Cho Đội Tuyển HSG
+          </h1>
+          <p className="text-slate-600 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+            Chuyên mục <strong>Lập trình Python 3.12 (Thuật toán &amp; Chấm tự động qua Test Cases)</strong> hiện được chỉ định dành riêng cho các bạn học sinh trong Đội tuyển Tin học trẻ &amp; Học sinh giỏi do <strong>Thầy Đỗ Mạnh Trường</strong> tuyển chọn.
+          </p>
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl max-w-lg mx-auto text-left text-xs text-blue-900 space-y-1.5 shadow-xs">
+            <p className="font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              Tài khoản hiện tại: {currentUser.pairNames || currentUser.studentName} ({currentUser.studentClass})
+            </p>
+            <p className="text-blue-700">
+              💡 <em>Để được cấp quyền mở khóa chuyên mục này, em hãy tiếp tục tích cực học tập trong Lớp học số, hoàn thành xuất sắc các Bài tập về nhà và đạt điểm số cao trong các đợt Kiểm tra định kỳ để Thầy ghi danh vào Đội tuyển HSG nhé!</em>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <Link
+            href="/in-class"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <Laptop className="w-4 h-4" />
+            <span>Vào Lớp Học Số</span>
+          </Link>
+          <Link
+            href="/homework"
+            className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Làm Bài Tập Về Nhà</span>
+          </Link>
+          <Link
+            href="/self-study"
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <PlayCircle className="w-4 h-4" />
+            <span>Tự Học Video Bài Giảng</span>
+          </Link>
+          <Link
+            href="/gradebook"
+            className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Xem Bảng Điểm Học Kỳ</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 edu-grid-bg">

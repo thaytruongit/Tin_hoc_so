@@ -91,7 +91,7 @@ export default function ClassroomSyncWatcher() {
       {/* 1. THANH THÔNG BÁO KHẨN TỪ THẦY ĐỖ MẠNH TRƯỜNG */}
       {/* ==================================================================== */}
       {!isTeacher && state.broadcastMessage && closedBroadcast !== state.broadcastMessage && (
-        <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-amber-600 via-indigo-600 to-blue-700 text-white px-4 py-2.5 shadow-lg flex items-center justify-between gap-3 text-xs sm:text-sm font-bold animate-slideDown">
+        <div className="fixed top-16 sm:top-20 left-0 right-0 z-30 bg-gradient-to-r from-amber-600 via-indigo-600 to-blue-700 text-white px-4 py-2.5 shadow-md flex items-center justify-between gap-3 text-xs sm:text-sm font-bold border-b border-white/20 animate-slideDown">
           <div className="flex items-center gap-2 max-w-5xl mx-auto truncate">
             <Volume2 className="w-4 h-4 shrink-0 text-amber-200 animate-pulse" />
             <span className="truncate">📢 <strong>Thầy Đỗ Mạnh Trường:</strong> {state.broadcastMessage}</span>

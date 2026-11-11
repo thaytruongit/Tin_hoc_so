@@ -19,9 +19,13 @@ import {
   Monitor,
   Award,
   Cloud,
-  School
+  School,
+  BookOpen,
+  PlayCircle,
+  Trophy,
+  FileSpreadsheet
 } from 'lucide-react';
-import { getCurrentUser, UserSession } from '@/lib/auth';
+import { getCurrentUser, UserSession, isStudentDesignatedHSG } from '@/lib/auth';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -57,39 +61,71 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // MENU HỌC SINH (HỌC TẬP CẶP ĐÔI · MẬT KHẨU 123)
-  const STUDENT_MENUS = [
+  // KIỂM TRA HỌC SINH CÓ ĐƯỢC THẦY CHỈ ĐỊNH ĐỘI TUYỂN HSG ĐỂ MỞ LẬP TRÌNH KHÔNG
+  const isHSG = Boolean(
+    user.role === 'teacher' ||
+    (user.studentCode && isStudentDesignatedHSG(user.studentCode)) ||
+    (user.partnerCode && isStudentDesignatedHSG(user.partnerCode))
+  );
+
+  // 1. MENU HỌC SINH (CHỈ GỒM CÁC CHỨC NĂNG THẦY TRƯỜNG CHỈ ĐỊNH)
+  const studentMenus = [
     {
-      title: 'Lớp Học Tin Học',
+      title: 'Lớp Học Số',
       href: '/in-class',
       icon: Laptop,
-      badge: '3 Hoạt động',
+      badge: 'Trực tiếp',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Lập Trình Python',
-      href: '/programming',
-      icon: Code2,
-      badge: 'Python 3.12',
-      badgeClass: 'bg-emerald-100 text-emerald-700',
+      title: 'Bài Tập Về Nhà',
+      href: '/homework',
+      icon: BookOpen,
+      badge: 'Nộp vở/tệp',
+      badgeClass: 'bg-amber-100 text-amber-800',
     },
     {
-      title: 'Kiểm Tra Định Kỳ',
+      title: 'Tự Học (Video)',
+      href: '/self-study',
+      icon: PlayCircle,
+      badge: '29 Tiết',
+      badgeClass: 'bg-emerald-100 text-emerald-800',
+    },
+    {
+      title: 'Bài Kiểm Tra',
       href: '/exams',
       icon: FileCheck2,
-      badge: 'Chuẩn Bộ GD&ĐT',
+      badge: 'Chuẩn Bộ',
       badgeClass: 'bg-rose-100 text-rose-700',
     },
     {
-      title: 'Hồ Sơ Học Tập',
-      href: '/student',
-      icon: Award,
-      badge: 'Tiến độ 29 tiết',
-      badgeClass: 'bg-amber-100 text-amber-700',
+      title: 'Thành Tích & Xếp Hạng',
+      href: '/achievements',
+      icon: Trophy,
+      badge: 'BXH 670 HS',
+      badgeClass: 'bg-purple-100 text-purple-700',
+    },
+    {
+      title: 'Bảng Điểm Học Kỳ',
+      href: '/gradebook',
+      icon: FileSpreadsheet,
+      badge: 'Theo lớp',
+      badgeClass: 'bg-teal-100 text-teal-800',
     },
   ];
 
-  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666)
+  // Chỉ hiển thị Lập Trình Python nếu học sinh được Thầy chỉ định là Học sinh giỏi
+  if (isHSG) {
+    studentMenus.push({
+      title: 'Lập Trình HSG',
+      href: '/programming',
+      icon: Code2,
+      badge: 'Đội tuyển HSG',
+      badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold',
+    });
+  }
+
+  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666)
   const TEACHER_MENUS = [
     {
       title: 'Quản Lý 24 Máy Trạm',
@@ -106,18 +142,25 @@ export default function Navbar() {
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Kế Hoạch & Đề Thi',
+      title: 'Nạp Bảng Điểm Học Kỳ',
+      href: '/gradebook',
+      icon: FileSpreadsheet,
+      badge: 'Chuẩn TT22',
+      badgeClass: 'bg-teal-100 text-teal-700',
+    },
+    {
+      title: 'Điều Phối Bài Dạy',
       href: '/in-class',
       icon: Layers,
       badge: '29 Tiết chuẩn',
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Kho Bài Thực Hành',
-      href: '/teacher',
-      icon: Cloud,
-      badge: 'Google Drive',
-      badgeClass: 'bg-teal-100 text-teal-700',
+      title: 'Lập Trình Python HSG',
+      href: '/programming',
+      icon: Code2,
+      badge: 'Pyodide',
+      badgeClass: 'bg-indigo-100 text-indigo-700',
     },
   ];
 
@@ -128,7 +171,10 @@ export default function Navbar() {
     ? GUEST_MENUS
     : user.role === 'teacher'
     ? TEACHER_MENUS
-    : STUDENT_MENUS;
+    : studentMenus;
+
+  const rawClassName = user.studentClass || 'Mão Điền';
+  const cleanClassName = rawClassName.startsWith('Lớp') ? rawClassName : `Lớp ${rawClassName}`;
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -216,7 +262,7 @@ export default function Navbar() {
                       {user.pairNames || user.studentName}
                     </span>
                     <span className="text-[10px] text-blue-700 font-medium">
-                      Lớp {user.studentClass || 'Mão Điền'}
+                      {cleanClassName}
                     </span>
                   </div>
                 </div>
