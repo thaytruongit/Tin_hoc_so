@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { MOCK_STUDENTS } from '@/lib/mock-data';
 
 // Cấu hình môi trường kết nối Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock-tin-hoc-thcs-mao-dien.supabase.co';
@@ -41,6 +42,7 @@ export interface LabMachineState {
 }
 
 export interface ClassroomControlState {
+  isLive: boolean; // Trạng thái phát trực tiếp bài dạy của Thầy Trường (true: 3 hoạt động, false: bảng trắng chờ)
   activeGrade: number;
   activeClassId: string;
   activeClassName: string;
@@ -73,73 +75,63 @@ export interface ClassroomControlState {
 const STORAGE_KEY = 'truong_classroom_control_state';
 const CHANNEL_NAME = 'room-tin-hoc-thcs-mao-dien';
 
-export function createDefaultMachines(className: string = 'Lớp 7A11'): LabMachineState[] {
-  const samplePairs = [
-    { s1: 'Lê Thị Bảo An', s2: 'Lê Danh Tuấn Anh' },
-    { s1: 'Nguyễn Thị Mai Anh', s2: 'Nguyễn Văn Việt Anh' },
-    { s1: 'Nguyễn Đắc Gia Bảo', s2: 'Đinh Yến Chi' },
-    { s1: 'Nguyễn Quỳnh Chi', s2: 'Nguyễn Quang Cường' },
-    { s1: 'Nguyễn Thị Thùy Dung', s2: 'Vương Văn Đạo' },
-    { s1: 'Nguyễn Hương Giang', s2: 'Nguyễn Mai Hoa' },
-    { s1: 'Nguyễn Thị Huyền', s2: 'Lê Thị Thu Hương' },
-    { s1: 'Nguyễn Đăng Nhật Khang', s2: 'Lê Đình Quốc Khánh' },
-    { s1: 'Phan Minh Khang', s2: 'Nguyễn Bá Khánh' },
-    { s1: 'Nguyễn Thị Mai Lan', s2: 'Lê Thị Duy Linh' },
-    { s1: 'Nguyễn Thị Thanh Mai', s2: 'Nguyễn Huy Mạnh' },
-    { s1: 'Lê Khả Gia Minh', s2: 'Nguyễn Đạt Minh' },
-    { s1: 'Nguyễn Thị Thảo Nguyên', s2: 'Lê Thị Quỳnh Nhi' },
-    { s1: 'Lê Danh Phúc', s2: 'Nguyễn Hữu Phúc' },
-    { s1: 'Vương Trường Phúc', s2: 'Nguyễn Thị Phương Thảo' },
-    { s1: 'Lê Danh Thắng', s2: 'Nguyễn Hữu Thiện' },
-    { s1: 'Nguyễn Đức Thực', s2: 'Lô Thị Quỳnh Trang' },
-    { s1: 'Nguyễn Phương Trang', s2: 'Nguyễn Duy Trí' },
-    { s1: 'Nguyễn Văn Vượng', s2: 'Nguyễn Bảo Yến' },
-    { s1: 'Nguyễn Thị Diệu Linh', s2: '' },
-    { s1: 'Nguyễn Quốc An', s2: 'Nguyễn Thành Việt Anh' },
-    { s1: 'Vũ Đức Anh', s2: 'Vương Huy Bảo' },
-    { s1: 'Nguyễn Hữu Bắc', s2: 'Nguyễn Văn Bình' },
-    { s1: 'Nguyễn Quốc Chung', s2: 'Nguyễn Bá Công' },
-  ];
+/**
+ * Tạo danh sách 24 máy trạm chuẩn lấy đúng học sinh của lớp được chọn
+ */
+export function createMachinesForClass(classId: string = 'c-6a10', className: string = 'Lớp 6A10'): LabMachineState[] {
+  const students = MOCK_STUDENTS.filter((s) => s.classId === classId);
 
   return Array.from({ length: 24 }, (_, idx) => {
-    const pair = samplePairs[idx] || { s1: `Học sinh A${idx + 1}`, s2: `Học sinh B${idx + 1}` };
+    const s1 = students[idx * 2];
+    const s2 = students[idx * 2 + 1];
     const num = idx + 1;
     const name = `Máy ${num < 10 ? '0' : ''}${num}`;
-    const h1 = Number((8 + (idx % 3) * 0.8).toFixed(1));
-    const h2 = Number((7 + ((idx * 2) % 4) * 0.8).toFixed(1));
-    const h3 = Number((8.5 + (idx % 2) * 1.5).toFixed(1));
-    const tot = Number((h1 * 0.3 + h2 * 0.3 + h3 * 0.4).toFixed(1));
+
+    const s1Name = s1 ? s1.fullName : `Chờ kết nối...`;
+    const s1Code = s1 ? s1.studentCode : '';
+    const s2Name = s2 ? s2.fullName : '';
+    const s2Code = s2 ? s2.studentCode : '';
+
+    const h1 = s1 ? Number((8 + (idx % 3) * 0.8).toFixed(1)) : 0;
+    const h2 = s1 ? Number((7 + ((idx * 2) % 4) * 0.8).toFixed(1)) : 0;
+    const h3 = s1 ? Number((8.5 + (idx % 2) * 1.5).toFixed(1)) : 0;
+    const tot = s1 ? Number((h1 * 0.3 + h2 * 0.3 + h3 * 0.4).toFixed(1)) : 0;
 
     return {
       machineId: num,
       machineName: name,
-      student1Name: pair.s1,
-      student1Code: `HS${num}A`,
-      student2Name: pair.s2,
-      student2Code: pair.s2 ? `HS${num}B` : '',
-      progress: 60 + ((num * 7) % 40),
-      completedTasks: 5 + (num % 3),
+      student1Name: s1Name,
+      student1Code: s1Code,
+      student2Name: s2Name,
+      student2Code: s2Code,
+      progress: s1 ? 60 + ((num * 7) % 40) : 0,
+      completedTasks: s1 ? 5 + (num % 3) : 0,
       totalTasks: 7,
-      starsEarned: 1 + (num % 3),
-      status: 'submitted',
+      starsEarned: s1 ? 1 + (num % 3) : 0,
+      status: s1 ? 'submitted' : 'idle',
       hasHelpRequest: idx === 2 || idx === 10,
       scoreH1: h1,
       scoreH2: h2,
       scoreH3: h3,
       totalScore: tot,
-      practicalFileName: `BTH_Tiet06_May${num < 10 ? '0' : ''}${num}.xlsx`,
-      practicalFileUrl: `H:\\My Drive\\Giảng dạy\\NOP_BAI_THUC_HANH\\KHOI_7\\Tiet_06\\BTH_Tiet06_May${num < 10 ? '0' : ''}${num}.xlsx`,
+      practicalFileName: s1 ? `BTH_${className.replace(/\s+/g, '')}_May${num < 10 ? '0' : ''}${num}.xlsx` : undefined,
+      practicalFileUrl: s1 ? `H:\\My Drive\\Giảng dạy\\NOP_BAI_THUC_HANH\\${className}\\BTH_May${num < 10 ? '0' : ''}${num}.xlsx` : undefined,
     };
   });
 }
 
+export function createDefaultMachines(className: string = 'Lớp 6A10'): LabMachineState[] {
+  return createMachinesForClass('c-6a10', className);
+}
+
 export function getDefaultClassroomState(): ClassroomControlState {
   return {
-    activeGrade: 7,
-    activeClassId: 'c-7a11',
-    activeClassName: 'Lớp 7A11',
-    activePeriod: 6,
-    lessonTitle: 'Tiết 6: Thực hành định dạng bảng tính và sử dụng hàm',
+    isLive: false, // Mặc định CHƯA phát trực tiếp -> Học sinh hiển thị BẢNG TRẮNG thông báo
+    activeGrade: 6,
+    activeClassId: 'c-6a10',
+    activeClassName: 'Lớp 6A10',
+    activePeriod: 1,
+    lessonTitle: 'Tiết 1: Thông tin và dữ liệu',
     activityLocks: {
       discovery: true,
       practice: true,
@@ -157,18 +149,8 @@ export function getDefaultClassroomState(): ClassroomControlState {
     spotlightMachineId: null,
     broadcastMessage: '🔔 Chào mừng các em đến với Tiết học Tin học · Thầy Đỗ Mạnh Trường!',
     broadcastTime: '08:00',
-    machines: createDefaultMachines('Lớp 7A11'),
-    helpRequests: [
-      {
-        id: 'help-1',
-        machineId: 3,
-        machineName: 'Máy 03',
-        studentName: 'Nguyễn Đắc Gia Bảo & Đinh Yến Chi',
-        message: 'Thầy ơi công thức tính tổng SUMIF của máy em đang báo lỗi #NAME ạ!',
-        createdAt: '08:15',
-        status: 'pending',
-      },
-    ],
+    machines: createMachinesForClass('c-6a10', 'Lớp 6A10'),
+    helpRequests: [],
   };
 }
 
@@ -388,6 +370,39 @@ export function updateMachineScore(
       machines: updated,
     };
   });
+}
+
+/**
+ * Bật / Tắt phát trực tiếp bài dạy của Thầy Trường
+ * Khi bật (isLive = true): Học sinh vào thẳng 3 hoạt động trực tiếp
+ * Khi tắt (isLive = false): Học sinh nhìn thấy Bảng Trắng kèm thông báo chờ lệnh
+ */
+export function setLiveBroadcast(isLive: boolean, className?: string): ClassroomControlState {
+  return updateClassroomState((prev) => ({
+    ...prev,
+    isLive,
+    broadcastMessage: isLive
+      ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${className || prev.activeClassName}! Các em hãy vào học nhé.`
+      : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp (Màn hình máy trạm chuyển về Bảng trắng thông báo).`,
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
+}
+
+/**
+ * Thầy chọn lớp giảng dạy: tự động cập nhật đúng danh sách học sinh của lớp vào 24 máy trạm
+ * và điều phối sang lớp học số tương ứng
+ */
+export function selectClassForClassroom(classId: string, className: string, grade: number): ClassroomControlState {
+  const newMachines = createMachinesForClass(classId, className);
+  return updateClassroomState((prev) => ({
+    ...prev,
+    activeClassId: classId,
+    activeClassName: className,
+    activeGrade: grade,
+    machines: newMachines,
+    broadcastMessage: `📢 Thầy Đỗ Mạnh Trường: Đã chuyển điều phối phòng máy sang ${className} (Khối ${grade}).`,
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
 }
 
 export function subscribeToClassroomState(callback: (state: ClassroomControlState) => void): () => void {

@@ -69,48 +69,36 @@ export default function Navbar() {
   );
 
   // 1. MENU HỌC SINH (CHỈ GỒM CÁC CHỨC NĂNG THẦY TRƯỜNG CHỈ ĐỊNH)
-  const studentMenus = [
+  const studentMenus: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Lớp Học Số',
       href: '/in-class',
       icon: Laptop,
-      badge: 'Trực tiếp',
-      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
       title: 'Bài Tập Về Nhà',
       href: '/homework',
       icon: BookOpen,
-      badge: 'Nộp vở/tệp',
-      badgeClass: 'bg-amber-100 text-amber-800',
     },
     {
       title: 'Tự Học (Video)',
       href: '/self-study',
       icon: PlayCircle,
-      badge: '29 Tiết',
-      badgeClass: 'bg-emerald-100 text-emerald-800',
     },
     {
       title: 'Bài Kiểm Tra',
       href: '/exams',
       icon: FileCheck2,
-      badge: 'Chuẩn Bộ',
-      badgeClass: 'bg-rose-100 text-rose-700',
     },
     {
-      title: 'Thành Tích & Xếp Hạng',
+      title: 'Bảng Xếp Hạng',
       href: '/achievements',
       icon: Trophy,
-      badge: 'BXH 670 HS',
-      badgeClass: 'bg-purple-100 text-purple-700',
     },
     {
       title: 'Bảng Điểm Học Kỳ',
       href: '/gradebook',
       icon: FileSpreadsheet,
-      badge: 'Theo lớp',
-      badgeClass: 'bg-teal-100 text-teal-800',
     },
   ];
 
@@ -120,47 +108,44 @@ export default function Navbar() {
       title: 'Lập Trình HSG',
       href: '/programming',
       icon: Code2,
-      badge: 'Đội tuyển HSG',
+      badge: 'HSG',
       badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold',
     });
   }
 
   // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666)
-  const TEACHER_MENUS = [
+  const TEACHER_MENUS: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
-      title: 'Quản Lý 24 Máy Trạm',
+      title: 'Quản Lý Lớp Học Số',
       href: '/teacher',
       icon: Monitor,
-      badge: 'Sơ đồ phòng',
-      badgeClass: 'bg-amber-100 text-amber-700',
     },
     {
-      title: 'Quản Trị 670 Học Sinh',
-      href: '/admin',
+      title: 'Quản Lý Lớp & Học Sinh',
+      href: '/teacher?tab=class-roster',
       icon: Users,
-      badge: 'Sổ điểm Excel',
-      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Nạp Bảng Điểm Học Kỳ',
+      title: 'Quản Lý Bài Kiểm Tra',
+      href: '/teacher?tab=exams',
+      icon: FileCheck2,
+    },
+    {
+      title: 'Bài Tập Về Nhà',
+      href: '/teacher?tab=homework',
+      icon: BookOpen,
+    },
+    {
+      title: 'Bảng Điểm Học Kỳ',
       href: '/gradebook',
       icon: FileSpreadsheet,
-      badge: 'Chuẩn TT22',
-      badgeClass: 'bg-teal-100 text-teal-700',
-    },
-    {
-      title: 'Điều Phối Bài Dạy',
-      href: '/in-class',
-      icon: Layers,
-      badge: '29 Tiết chuẩn',
-      badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
       title: 'Lập Trình Python HSG',
       href: '/programming',
       icon: Code2,
-      badge: 'Pyodide',
-      badgeClass: 'bg-indigo-100 text-indigo-700',
+      badge: 'HSG',
+      badgeClass: 'bg-indigo-100 text-indigo-700 font-bold',
     },
   ];
 
@@ -178,7 +163,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
           
           {/* LOGO CHÍNH THỨC SƯ PHẠM */}
@@ -202,26 +187,30 @@ export default function Navbar() {
           </Link>
 
           {/* MENU DESKTOP */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 flex-nowrap overflow-x-auto no-scrollbar py-1">
             {activeMenus.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== '/' && !item.href.includes('#') && pathname.startsWith(item.href));
+              const isActive = pathname === item.href || (item.href !== '/' && !item.href.includes('#') && !item.href.includes('?') && pathname.startsWith(item.href));
 
               return (
                 <Link
                   key={item.title}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all border ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-50'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-blue-700 hover:bg-blue-50/80'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                  <span>{item.title}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${item.badgeClass}`}>
-                    {item.badge}
-                  </span>
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                  <span className="whitespace-nowrap">{item.title}</span>
+                  {item.badge && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      isActive ? 'bg-white/20 text-white' : item.badgeClass || 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

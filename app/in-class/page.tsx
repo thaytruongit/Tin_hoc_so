@@ -29,7 +29,8 @@ import {
   School,
   Play,
   RotateCcw,
-  CheckSquare
+  CheckSquare,
+  Radio
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCurrentUser, UserSession } from '@/lib/auth';
@@ -40,7 +41,8 @@ import {
   getDefaultClassroomState,
   subscribeToClassroomState,
   updateMachineScore,
-  sendStudentHelpRequest
+  sendStudentHelpRequest,
+  setLiveBroadcast
 } from '@/lib/classroom-control';
 import { uploadPracticalToDriveOnline } from '@/lib/google-drive-service';
 import { PracticalSubmission, CognitiveLevel } from '@/lib/types';
@@ -87,6 +89,10 @@ export default function InClassPage() {
   const [isUploadingLab, setIsUploadingLab] = useState<boolean>(false);
   const [labSubmissionReceipt, setLabSubmissionReceipt] = useState<PracticalSubmission | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Trạng thái Bảng Trắng khi chưa phát trực tiếp
+  const [testClickCount, setTestClickCount] = useState<number>(0);
+  const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
 
   // Đăng ký nhận sự kiện điều khiển thời gian thực từ Thầy Đỗ Mạnh Trường
   useEffect(() => {
@@ -312,6 +318,204 @@ export default function InClassPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500">
         <p className="text-sm font-semibold">Đang kết nối phòng thực hành Tin học THCS Mão Điền...</p>
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // KHI GIÁO VIÊN CHƯA PHÁT TRỰC TIẾP: HIỂN THỊ BẢNG TRẮNG KÈM THÔNG BÁO CỦA THẦY
+  // ==========================================================================
+  if (!controlState.isLive) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* BANNER THÔNG BÁO DÀNH CHO GIÁO VIÊN NẾU LÀ THẦY TRƯỜNG ĐANG TRUY CẬP */}
+        {currentUser?.role === 'teacher' && (
+          <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm font-bold text-amber-900 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+              <span>Thầy Đỗ Mạnh Trường đang ở chế độ xem trước Bảng Trắng của Học Sinh (Chưa phát trực tiếp).</span>
+            </div>
+            <button
+              onClick={() => {
+                setLiveBroadcast(true, controlState.activeClassName);
+                setControlState(prev => ({ ...prev, isLive: true }));
+              }}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <Radio className="w-4 h-4 text-white animate-pulse" />
+              <span>Phát trực tiếp bài dạy ngay</span>
+            </button>
+          </div>
+        )}
+
+        {/* KHUNG BẢNG TRẮNG ĐIỆN TỬ PHÒNG THỰC HÀNH (VIRTUAL WHITEBOARD) */}
+        <div className="bg-white rounded-3xl border-8 sm:border-12 border-slate-300 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[580px]">
+          
+          {/* MÓC TREO BẢNG & ĐINH ỐC 4 GÓC */}
+          <div className="absolute top-2 left-2 w-3 h-3 rounded-full bg-slate-400 border border-slate-500 shadow-inner"></div>
+          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-slate-400 border border-slate-500 shadow-inner"></div>
+          <div className="absolute bottom-8 left-2 w-3 h-3 rounded-full bg-slate-400 border border-slate-500 shadow-inner"></div>
+          <div className="absolute bottom-8 right-2 w-3 h-3 rounded-full bg-slate-400 border border-slate-500 shadow-inner"></div>
+
+          {/* NỘI DUNG TRÊN MẶT BẢNG TRẮNG */}
+          <div className="p-6 sm:p-10 space-y-6 relative z-10">
+            
+            {/* TIÊU ĐỀ ĐẦU BẢNG */}
+            <div className="text-center space-y-2 border-b-2 border-dashed border-slate-200 pb-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200">
+                <School className="w-4 h-4 text-blue-600" />
+                <span>TRƯỜNG THCS MÃO ĐIỀN · PHÒNG THỰC HÀNH TIN HỌC SỐ</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
+                BẢNG TIN TIẾT DẠY SỐ
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Giáo viên phụ trách bộ môn: <strong className="text-slate-800">Thầy Đỗ Mạnh Trường</strong>
+              </p>
+            </div>
+
+            {/* TRẠNG THÁI CHỜ PHÁT TRỰC TIẾP */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 text-amber-900 border border-amber-200 text-xs sm:text-sm font-bold shadow-xs animate-pulse">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span>⏳ ĐANG CHỜ TÍN HIỆU PHÁT TRỰC TIẾP TỪ THẦY ĐỖ MẠNH TRƯỜNG...</span>
+              </div>
+            </div>
+
+            {/* THÔNG TIN VỊ TRÍ MÁY & CẶP ĐÔI TẠI MÁY */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                <span className="text-[11px] font-bold text-slate-500 block uppercase">Vị trí máy trạm</span>
+                <span className="text-base font-extrabold text-blue-700 font-mono">
+                  💻 Máy {machineId < 10 ? `0${machineId}` : machineId}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                <span className="text-[11px] font-bold text-slate-500 block uppercase">Lớp học</span>
+                <span className="text-base font-extrabold text-slate-800">
+                  {currentUser?.studentClass || controlState.activeClassName || 'Lớp 6A10'}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                <span className="text-[11px] font-bold text-slate-500 block uppercase">Học sinh tại máy</span>
+                <span className="text-xs font-bold text-slate-800 truncate block">
+                  {student1Name} {student2Name ? `& ${student2Name}` : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* KHUNG THÔNG BÁO CHÍNH THỨC SƯ PHẠM */}
+            <div className="max-w-3xl mx-auto bg-blue-50/70 border-2 border-blue-200 rounded-2xl p-5 sm:p-6 text-slate-800 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 text-blue-900 font-bold text-sm sm:text-base">
+                <AlertCircle className="w-5 h-5 text-blue-600 shrink-0" />
+                <span>HƯỚNG DẪN CHUẨN BỊ ĐẦU GIỜ TỪ THẦY TRƯỜNG</span>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2">
+                <p>
+                  Thầy Đỗ Mạnh Trường chưa phát lệnh bắt đầu bài dạy trực tiếp cho lớp của em. Trong thời gian chuẩn bị, các em vui lòng:
+                </p>
+                <ol className="list-decimal pl-5 space-y-1 font-medium text-slate-800">
+                  <li><strong>Ổn định vị trí:</strong> Ngồi đúng số máy được phân công, giữ gìn trật tự và vệ sinh chung.</li>
+                  <li><strong>Chuẩn bị đồ dùng:</strong> Mở sẵn sách giáo khoa Tin học và vở ghi bài trên bàn.</li>
+                  <li><strong>Kiểm tra thiết bị:</strong> Thử rê chuột và gõ phím bên dưới để chắc chắn máy trạm hoạt động bình thường.</li>
+                  <li><strong>Sẵn sàng học tập:</strong> Khi Thầy Trường bấm <em>&quot;Phát trực tiếp bài dạy&quot;</em> từ Bàn quản lý, màn hình máy trạm sẽ tự động chuyển ngay sang 3 Hoạt động lớp học số mà không cần thao tác gì thêm!</li>
+                </ol>
+              </div>
+            </div>
+
+            {/* CÔNG CỤ TEST THIẾT BỊ TẠI CHỖ & NỘI QUY */}
+            <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setTestClickCount(c => c + 1)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-300 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>🖱️ Test Chuột (Đã click: {testClickCount})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRulesModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-300 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>📜 5 Điều Nội Quy Phòng Máy</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowHelpDialog(true)}
+                className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4 text-rose-600" />
+                <span>Báo Cáo Máy Hỏng / Cần Thầy Giúp</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KHAY ĐỰNG BÚT LÔNG VÀ KHĂN LAU Ở ĐÁY BẢNG TRẮNG */}
+          <div className="bg-gradient-to-r from-slate-300 via-slate-200 to-slate-300 border-t-2 border-slate-400 py-2.5 px-6 flex items-center justify-center gap-6 shadow-inner">
+            <div className="flex items-center gap-3">
+              {/* Bút lông xanh */}
+              <div className="w-16 h-3 rounded-full bg-blue-600 shadow-sm border border-blue-700" title="Bút lông xanh viết bảng"></div>
+              {/* Bút lông đỏ */}
+              <div className="w-16 h-3 rounded-full bg-rose-600 shadow-sm border border-rose-700" title="Bút lông đỏ viết bảng"></div>
+              {/* Bút lông đen */}
+              <div className="w-16 h-3 rounded-full bg-slate-900 shadow-sm border border-slate-950" title="Bút lông đen viết bảng"></div>
+              {/* Khăn lau bảng */}
+              <div className="w-14 h-4 rounded-md bg-amber-700 shadow-sm border border-amber-800 text-[8px] text-white flex items-center justify-center font-bold" title="Khăn lau bảng">
+                LAU BẢNG
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MODAL 5 ĐIỀU NỘI QUY PHÒNG MÁY THCS MÃO ĐIỀN */}
+        {showRulesModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                  <School className="w-5 h-5 text-blue-600" />
+                  <span>Nội Quy Phòng Thực Hành Tin Học THCS Mão Điền</span>
+                </h3>
+                <button
+                  onClick={() => setShowRulesModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="text-xs sm:text-sm text-slate-700 space-y-2.5">
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <strong>Điều 1:</strong> Vào phòng máy đúng giờ, ngồi đúng vị trí máy trạm đã được phân công.
+                </div>
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <strong>Điều 2:</strong> Giữ gìn vệ sinh, không mang đồ ăn, nước uống vào phòng thực hành.
+                </div>
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <strong>Điều 3:</strong> Sử dụng máy tính đúng mục đích học tập theo hướng dẫn của Thầy Đỗ Mạnh Trường.
+                </div>
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <strong>Điều 4:</strong> Không tự ý thay đổi cài đặt hệ thống, tháo lắp linh kiện chuột, bàn phím, dây nguồn.
+                </div>
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <strong>Điều 5:</strong> Hết giờ học, lưu bài nộp lên Google Drive, tắt máy và xếp gọn ghế ngồi ngăn nắp.
+                </div>
+              </div>
+
+              <div className="pt-2 text-right">
+                <button
+                  onClick={() => setShowRulesModal(false)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all"
+                >
+                  Đã hiểu và thực hiện
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
