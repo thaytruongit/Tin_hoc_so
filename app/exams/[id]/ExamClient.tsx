@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MOCK_EXAMS } from '@/lib/mock-data';
+import { getCurrentUser } from '@/lib/auth';
+import { saveExamResultToCloud } from '@/lib/supabase-service';
 
 export default function ExamClient() {
   const params = useParams();
@@ -92,6 +94,21 @@ export default function ExamClient() {
     if (finalScore >= 8) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
     }
+
+    // Tự động lưu điểm chính thức lên Supabase Database Cloud & LocalStorage
+    const user = getCurrentUser();
+    saveExamResultToCloud({
+      examId: exam.id,
+      examTitle: exam.title,
+      studentCode: user.studentCode || 'HS-TEST',
+      studentName: user.studentName || 'Học sinh kiểm tra',
+      className: user.studentClass || `Lớp ${exam.grade}A1`,
+      grade: exam.grade,
+      score: finalScore,
+      tabSwitches: tabSwitches,
+      answers: answers,
+      submittedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+    }).catch(err => console.error('Lỗi lưu điểm thi:', err));
   };
 
   const formatTime = (seconds: number) => {
@@ -162,7 +179,7 @@ export default function ExamClient() {
             {score} <span className="text-2xl text-slate-400 font-normal">/ 10đ</span>
           </div>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Số lần rời màn hình: <strong>{tabSwitches}</strong>. Kết quả và chi tiết các câu đã được tự động lưu trữ vào hồ sơ học sinh trên hệ thống.
+            Số lần rời màn hình: <strong>{tabSwitches}</strong>. Kết quả và chi tiết bài làm đã được tự động lưu vào cơ sở dữ liệu học sinh của Thầy Trương Thành Trường.
           </p>
           <div className="pt-2 flex justify-center gap-3">
             <Link

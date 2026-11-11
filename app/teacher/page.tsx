@@ -40,6 +40,7 @@ import { CURRICULUM_DATA } from '@/lib/curriculum-data';
 import { ShieldAlert, ArrowRight, Cloud, FolderCheck, RefreshCw, RotateCw, ZoomIn, ZoomOut, ThumbsUp, Award, Sliders, CheckSquare, Radio } from 'lucide-react';
 import { getGasWebAppUrl, setGasWebAppUrl, testDriveOnlineConnection } from '@/lib/google-drive-service';
 import ClassroomCommandCenter from '@/components/ClassroomCommandCenter';
+import { fetchClassExamResultsFromCloud, CloudExamResult } from '@/lib/supabase-service';
 
 
 export default function TeacherDashboard() {
@@ -78,6 +79,8 @@ export default function TeacherDashboard() {
   const [imageZoom, setImageZoom] = useState<number>(1);
   const [rfLessonId, setRfLessonId] = useState<string>(MOCK_IN_CLASS_LESSONS[1].id);
   const [rfResults, setRfResults] = useState<any[]>([]);
+  const [examResultsList, setExamResultsList] = useState<CloudExamResult[]>([]);
+  const [isLoadingExamResults, setIsLoadingExamResults] = useState<boolean>(false);
 
   // Tải danh sách bài nộp từ localStorage nếu có
   useEffect(() => {
@@ -126,6 +129,17 @@ export default function TeacherDashboard() {
 
   const currentClass = MOCK_CLASSES.find(c => c.id === selectedClassId) || MOCK_CLASSES[0];
   const classStudents = MOCK_STUDENTS.filter(s => s.classId === selectedClassId);
+
+  // Tự động tải điểm thi từ Supabase Cloud khi đổi Lớp
+  useEffect(() => {
+    if (currentClass?.name) {
+      setIsLoadingExamResults(true);
+      fetchClassExamResultsFromCloud(currentClass.name)
+        .then(res => setExamResultsList(res))
+        .catch(err => console.error(err))
+        .finally(() => setIsLoadingExamResults(false));
+    }
+  }, [currentClass?.name]);
 
   const filteredStudents = classStudents.filter(s => 
     s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -869,6 +883,89 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* BẢNG ĐIỂM THI TRỰC TUYẾN THỜI GIAN THỰC TỪ SUPABASE */}
+          <div className="pt-6 border-t border-slate-200 space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h4 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5 text-indigo-600" />
+                  <span>Bảng Điểm Kiểm Tra Trực Tuyến · {currentClass.name}</span>
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Đồng bộ tự động từ Supabase PostgreSQL khi học sinh nộp bài thi
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoadingExamResults(true);
+                  fetchClassExamResultsFromCloud(currentClass.name)
+                    .then(res => setExamResultsList(res))
+                    .finally(() => setIsLoadingExamResults(false));
+                }}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingExamResults ? 'animate-spin' : ''}`} />
+                <span>Cập nhật bảng điểm</span>
+              </button>
+            </div>
+
+            {examResultsList.length > 0 ? (
+              <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 text-slate-700 font-bold">
+                    <tr>
+                      <th className="py-3 px-4">Học sinh</th>
+                      <th className="py-3 px-4">Bài thi</th>
+                      <th className="py-3 px-4 text-center">Điểm số</th>
+                      <th className="py-3 px-4 text-center">Rời màn hình</th>
+                      <th className="py-3 px-4">Thời gian nộp</th>
+                      <th className="py-3 px-4 text-center">Xếp loại</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {examResultsList.map((res, rIdx) => (
+                      <tr key={res.id || rIdx} className="hover:bg-slate-50">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900">{res.studentName}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{res.studentCode}</div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 font-medium">{res.examTitle}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`px-2.5 py-1 rounded-xl font-black text-xs ${
+                            res.score >= 8 ? 'bg-emerald-100 text-emerald-800' :
+                            res.score >= 5 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {res.score} / 10đ
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-600">
+                          {res.tabSwitches > 0 ? (
+                            <span className="text-rose-600">{res.tabSwitches} lần</span>
+                          ) : (
+                            <span className="text-emerald-600">0 lần</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{res.submittedAt}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="font-bold text-[11px] text-slate-700">
+                            {res.score >= 8 ? 'Giỏi' : res.score >= 6.5 ? 'Khá' : res.score >= 5 ? 'Đạt' : 'Chưa đạt'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500 space-y-1">
+                <p className="font-bold text-slate-700">Chưa có kết quả kiểm tra nào của {currentClass.name}</p>
+                <p>Khi học sinh nộp bài thi tại phòng máy, kết quả và số lần chuyển tab sẽ xuất hiện tại đây.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
