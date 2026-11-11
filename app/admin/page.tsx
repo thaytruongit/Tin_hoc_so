@@ -1,19 +1,124 @@
 'use client';
 
-import { useState } from 'react';
-import { Settings, Users, Database, Shield, KeyRound, Save, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Settings, Users, Database, Shield, KeyRound, Save, CheckCircle2, RefreshCw, ShieldAlert, ArrowRight, Crown } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
+import { getCurrentUser, UserSession } from '@/lib/auth';
 
 export default function AdminPage() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (user.role === 'teacher') {
+      setIsUnlocked(true);
+    }
+  }, []);
+
   const [siteTitle, setSiteTitle] = useState('THAYTRUONGIT-THCS MÃO ĐIỀN');
   const [xpPerCorrect, setXpPerCorrect] = useState(10);
   const [saved, setSaved] = useState(false);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminKey.trim() === '666') {
+      setIsUnlocked(true);
+      setAuthError('');
+      localStorage.setItem('truong_user_role', 'teacher');
+      localStorage.setItem('truong_teacher_name', 'Thầy Đỗ Mạnh Trường');
+    } else {
+      setAuthError('Mật khẩu quản trị không chính xác! (Mật mã chuẩn y: 666)');
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+
+  if (!mounted) return null;
+
+  // ROUTE GUARD: BẢO VỆ PHÂN QUYỀN GIÁO VIÊN
+  if (!isUnlocked && currentUser?.role === 'student') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shadow-lg">
+          <ShieldAlert className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-black uppercase">
+            Bảo mật phân quyền (RBAC)
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">
+            Truy Cập Bị Từ Chối — Khu Vực Quản Trị
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+            Khu vực này dành riêng cho <strong>Thầy Đỗ Mạnh Trường</strong> quản trị 670 học sinh và cấu hình điểm thi.<br />
+            Tài khoản của em là <strong>{currentUser.studentName}</strong> (Lớp {currentUser.studentClass}) vui lòng quay lại buồng lái học tập!
+          </p>
+        </div>
+        <div className="pt-2 flex justify-center gap-3">
+          <Link
+            href="/in-class"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-md transition-all"
+          >
+            Quay Về Buồng Lái Học Tập
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // NẾU LÀ KHÁCH CHƯA XÁC THỰC MẬT MÃ 666
+  if (!isUnlocked) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow-neon-gold/40">
+          <Crown className="w-8 h-8" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-white glow-text-gold">Xác Thực Quản Trị Viên</h1>
+          <p className="text-xs text-slate-400 mt-1">Dành riêng cho Thầy Đỗ Mạnh Trường (Mã 666)</p>
+        </div>
+
+        <form onSubmit={handleUnlock} className="space-y-4 text-left">
+          {authError && (
+            <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs font-bold">
+              {authError}
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-bold text-amber-300 mb-1">Mật mã Quản trị đặc quyền</label>
+            <div className="relative">
+              <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="password"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                placeholder="Nhập 666"
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-amber-500/50 bg-slate-900 text-amber-300 text-sm font-black focus:outline-none focus:border-amber-400 tracking-widest"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs shadow-neon-gold/40 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Mở Khóa Bảng Quản Trị</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
