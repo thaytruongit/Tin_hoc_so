@@ -42,22 +42,22 @@ export default function Footer() {
               Không Gian Học Sinh (123)
             </h4>
             <ul className="space-y-2 text-sm text-slate-600">
-              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">1. Buồng Lái Lớp Học (3 HĐ)</Link></li>
-              <li><Link href="/programming" className="hover:text-blue-600 transition-colors">2. Võ Đài Python (Wasm 3.12)</Link></li>
-              <li><Link href="/exams" className="hover:text-blue-600 transition-colors">3. Đấu Boss Thi Cử (Chống lận)</Link></li>
-              <li><Link href="/student" className="hover:text-blue-600 transition-colors">4. Hồ Sơ &amp; Bảng Vàng (XP)</Link></li>
+              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">1. Lớp Học Tin Học (3 Hoạt động)</Link></li>
+              <li><Link href="/programming" className="hover:text-blue-600 transition-colors">2. Lập Trình Python (Wasm 3.12)</Link></li>
+              <li><Link href="/exams" className="hover:text-blue-600 transition-colors">3. Kiểm Tra Định Kỳ (Chuẩn Bộ)</Link></li>
+              <li><Link href="/student" className="hover:text-blue-600 transition-colors">4. Hồ Sơ Học Tập &amp; Điểm Thi Đua</Link></li>
             </ul>
           </div>
 
-          {/* Column 3: Đài chỉ huy giáo viên */}
+          {/* Column 3: Bàn quản lý giáo viên */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-              Đài Chỉ Huy Giáo Viên (666)
+              Bàn Quản Lý Giáo Viên (666)
             </h4>
             <ul className="space-y-2 text-sm text-slate-600">
-              <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">1. Đài Chỉ Huy 24 Trạm (Ziczac)</Link></li>
-              <li><Link href="/admin" className="hover:text-blue-600 transition-colors">2. Quản Trị 670 HS (Xuất Excel)</Link></li>
-              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">3. Điều Phối Tiết Dạy &amp; Đề Thi</Link></li>
+              <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">1. Quản Lý 24 Máy Trạm (Ziczac)</Link></li>
+              <li><Link href="/admin" className="hover:text-blue-600 transition-colors">2. Quản Trị 670 Học Sinh (Xuất Excel)</Link></li>
+              <li><Link href="/in-class" className="hover:text-blue-600 transition-colors">3. Kế Hoạch Tiết Dạy &amp; Đề Thi</Link></li>
               <li><Link href="/teacher" className="hover:text-blue-600 transition-colors">4. Cấu Hình Google Drive Thực Hành</Link></li>
             </ul>
           </div>

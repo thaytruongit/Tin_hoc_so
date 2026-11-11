@@ -59,12 +59,12 @@ export default function HomePage() {
             HỆ SINH THÁI TIN HỌC SỐ · THCS MÃO ĐIỀN
           </h1>
           <p className="text-sm sm:text-base font-extrabold text-blue-700 mt-1.5 flex items-center justify-center gap-2">
-            <Crown className="w-4 h-4 text-amber-500" />
-            <span>(Tổng Chỉ Huy: Thầy Đỗ Mạnh Trường)</span>
+            <School className="w-4 h-4 text-blue-600" />
+            <span>(Giáo Viên Phụ Trách: Thầy Đỗ Mạnh Trường)</span>
           </p>
 
           <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto mt-2 leading-relaxed">
-            Hệ thống dạy học số hóa môn Tin học theo chuẩn GDPT 2018. Phân định rõ 2 không gian tác nghiệp thực tế: <strong>Không Gian Của Học Sinh</strong> và <strong>Đài Chỉ Huy Của Giáo Viên</strong>.
+            Hệ thống dạy học số hóa môn Tin học theo chuẩn GDPT 2018. Phân định rõ 2 không gian sư phạm thực tế: <strong>Không Gian Học Tập Của Học Sinh</strong> và <strong>Bàn Quản Lý Của Giáo Viên</strong>.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           
           {/* ================================================================ */}
-          {/* NHÁNH 1: KHÔNG GIAN CỦA HỌC SINH (Chiến Binh Số · Buồng Lái Kép 123) */}
+          {/* NHÁNH 1: KHÔNG GIAN CỦA HỌC SINH (Học tập cặp đôi · Mật khẩu 123) */}
           {/* ================================================================ */}
           <div className="bg-white rounded-3xl border-2 border-blue-400 shadow-md p-6 sm:p-7 space-y-6 flex flex-col justify-between relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-2xl pointer-events-none"></div>
@@ -103,7 +103,7 @@ export default function HomePage() {
                       KHÔNG GIAN CỦA HỌC SINH
                     </h2>
                     <p className="text-xs font-bold text-blue-700">
-                      (Chiến Binh Số · Buồng Lái Kép 123)
+                      (Học Tập Cặp Đôi · Mật Khẩu 123)
                     </p>
                   </div>
                 </div>
@@ -120,36 +120,36 @@ export default function HomePage() {
             {/* 4 MODULE CHỨC NĂNG HỌC SINH */}
             <div className="space-y-4">
               
-              {/* 1. BUỒNG LÁI LỚP HỌC */}
+              {/* 1. LỚP HỌC TIN HỌC */}
               <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200 hover:border-blue-300 transition-all space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-xs font-black flex items-center justify-center">1</span>
                     <h3 className="font-extrabold text-sm text-slate-900">
-                      Buồng Lái Lớp Học (<code className="text-blue-700 text-xs">/in-class</code>)
+                      Lớp Học Tin Học (<code className="text-blue-700 text-xs">/in-class</code>)
                     </h3>
                   </div>
                   <Link
                     href="/in-class"
                     className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                   >
-                    <span>Vào lớp</span>
+                    <span>Vào lớp học</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
-                  <li><strong>Ghép cặp 2 bạn:</strong> Phân vai Kỹ thuật viên & Thư ký (Cơ trưởng - Cơ phó) tại 1 máy trạm.</li>
-                  <li><strong>3 Hoạt động lớp:</strong> Khám phá logic đôi + Luyện tập 7 câu chuẩn Bộ + Nộp bài Drive thời gian thực.</li>
+                  <li><strong>Học tập cặp đôi:</strong> Phân vai Kỹ thuật viên & Thư ký luân phiên tại máy trạm.</li>
+                  <li><strong>3 Hoạt động bài học:</strong> Khám phá kiến thức + Luyện tập 7 câu chuẩn Bộ + Nộp bài thực hành Drive.</li>
                 </ul>
               </div>
 
-              {/* 2. VÕ ĐÀI PYTHON */}
+              {/* 2. LUYỆN TẬP LẬP TRÌNH PYTHON */}
               <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200 hover:border-emerald-300 transition-all space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-black flex items-center justify-center">2</span>
                     <h3 className="font-extrabold text-sm text-slate-900">
-                      Võ Đài Python (<code className="text-emerald-700 text-xs">/programming</code>)
+                      Luyện Tập Lập Trình Python (<code className="text-emerald-700 text-xs">/programming</code>)
                     </h3>
                   </div>
                   <Link
@@ -161,31 +161,31 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
-                  <li><strong>Pyodide 3.12 WebAssembly:</strong> Chạy code trực tiếp trên trình duyệt, không cần cài phần mềm.</li>
-                  <li><strong>Chấm Multi-Test Cases tự động:</strong> Kiểm tra tự động từng trường hợp kiểm thử, phản hồi tức thì.</li>
+                  <li><strong>Pyodide 3.12 WebAssembly:</strong> Thực thi Python trực tiếp trên trình duyệt, không cần cài đặt.</li>
+                  <li><strong>Chấm Test Cases tự động:</strong> Kiểm tra tự động từng trường hợp kiểm thử, phản hồi tức thì.</li>
                 </ul>
               </div>
 
-              {/* 3. ĐẤU BOSS THI CỬ */}
+              {/* 3. KIỂM TRA ĐỊNH KỲ */}
               <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200 hover:border-rose-300 transition-all space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-lg bg-rose-600 text-white text-xs font-black flex items-center justify-center">3</span>
                     <h3 className="font-extrabold text-sm text-slate-900">
-                      Đấu Boss Thi Cử (<code className="text-rose-700 text-xs">/exams</code>)
+                      Kiểm Tra Định Kỳ (<code className="text-rose-700 text-xs">/exams</code>)
                     </h3>
                   </div>
                   <Link
                     href="/exams"
                     className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1"
                   >
-                    <span>Vào thi</span>
+                    <span>Làm bài thi</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
-                  <li><strong>Đề kiểm tra định kỳ có bảo mật:</strong> 8 Bộ đề Giữa kỳ & Cuối kỳ chuẩn Ma trận nhận thức Bộ GD&ĐT.</li>
-                  <li><strong>Radar cảnh báo chống chuyển tab:</strong> Khóa phím tắt, ghi nhận vi phạm để đảm bảo tính minh bạch.</li>
+                  <li><strong>Đề kiểm tra định kỳ chuẩn Bộ:</strong> 8 Bộ đề Giữa kỳ & Cuối kỳ chuẩn Ma trận nhận thức Bộ GD&ĐT.</li>
+                  <li><strong>Giám sát trung thực khi làm bài:</strong> Khóa phím tắt, cảnh báo chuyển tab để đảm bảo tính công bằng.</li>
                 </ul>
               </div>
 
@@ -195,7 +195,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-lg bg-amber-600 text-white text-xs font-black flex items-center justify-center">4</span>
                     <h3 className="font-extrabold text-sm text-slate-900">
-                      Hồ Sơ & Bảng Vàng (<code className="text-amber-800 text-xs">/student</code>)
+                      Hồ Sơ &amp; Điểm Thi Đua (<code className="text-amber-800 text-xs">/student</code>)
                     </h3>
                   </div>
                   <Link
@@ -208,7 +208,7 @@ export default function HomePage() {
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
                   <li><strong>Theo dõi tiến độ học tập:</strong> Lưu lịch sử điểm số 29 tiết học SGK Kết nối tri thức.</li>
-                  <li><strong>XP, Cấp độ, Huy hiệu:</strong> Bảng thi đua top học sinh xuất sắc và chuỗi ngày chăm chỉ.</li>
+                  <li><strong>Điểm thi đua học tốt:</strong> Bảng vinh danh học sinh tích cực và chăm chỉ nhất trường.</li>
                 </ul>
               </div>
 
@@ -220,13 +220,13 @@ export default function HomePage() {
               className="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
             >
               <Laptop className="w-4 h-4" />
-              <span>VÀO BUỒNG LÁI LỚP HỌC (CHIẾN BINH SỐ)</span>
+              <span>VÀO LỚP HỌC TIN HỌC THỰC HÀNH</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           {/* ================================================================ */}
-          {/* NHÁNH 2: ĐÀI CHỈ HUY CỦA GIÁO VIÊN (Thầy Đỗ Mạnh Trường · Admin 666) */}
+          {/* NHÁNH 2: BÀN QUẢN LÝ CỦA GIÁO VIÊN (Thầy Đỗ Mạnh Trường · Mã 666)  */}
           {/* ================================================================ */}
           <div className="bg-white rounded-3xl border-2 border-amber-400 shadow-md p-6 sm:p-7 space-y-6 flex flex-col justify-between relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl pointer-events-none"></div>
@@ -236,14 +236,14 @@ export default function HomePage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-black shadow-sm">
-                    <Crown className="w-6 h-6" />
+                    <UserCheck className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                      ĐÀI CHỈ HUY CỦA GIÁO VIÊN
+                      BÀN QUẢN LÝ CỦA GIÁO VIÊN
                     </h2>
                     <p className="text-xs font-bold text-amber-800">
-                      (Thầy Đỗ Mạnh Trường · Admin 666)
+                      (Thầy Đỗ Mạnh Trường · Mã 666)
                     </p>
                   </div>
                 </div>
@@ -260,27 +260,27 @@ export default function HomePage() {
             {/* 4 MODULE CHỨC TRÁCH GIÁO VIÊN */}
             <div className="space-y-4">
               
-              {/* 1. ĐÀI CHỈ HUY 24 TRẠM */}
+              {/* 1. QUẢN LÝ 24 MÁY TRẠM */}
               <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 hover:border-amber-300 transition-all space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-lg bg-amber-600 text-white text-xs font-black flex items-center justify-center">1</span>
                     <h3 className="font-extrabold text-sm text-slate-900">
-                      Đài Chỉ Huy 24 Trạm (<code className="text-amber-800 text-xs">/teacher</code>)
+                      Quản Lý 24 Máy Trạm (<code className="text-amber-800 text-xs">/teacher</code>)
                     </h3>
                   </div>
                   <Link
                     href="/teacher"
                     className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1"
                   >
-                    <span>Điều hành</span>
+                    <span>Quản lý phòng</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
-                  <li><strong>Giám sát Realtime sơ đồ Ziczac:</strong> Lưới 24 trạm máy chuẩn phòng THCS Mão Điền (4-3-2-1 / 5-6-7-8...).</li>
-                  <li><strong>Buff Sao Vàng, Khóa/Mở trạm máy:</strong> Điều khiển đồng loạt hoặc can thiệp từng cặp máy tức thì.</li>
-                  <li><strong>Chiếu Hologram bài mẫu xuất sắc:</strong> Trình chiếu sản phẩm tiêu biểu lên màn hình lớn cả phòng.</li>
+                  <li><strong>Sơ đồ 24 máy trạm:</strong> Bố trí phòng máy chuẩn THCS Mão Điền (dãy ziczac 4-3-2-1 / 5-6-7-8...).</li>
+                  <li><strong>Khen thưởng Sao Vàng, Khóa/Mở máy:</strong> Điều khiển đồng loạt hoặc can thiệp từng máy trạm tức thì.</li>
+                  <li><strong>Trình chiếu bài mẫu xuất sắc:</strong> Chiếu sản phẩm của học sinh tiêu biểu lên màn hình lớp học.</li>
                 </ul>
               </div>
 
@@ -326,7 +326,7 @@ export default function HomePage() {
                 </div>
                 <ul className="text-xs text-slate-600 space-y-1 pl-8 list-disc font-medium">
                   <li><strong>Kích hoạt đợt thi:</strong> Mở hoặc đóng phòng kiểm tra trực tuyến có chống gian lận.</li>
-                  <li><strong>Xem phổ điểm &amp; Phân tích nhận thức:</strong> Thống kê phổ điểm 3D theo 3 mức độ (Biết - Hiểu - Vận dụng).</li>
+                  <li><strong>Xem phổ điểm &amp; Phân tích nhận thức:</strong> Thống kê phổ điểm theo 3 mức độ (Biết - Hiểu - Vận dụng).</li>
                 </ul>
               </div>
 
@@ -360,8 +360,8 @@ export default function HomePage() {
               href="/teacher"
               className="w-full py-3 px-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              <Crown className="w-4 h-4" />
-              <span>MỞ ĐÀI CHỈ HUY 24 TRẠM (THẦY TRƯỜNG - MÃ 666)</span>
+              <UserCheck className="w-4 h-4" />
+              <span>MỞ BÀN QUẢN LÝ TIẾT DẠY (THẦY TRƯỜNG - MÃ 666)</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

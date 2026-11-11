@@ -425,10 +425,10 @@ function InClassContent() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            Buồng Lái Lớp Học (Chiến Binh Số · Buồng Lái Kép 123)
+            Lớp Học Tin Học Thực Hành (Học Tập Cặp Đôi · Mật Khẩu 123)
           </h1>
           <p className="text-xs sm:text-sm text-slate-600">
-            Ghép cặp 2 bạn (Cơ trưởng - Cơ phó) · 3 HĐ: <strong className="text-blue-600">Khám phá logic đôi</strong> ➔ <strong className="text-indigo-600">Luyện tập 7 câu chuẩn Bộ</strong> ➔ <strong className="text-emerald-600">Nộp Drive thời gian thực</strong>.
+            Học tập cặp đôi (Phân vai Kỹ thuật viên &amp; Thư ký) · 3 Hoạt động bài học: <strong className="text-blue-600">Khám phá kiến thức</strong> ➔ <strong className="text-indigo-600">Luyện tập 7 câu chuẩn Bộ</strong> ➔ <strong className="text-emerald-600">Nộp bài thực hành Google Drive</strong>.
           </p>
         </div>
 

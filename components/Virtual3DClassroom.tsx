@@ -79,7 +79,7 @@ export default function Virtual3DClassroom({
     ];
   }, []);
 
-  // Top vinh danh chiến binh dẫn đầu phòng máy
+  // Top vinh danh học sinh dẫn đầu phòng máy
   const leaderboard = useMemo(() => {
     return [...machines]
       .filter((m) => m.student1Name || m.starsEarned > 0 || m.progress > 0)

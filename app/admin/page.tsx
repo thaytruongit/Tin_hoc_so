@@ -21,7 +21,8 @@ import {
   Sparkles,
   School,
   Lock,
-  Unlock
+  Unlock,
+  UserCheck
 } from 'lucide-react';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
@@ -189,7 +190,7 @@ export default function AdminPage() {
       <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2">
-            Đài Chỉ Huy Giáo Viên · Admin 666
+            Bàn Quản Lý Giáo Viên · Mã 666
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Quản Trị 670 Học Sinh &amp; Hệ Thống
@@ -211,8 +212,8 @@ export default function AdminPage() {
             href="/teacher"
             className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
           >
-            <Crown className="w-4 h-4 text-amber-300" />
-            <span>Đài Chỉ Huy 24 Trạm</span>
+            <UserCheck className="w-4 h-4 text-amber-300" />
+            <span>Quản Lý 24 Máy Trạm</span>
           </Link>
         </div>
       </div>
@@ -225,7 +226,7 @@ export default function AdminPage() {
       )}
 
       {/* ===================================================================== */}
-      {/* 1. KHỐI DANH BẠ 670 HỌC SINH 4 KHỐI (THEO SƠ ĐỒ ĐÀI CHỈ HUY)         */}
+      {/* 1. KHỐI DANH BẠ 670 HỌC SINH 4 KHỐI THCS MÃO ĐIỀN */}
       {/* ===================================================================== */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -404,7 +405,7 @@ export default function AdminPage() {
               Cơ Sở Dữ Liệu Supabase
             </h3>
             <p className="text-xs text-slate-500">
-              Đồng bộ dữ liệu thời gian thực giữa 24 máy trạm và đài chỉ huy
+              Đồng bộ dữ liệu thời gian thực giữa 24 máy trạm và máy giáo viên
             </p>
 
             <div className="space-y-2 text-xs">

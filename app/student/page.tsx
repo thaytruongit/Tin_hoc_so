@@ -186,7 +186,7 @@ export default function StudentDashboard() {
                 href={`/in-class?grade=${gradeNumber}`}
                 className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
               >
-                <span>Vào Buồng Lái Lớp Học</span>
+                <span>Vào Lớp Học Thực Hành</span>
                 <ChevronRight className="w-4 h-4 text-white" />
               </Link>
             </div>

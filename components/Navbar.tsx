@@ -56,66 +56,66 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // MENU HỌC SINH (CHIẾN BINH SỐ · BUỒNG LÁI KÉP 123)
+  // MENU HỌC SINH (HỌC TẬP CẶP ĐÔI · MẬT KHẨU 123)
   const STUDENT_MENUS = [
     {
-      title: 'Buồng Lái Lớp Học',
+      title: 'Lớp Học Tin Học',
       href: '/in-class',
       icon: Laptop,
-      badge: '3 HĐ',
+      badge: '3 Hoạt động',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Võ Đài Python',
+      title: 'Lập Trình Python',
       href: '/programming',
       icon: Code2,
-      badge: 'Pyodide 3.12',
+      badge: 'Python 3.12',
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Đấu Boss Thi Cử',
+      title: 'Kiểm Tra Định Kỳ',
       href: '/exams',
       icon: FileCheck2,
-      badge: 'Radar chống lận',
+      badge: 'Chuẩn Bộ GD&ĐT',
       badgeClass: 'bg-rose-100 text-rose-700',
     },
     {
-      title: 'Hồ Sơ & Bảng Vàng',
+      title: 'Hồ Sơ Học Tập',
       href: '/student',
       icon: Award,
-      badge: 'XP & Cấp độ',
+      badge: 'Tiến độ 29 tiết',
       badgeClass: 'bg-amber-100 text-amber-700',
     },
   ];
 
-  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · ADMIN 666)
+  // MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666)
   const TEACHER_MENUS = [
     {
-      title: 'Đài Chỉ Huy 24 Trạm',
+      title: 'Quản Lý 24 Máy Trạm',
       href: '/teacher',
       icon: Monitor,
-      badge: 'Radar Ziczac',
+      badge: 'Sơ đồ phòng',
       badgeClass: 'bg-amber-100 text-amber-700',
     },
     {
-      title: 'Quản Trị 670 HS',
+      title: 'Quản Trị 670 Học Sinh',
       href: '/admin',
       icon: Users,
-      badge: 'Xuất Excel .xls',
+      badge: 'Sổ điểm Excel',
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Điều Phối & Đề Thi',
+      title: 'Kế Hoạch & Đề Thi',
       href: '/in-class',
       icon: Layers,
       badge: '29 Tiết chuẩn',
       badgeClass: 'bg-emerald-100 text-emerald-700',
     },
     {
-      title: 'Cấu Hình Google Drive',
+      title: 'Kho Bài Thực Hành',
       href: '/teacher',
       icon: Cloud,
-      badge: 'Kho nộp bài',
+      badge: 'Google Drive',
       badgeClass: 'bg-teal-100 text-teal-700',
     },
   ];
@@ -137,7 +137,7 @@ export default function Navbar() {
       badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      title: 'Đài Chỉ Huy Giáo Viên',
+      title: 'Bàn Quản Lý Giáo Viên',
       href: '/login?role=teacher',
       icon: Monitor,
       badge: 'Mã 666',

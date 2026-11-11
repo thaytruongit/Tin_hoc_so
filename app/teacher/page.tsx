@@ -375,7 +375,7 @@ export default function TeacherDashboard() {
           }`}
         >
           <Radio className="w-4 h-4 text-rose-600 animate-pulse" />
-          <span>1. Đài Chỉ Huy 24 Trạm (Ziczac)</span>
+          <span>1. Quản Lý 24 Máy Trạm (Ziczac)</span>
           <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase">LIVE</span>
         </button>
 

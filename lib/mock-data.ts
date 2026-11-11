@@ -12855,7 +12855,7 @@ export const MOCK_BADGES: Badge[] = [
   {
     id: 'b-2',
     code: 'HARD_WORK',
-    name: 'Chiến Binh Chăm Chỉ',
+    name: 'Học Sinh Chăm Chỉ',
     category: 'Thi đua',
     description: 'Hoàn thành các nhiệm vụ và phiếu học tập liên tục đúng hạn',
     icon: 'Flame',
