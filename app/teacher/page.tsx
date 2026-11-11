@@ -835,87 +835,10 @@ function TeacherDashboardContent() {
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* 2. TÁCH RIÊNG TOÀN BỘ CÁC CHỨC NĂNG CHÍNH (5 TABS CẤP CAO)          */}
-      {/* ==================================================================== */}
-      <div className="space-y-5">
-        <div className="flex border-b border-slate-200 gap-1 sm:gap-2 text-xs sm:text-sm font-extrabold overflow-x-auto no-scrollbar">
-          
-          {/* TAB 1: QUẢN LÝ LỚP HỌC SỐ */}
-          <button
-            onClick={() => switchTab('in-class')}
-            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
-              activeTab === 'in-class'
-                ? 'border-b-2 border-blue-600 text-blue-700 font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Radio className={`w-4 h-4 ${activeTab === 'in-class' ? 'text-blue-600 animate-pulse' : 'text-slate-400'}`} />
-            <span>Quản Lý Lớp Học Số</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">5 Phân Hệ</span>
-          </button>
-
-          {/* TAB 2: QUẢN LÝ LỚP & HỌC SINH */}
-          <button
-            onClick={() => switchTab('class-roster')}
-            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
-              activeTab === 'class-roster'
-                ? 'border-b-2 border-indigo-600 text-indigo-700 font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Quản Lý Lớp &amp; Học Sinh</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 text-[10px]">
-              {classStudents.length} HS
-            </span>
-          </button>
-
-          {/* TAB 3: QUẢN LÝ BÀI KIỂM TRA */}
-          <button
-            onClick={() => switchTab('exams')}
-            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
-              activeTab === 'exams'
-                ? 'border-b-2 border-purple-600 text-purple-700 font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <ClipboardCheck className="w-4 h-4" />
-            <span>Quản Lý Bài Kiểm Tra</span>
-          </button>
-
-          {/* TAB 4: BÀI TẬP VỀ NHÀ */}
-          <button
-            onClick={() => switchTab('homework')}
-            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
-              activeTab === 'homework'
-                ? 'border-b-2 border-amber-600 text-amber-700 font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Bài Tập Về Nhà</span>
-          </button>
-
-          {/* TAB 5: BẢNG ĐIỂM HỌC KỲ */}
-          <button
-            onClick={() => switchTab('gradebook')}
-            className={`pb-3 px-3.5 flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
-              activeTab === 'gradebook'
-                ? 'border-b-2 border-[#2d7d6f] text-[#1e584e] font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Bảng Điểm Học Kỳ</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800 text-[10px] font-bold">Chuẩn TT22</span>
-          </button>
-        </div>
-
-        {/* ================================================================== */}
-        {/* TAB 1: QUẢN LÝ LỚP HỌC SỐ (TẬP TRUNG 5 PHÂN HỆ CHO ĐÚNG 1 LỚP)     */}
-        {/* ================================================================== */}
-        {activeTab === 'in-class' && (
+      {/* ================================================================== */}
+      {/* NỘI DUNG CHỨC NĂNG THEO LỰA CHỌN TỪ THANH MENU NAVBAR             */}
+      {/* ================================================================== */}
+      {activeTab === 'in-class' && (
           <ClassroomCommandCenter
             currentClass={currentClass}
             classStudents={classStudents}
@@ -1638,8 +1561,6 @@ function TeacherDashboardContent() {
             </div>
           </div>
         )}
-
-      </div>
 
       {/* ==================================================================== */}
       {/* 3. CÁC MODAL THAO TÁC                                               */}
