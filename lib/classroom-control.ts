@@ -32,6 +32,12 @@ export interface LabMachineState {
   starsEarned: number;
   status: 'active' | 'idle' | 'submitted';
   hasHelpRequest?: boolean;
+  scoreH1?: number; // Điểm Hoạt động 1: Khám phá cặp đôi (/10)
+  scoreH2?: number; // Điểm Hoạt động 2: Luyện tập 7 câu (/10)
+  scoreH3?: number; // Điểm Hoạt động 3: Thực hành (/10)
+  totalScore?: number; // Điểm trung bình / tổng kết tiết dạy (/10)
+  practicalFileName?: string;
+  practicalFileUrl?: string;
 }
 
 export interface ClassroomControlState {
@@ -96,6 +102,11 @@ export function createDefaultMachines(className: string = 'Lớp 7A11'): LabMach
     const pair = samplePairs[idx] || { s1: `Học sinh A${idx + 1}`, s2: `Học sinh B${idx + 1}` };
     const num = idx + 1;
     const name = `Máy ${num < 10 ? '0' : ''}${num}`;
+    const h1 = Number((8 + (idx % 3) * 0.8).toFixed(1));
+    const h2 = Number((7 + ((idx * 2) % 4) * 0.8).toFixed(1));
+    const h3 = Number((8.5 + (idx % 2) * 1.5).toFixed(1));
+    const tot = Number((h1 * 0.3 + h2 * 0.3 + h3 * 0.4).toFixed(1));
+
     return {
       machineId: num,
       machineName: name,
@@ -103,12 +114,18 @@ export function createDefaultMachines(className: string = 'Lớp 7A11'): LabMach
       student1Code: `HS${num}A`,
       student2Name: pair.s2,
       student2Code: pair.s2 ? `HS${num}B` : '',
-      progress: Math.floor(Math.random() * 60) + 20,
-      completedTasks: Math.floor(Math.random() * 5) + 1,
+      progress: Math.floor(Math.random() * 40) + 60,
+      completedTasks: Math.floor(Math.random() * 3) + 5,
       totalTasks: 7,
-      starsEarned: Math.floor(Math.random() * 3),
-      status: 'active',
+      starsEarned: Math.floor(Math.random() * 3) + 1,
+      status: 'submitted',
       hasHelpRequest: idx === 2 || idx === 10,
+      scoreH1: h1,
+      scoreH2: h2,
+      scoreH3: h3,
+      totalScore: tot,
+      practicalFileName: `BTH_Tiet06_May${num < 10 ? '0' : ''}${num}.xlsx`,
+      practicalFileUrl: `H:\\My Drive\\Giảng dạy\\NOP_BAI_THUC_HANH\\KHOI_7\\Tiet_06\\BTH_Tiet06_May${num < 10 ? '0' : ''}${num}.xlsx`,
     };
   });
 }
