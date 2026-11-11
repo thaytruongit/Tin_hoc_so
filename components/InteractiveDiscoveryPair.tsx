@@ -33,6 +33,10 @@ export default function InteractiveDiscoveryPair({
   onComplete,
 }: InteractiveDiscoveryPairProps) {
   const ws = currentPeriod.worksheet;
+  const dragDrop = ws?.dragDrop;
+  const fillBlanks = ws?.fillBlanks;
+  const matchingPairs = ws?.matchingPairs;
+  const wordBank = ws?.wordBank;
 
   // 1. Trạng thái Kéo thả phân loại (Drag & Drop)
   const [bucketAssignments, setBucketAssignments] = useState<Record<string, string>>({});
@@ -92,8 +96,8 @@ export default function InteractiveDiscoveryPair({
     const feedback: string[] = [];
 
     // Chấm phần 1: Drag & Drop
-    if (ws.dragDrop && ws.dragDrop.items) {
-      ws.dragDrop.items.forEach((item) => {
+    if (dragDrop && dragDrop.items) {
+      dragDrop.items.forEach((item) => {
         totalItems += 1;
         const userChoice = bucketAssignments[item.text];
         if (userChoice === item.bucket) {
@@ -105,8 +109,8 @@ export default function InteractiveDiscoveryPair({
     }
 
     // Chấm phần 2: Fill blanks dropdown
-    if (ws.fillBlanks) {
-      ws.fillBlanks.forEach((item, idx) => {
+    if (fillBlanks) {
+      fillBlanks.forEach((item, idx) => {
         totalItems += 1;
         const userChoice = dropdownAnswers[idx];
         if (userChoice === item.correctAnswer) {
@@ -118,8 +122,8 @@ export default function InteractiveDiscoveryPair({
     }
 
     // Chấm phần 3: Matching Pairs
-    if (ws.matchingPairs) {
-      ws.matchingPairs.forEach((pair) => {
+    if (matchingPairs) {
+      matchingPairs.forEach((pair) => {
         totalItems += 1;
         const userChoice = matchingConnections[pair.left];
         if (userChoice === pair.right) {
@@ -195,7 +199,7 @@ export default function InteractiveDiscoveryPair({
       </div>
 
       {/* 2. NHIỆM VỤ 1: KÉO - THẢ PHÂN LOẠI 3D (DRAG & DROP) */}
-      {ws.dragDrop && ws.dragDrop.items && ws.dragDrop.items.length > 0 && (
+      {dragDrop && dragDrop.items && dragDrop.items.length > 0 && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -216,17 +220,17 @@ export default function InteractiveDiscoveryPair({
               <div className="flex items-center justify-between">
                 <span className="font-black text-xs text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
                   <span>📂</span>
-                  <span>{ws.dragDrop.bucketA}</span>
+                  <span>{dragDrop.bucketA}</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-200/70 text-blue-800">
-                  {Object.values(bucketAssignments).filter((b) => b === ws.dragDrop.bucketA).length} mục
+                  {Object.values(bucketAssignments).filter((b) => b === dragDrop.bucketA).length} mục
                 </span>
               </div>
 
               {/* Danh sách các item đã gán vào Giỏ A */}
               <div className="flex flex-wrap gap-2">
-                {ws.dragDrop.items
-                  .filter((item) => bucketAssignments[item.text] === ws.dragDrop.bucketA)
+                {dragDrop.items
+                  .filter((item) => bucketAssignments[item.text] === dragDrop.bucketA)
                   .map((item) => (
                     <span
                       key={item.text}
@@ -256,17 +260,17 @@ export default function InteractiveDiscoveryPair({
               <div className="flex items-center justify-between">
                 <span className="font-black text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                   <span>📂</span>
-                  <span>{ws.dragDrop.bucketB}</span>
+                  <span>{dragDrop.bucketB}</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-800">
-                  {Object.values(bucketAssignments).filter((b) => b === ws.dragDrop.bucketB).length} mục
+                  {Object.values(bucketAssignments).filter((b) => b === dragDrop.bucketB).length} mục
                 </span>
               </div>
 
               {/* Danh sách các item đã gán vào Giỏ B */}
               <div className="flex flex-wrap gap-2">
-                {ws.dragDrop.items
-                  .filter((item) => bucketAssignments[item.text] === ws.dragDrop.bucketB)
+                {dragDrop.items
+                  .filter((item) => bucketAssignments[item.text] === dragDrop.bucketB)
                   .map((item) => (
                     <span
                       key={item.text}
@@ -297,7 +301,7 @@ export default function InteractiveDiscoveryPair({
             <div className="pt-3 border-t border-slate-100">
               <p className="text-xs font-bold text-slate-700 mb-2">Các thẻ chờ xếp vào nhóm:</p>
               <div className="flex flex-wrap gap-2">
-                {ws.dragDrop.items
+                {dragDrop.items
                   .filter((item) => !bucketAssignments[item.text])
                   .map((item) => (
                     <div
@@ -308,19 +312,19 @@ export default function InteractiveDiscoveryPair({
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => handleAssignBucket(item.text, ws.dragDrop.bucketA)}
+                          onClick={() => handleAssignBucket(item.text, dragDrop.bucketA)}
                           className="px-2 py-0.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-[10px] font-black"
-                          title={`Chuyển vào ${ws.dragDrop.bucketA}`}
+                          title={`Chuyển vào ${dragDrop.bucketA}`}
                         >
-                          {ws.dragDrop.bucketA.slice(0, 8)}...
+                          {dragDrop.bucketA.slice(0, 8)}...
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleAssignBucket(item.text, ws.dragDrop.bucketB)}
+                          onClick={() => handleAssignBucket(item.text, dragDrop.bucketB)}
                           className="px-2 py-0.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-black"
-                          title={`Chuyển vào ${ws.dragDrop.bucketB}`}
+                          title={`Chuyển vào ${dragDrop.bucketB}`}
                         >
-                          {ws.dragDrop.bucketB.slice(0, 8)}...
+                          {dragDrop.bucketB.slice(0, 8)}...
                         </button>
                       </div>
                     </div>
@@ -332,7 +336,7 @@ export default function InteractiveDiscoveryPair({
       )}
 
       {/* 3. NHIỆM VỤ 2: ĐIỀN KHUYẾT THẢ CHỌN THÔNG MINH (DROPDOWN CLOZE) */}
-      {ws.fillBlanks && ws.fillBlanks.length > 0 && (
+      {fillBlanks && fillBlanks.length > 0 && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -343,7 +347,7 @@ export default function InteractiveDiscoveryPair({
           </div>
 
           <div className="space-y-3">
-            {ws.fillBlanks.map((fb, idx) => {
+            {fillBlanks.map((fb, idx) => {
               // Tách statement bằng [___] để chèn dropdown
               const parts = fb.statement.split('[___]');
               const currentChoice = dropdownAnswers[idx] || '';
@@ -372,7 +376,7 @@ export default function InteractiveDiscoveryPair({
                     >
                       <option value="">-- Chọn từ khuyết --</option>
                       {/* Lấy từ ngân hàng từ của bài học */}
-                      {(ws.wordBank || [fb.correctAnswer, 'Khác', 'Không xác định']).map((w) => (
+                      {(wordBank || [fb.correctAnswer, 'Khác', 'Không xác định']).map((w) => (
                         <option key={w} value={w}>
                           {w}
                         </option>
@@ -395,7 +399,7 @@ export default function InteractiveDiscoveryPair({
       )}
 
       {/* 4. NHIỆM VỤ 3: GHÉP ĐÔI KHÁI NIỆM & HÌNH ẢNH (MATCHING PAIRS) */}
-      {ws.matchingPairs && ws.matchingPairs.length > 0 && (
+      {matchingPairs && matchingPairs.length > 0 && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -409,7 +413,7 @@ export default function InteractiveDiscoveryPair({
             {/* Cột Vế Trái */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-slate-700">Vế trái (Thuật ngữ / Thao tác):</p>
-              {ws.matchingPairs.map((pair) => {
+              {matchingPairs.map((pair) => {
                 const isSelected = selectedMatchingLeft === pair.left;
                 const isConnected = Boolean(matchingConnections[pair.left]);
 
@@ -437,7 +441,7 @@ export default function InteractiveDiscoveryPair({
             {/* Cột Vế Phải */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-slate-700">Vế phải (Ý nghĩa / Chức năng):</p>
-              {ws.matchingPairs.map((pair) => (
+              {matchingPairs.map((pair) => (
                 <button
                   key={pair.right}
                   type="button"

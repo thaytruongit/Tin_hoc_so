@@ -523,7 +523,7 @@ export default function ClassroomCommandCenter({
             </select>
 
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
-              <div>Chủ đề: <strong>{activeLesson.theme || 'Tin học cơ bản'}</strong></div>
+              <div>Chủ đề: <strong>{activeLesson.topic || 'Tin học cơ bản'}</strong></div>
               <div>Bài tập: <strong>{activeLesson.practicalTask?.title || 'Bài tập thực hành tại lớp'}</strong></div>
             </div>
           </div>

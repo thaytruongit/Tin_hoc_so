@@ -61,6 +61,9 @@ export interface ClassroomControlState {
   isTimerRunning: boolean;
   isTimeUp: boolean;
   spotlightMachineId?: number | null;
+  spotlightTitle?: string;
+  spotlightStudentNames?: string;
+  spotlightContent?: string;
   broadcastMessage: string;
   broadcastTime: string;
   machines: LabMachineState[];
@@ -260,6 +263,31 @@ export function resolveHelpRequest(requestId: string): ClassroomControlState {
     helpRequests: prev.helpRequests.map((req) =>
       req.id === requestId ? { ...req, status: 'resolved' as const } : req
     ),
+  }));
+}
+
+export function sendStudentHelpRequest(
+  machineId: number,
+  machineName: string,
+  studentName: string,
+  className: string,
+  message: string
+): ClassroomControlState {
+  const newHelp: HelpRequest = {
+    id: `help-${Date.now()}`,
+    machineId,
+    machineName,
+    studentName,
+    message,
+    createdAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    status: 'pending',
+  };
+
+  return updateClassroomState((prev) => ({
+    ...prev,
+    helpRequests: [newHelp, ...prev.helpRequests],
+    broadcastMessage: `🆘 [Trợ giúp] ${machineName} (${studentName} - ${className}): "${message}"`,
+    broadcastTime: newHelp.createdAt,
   }));
 }
 

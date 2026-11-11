@@ -30,12 +30,13 @@ export interface Student {
 
 export interface Question {
   id: string;
-  type: 'mcq' | 'boolean' | 'fill' | 'essay';
+  type?: 'mcq' | 'boolean' | 'fill' | 'essay' | string;
   content: string;
   options?: string[];
   correctAnswer: number | string | boolean;
   explanation?: string;
   points: number;
+  level?: 'Nhận biết' | 'Thông hiểu' | 'Vận dụng' | 'Vận dụng cao' | string;
 }
 
 export interface Worksheet {
