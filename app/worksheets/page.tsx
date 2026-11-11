@@ -30,11 +30,10 @@ export default function WorksheetsPage() {
         <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
           <button
             onClick={() => setSelectedGrade('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              selectedGrade === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedGrade === 'all'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
           >
             Tất cả khối
           </button>
@@ -42,11 +41,10 @@ export default function WorksheetsPage() {
             <button
               key={g}
               onClick={() => setSelectedGrade(g)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                selectedGrade === g
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedGrade === g
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                }`}
             >
               Khối {g}
             </button>

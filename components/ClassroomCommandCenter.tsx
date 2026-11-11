@@ -1,28 +1,28 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  Lock, 
-  Unlock, 
-  Clock, 
-  Volume2, 
-  Send, 
-  Sparkles, 
-  Users, 
-  Radio, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Award, 
-  Star, 
-  Eye, 
-  HelpCircle, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Monitor, 
-  Layers, 
-  BookOpen, 
-  RefreshCw, 
+import {
+  Lock,
+  Unlock,
+  Clock,
+  Volume2,
+  Send,
+  Sparkles,
+  Users,
+  Radio,
+  Play,
+  Pause,
+  RotateCcw,
+  Award,
+  Star,
+  Eye,
+  HelpCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Monitor,
+  Layers,
+  BookOpen,
+  RefreshCw,
   ArrowRight,
   Laptop,
   Check,
@@ -34,18 +34,18 @@ import {
 import { ClassItem, Student } from '@/lib/types';
 import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
-import { 
-  ClassroomControlState, 
+import {
+  ClassroomControlState,
   ClassroomActivityKey,
-  LabMachineState, 
+  LabMachineState,
   HelpRequest,
-  getClassroomState, 
-  updateClassroomState, 
+  getClassroomState,
+  updateClassroomState,
   toggleActivityLock,
-  resolveHelpRequest, 
-  awardStarToMachine, 
+  resolveHelpRequest,
+  awardStarToMachine,
   subscribeToClassroomState,
-  createDefaultMachines 
+  createDefaultMachines
 } from '@/lib/classroom-control';
 
 interface ClassroomCommandCenterProps {
@@ -300,7 +300,7 @@ export default function ClassroomCommandCenter({
       {/* 2. BỘ ĐIỀU KHIỂN KHÓA/MỞ 3 HOẠT ĐỘNG THỦ CÔNG & ĐỒNG HỒ ĐẾM NGƯỢC */}
       {/* ==================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* KHỐI 1: BỘ 3 CÔNG TẮC KHÓA/MỞ THỦ CÔNG (TRỌNG TÂM THEO Ý THẦY) */}
         <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -313,11 +313,10 @@ export default function ClassroomCommandCenter({
 
           <div className="space-y-3">
             {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.discovery 
-                ? 'bg-indigo-50/60 border-indigo-200 text-indigo-950' 
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.discovery
+              ? 'bg-indigo-50/60 border-indigo-200 text-indigo-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Users className="w-4 h-4 text-indigo-600" />
@@ -329,11 +328,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('discovery')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.discovery
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.discovery
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.discovery ? (
                   <>
@@ -350,11 +348,10 @@ export default function ClassroomCommandCenter({
             </div>
 
             {/* HOẠT ĐỘNG 2: LUYỆN TẬP */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.practice 
-                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' 
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.practice
+              ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
@@ -366,11 +363,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('practice')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.practice
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.practice
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.practice ? (
                   <>
@@ -387,11 +383,10 @@ export default function ClassroomCommandCenter({
             </div>
 
             {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY */}
-            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-              controlState.activityLocks.lab 
-                ? 'bg-purple-50/60 border-purple-200 text-purple-950' 
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.lab
+              ? 'bg-purple-50/60 border-purple-200 text-purple-950'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-bold text-xs">
                   <Laptop className="w-4 h-4 text-purple-600" />
@@ -403,11 +398,10 @@ export default function ClassroomCommandCenter({
               <button
                 type="button"
                 onClick={() => handleToggleActivity('lab')}
-                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${
-                  controlState.activityLocks.lab
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                }`}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.lab
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                  }`}
               >
                 {controlState.activityLocks.lab ? (
                   <>
@@ -438,9 +432,8 @@ export default function ClassroomCommandCenter({
           </div>
 
           <div className="flex items-baseline justify-center gap-2 py-1">
-            <span className={`text-4xl sm:text-5xl font-black font-mono tracking-tight ${
-              controlState.timerRemainingSeconds < 60 ? 'text-rose-400 animate-pulse' : 'text-amber-400'
-            }`}>
+            <span className={`text-4xl sm:text-5xl font-black font-mono tracking-tight ${controlState.timerRemainingSeconds < 60 ? 'text-rose-400 animate-pulse' : 'text-amber-400'
+              }`}>
               {formatTimer(controlState.timerRemainingSeconds)}
             </span>
           </div>
@@ -626,11 +619,10 @@ export default function ClassroomCommandCenter({
             return (
               <div
                 key={machine.machineId}
-                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2.5 relative group ${
-                  hasHelp
-                    ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/30'
-                    : 'bg-slate-50/70 border-slate-200 hover:bg-white hover:border-indigo-300 hover:shadow-md'
-                }`}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2.5 relative group ${hasHelp
+                  ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/30'
+                  : 'bg-slate-50/70 border-slate-200 hover:bg-white hover:border-indigo-300 hover:shadow-md'
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-slate-800 flex items-center gap-1">

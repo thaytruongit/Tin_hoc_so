@@ -38,7 +38,7 @@ export function getCurrentUser(): UserSession {
   const studentCode = localStorage.getItem('truong_student_code') || '';
   const studentName = localStorage.getItem('truong_student_name') || 'Học sinh';
   const studentClass = localStorage.getItem('truong_student_class') || '';
-  
+
   // Trích xuất Khối lớp từ tên lớp (vd: 'Lớp 7A11' -> 7, '6A10' -> 6)
   let studentGrade = 7;
   const gradeStored = localStorage.getItem('truong_student_grade');

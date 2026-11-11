@@ -239,3 +239,4 @@ export async function fetchClassExamResultsFromCloud(className: string): Promise
 
   return [];
 }
+
