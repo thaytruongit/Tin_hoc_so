@@ -392,42 +392,45 @@ function InClassContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 cyber-grid-bg">
       {/* ==================================================================== */}
-      {/* HEADER BANNER TIẾT HỌC                                               */}
+      {/* HEADER BANNER BUỒNG LÁI PHÒNG MÁY (CYBER COCKPIT)                   */}
       {/* ==================================================================== */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/10">
+      <div className="bg-gradient-to-r from-cyan-950 via-slate-900 to-purple-950 rounded-3xl p-6 sm:p-8 text-white shadow-neon-cyan/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-cyan-500/30">
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-400/40 text-xs font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               <span>Tiết {currentPeriod.period} · {currentPeriod.topic}</span>
             </span>
-            <span className="text-xs text-blue-200">
-              Giáo viên: <strong>Thầy Đỗ Mạnh Trường</strong>
+            <span className="text-xs text-slate-300">
+              Chỉ huy: <strong className="text-cyan-300">Thầy Đỗ Mạnh Trường</strong>
+            </span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/40 font-bold">
+              🛸 {pairComputerNum}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Hoạt Động Trực Tiếp Trên Lớp
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight glow-text-cyan">
+            Buồng Lái Tác Chiến Phòng Máy
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Học liệu chuẩn GDPT 2018 THCS Mão Điền: <strong>1. Khám phá cặp đôi</strong> ➔ <strong>2. Luyện tập</strong> ➔ <strong>3. Thực hành trên máy</strong>.
+            Học liệu chuẩn GDPT 2018 THCS Mão Điền: <strong className="text-cyan-300">1. Khám phá cặp đôi</strong> ➔ <strong className="text-purple-300">2. Luyện tập 7 câu</strong> ➔ <strong className="text-emerald-300">3. Thực hành & Nộp Drive</strong>.
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <Link
             href={`/subjects?grade=${selectedGrade}&period=${selectedPeriodNum}&section=29periods`}
-            className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 text-xs font-bold transition-all flex items-center gap-2"
+            className="px-4 py-2.5 rounded-2xl bg-cyan-950/70 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/40 text-xs font-black transition-all flex items-center gap-2 shadow-neon-cyan/20"
           >
-            <BookOpen className="w-4 h-4 text-amber-400" />
-            <span>Kho học liệu Tiết {selectedPeriodNum}</span>
+            <BookOpen className="w-4 h-4 text-cyan-400" />
+            <span>Kho Học Liệu Tiết {selectedPeriodNum}</span>
           </Link>
           <Link
             href="/teacher"
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold transition-all flex items-center gap-2"
+            className="px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-black transition-all flex items-center gap-2 shadow-neon-gold/20"
           >
-            <span>Kênh Giáo viên</span>
+            <span>Kênh Giáo Viên</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -435,21 +438,21 @@ function InClassContent() {
 
       {/* CẢNH BÁO PHÂN QUYỀN NẾU CHỌN SAI KHỐI */}
       {permissionNotice && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
-          <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
           <span>{permissionNotice}</span>
         </div>
       )}
 
       {/* BỘ CHỌN KHỐI LỚP & 29 TIẾT HỌC */}
-      <div className="space-y-3 p-5 rounded-3xl bg-white border border-slate-200 shadow-xs">
+      <div className="space-y-3 p-5 rounded-3xl cyber-hud-card border border-cyan-500/20 shadow-xs">
         {/* Hàng 1: Chọn Khối */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            <span>Chọn khối lớp:</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+            <BookOpen className="w-4 h-4 text-cyan-400" />
+            <span>Chọn quân đoàn khối:</span>
             {currentUser?.role === 'student' && (
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-400/40">
                 Lớp {currentUser.studentClass} (Khối {currentUser.studentGrade})
               </span>
             )}
@@ -462,16 +465,16 @@ function InClassContent() {
                 <button
                   key={g}
                   onClick={() => handleSelectGrade(g)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
                     isCur
-                      ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-400/30'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-neon-cyan/40 border border-cyan-300/40 scale-105'
                       : isAllowed
-                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      : 'bg-slate-100/60 text-slate-400 cursor-not-allowed border border-dashed border-slate-300'
+                      ? 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                      : 'bg-slate-950 text-slate-600 cursor-not-allowed border border-dashed border-slate-800'
                   }`}
                   title={!isAllowed ? `Khóa: Học sinh chỉ được chọn Khối ${currentUser?.studentGrade}` : `Khối ${g}`}
                 >
-                  {!isAllowed ? <Lock className="w-3 h-3 text-slate-400" /> : <Unlock className="w-3 h-3 text-amber-600" />}
+                  {!isAllowed ? <Lock className="w-3 h-3 text-slate-600" /> : <Unlock className="w-3 h-3 text-cyan-400" />}
                   <span>Khối {g}</span>
                 </button>
               );
@@ -481,9 +484,9 @@ function InClassContent() {
 
         {/* Hàng 2: Chọn trong 29 Tiết học */}
         <div className="space-y-1.5 pt-1">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>Chọn tiết học trong phân phối chương trình 29 tiết (Khối {selectedGrade}):</span>
-            <span className="text-[11px] text-amber-700 font-bold">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-bold">
+            <span>Hành trình 29 ải tri thức (Khối {selectedGrade}):</span>
+            <span className="text-[11px] text-cyan-400 font-black">
               Đang chọn: Tiết {selectedPeriodNum} {currentPeriod.isPractice ? '(Thực hành)' : '(Lý thuyết)'}
             </span>
           </div>
@@ -492,10 +495,10 @@ function InClassContent() {
               <button
                 key={p.id}
                 onClick={() => handleSelectPeriod(p.period)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all ${
                   selectedPeriodNum === p.period
-                    ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/30'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-neon-purple/40 border border-purple-400/40'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                 }`}
                 title={p.title}
               >
@@ -510,24 +513,24 @@ function InClassContent() {
       {/* ==================================================================== */}
       {/* TABS 3 HOẠT ĐỘNG CHÍNH (KÈM CHỈ BÁO KHÓA/MỞ THỦ CÔNG)               */}
       {/* ==================================================================== */}
-      <div className="flex border-b border-slate-200 gap-3 sm:gap-6 text-xs sm:text-sm font-bold flex-wrap">
+      <div className="flex border-b border-slate-800 gap-3 sm:gap-6 text-xs sm:text-sm font-bold flex-wrap">
         {/* TAB 1: KHÁM PHÁ CẶP ĐÔI */}
         <button
           onClick={() => setActiveTab('worksheet')}
           className={`pb-3 flex items-center gap-2 transition-all relative ${
             activeTab === 'worksheet'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
+              ? 'border-b-2 border-cyan-400 text-cyan-300 font-black glow-text-cyan'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Users className="w-4 h-4 text-indigo-600" />
-          <span>Hoạt động 1: Khám phá cặp đôi</span>
+          <Users className="w-4 h-4 text-cyan-400" />
+          <span>Ải 1: Khám phá cặp đôi</span>
           {isDiscoveryLocked ? (
-            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center gap-0.5">
+            <span className="px-1.5 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-500/40 text-[10px] font-bold flex items-center gap-0.5">
               <Lock className="w-2.5 h-2.5" /> Khóa
             </span>
           ) : (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-0.5">
               <Unlock className="w-2.5 h-2.5" /> Mở
             </span>
           )}
@@ -538,18 +541,18 @@ function InClassContent() {
           onClick={() => setActiveTab('reinforcement')}
           className={`pb-3 flex items-center gap-2 transition-all relative ${
             activeTab === 'reinforcement'
-              ? 'border-b-2 border-amber-500 text-amber-600 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
+              ? 'border-b-2 border-purple-400 text-purple-300 font-black glow-text-purple'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Hoạt động 2: Luyện tập</span>
+          <Sparkles className="w-4 h-4 text-purple-400" />
+          <span>Ải 2: Đấu trường 7 câu</span>
           {isPracticeLocked ? (
-            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center gap-0.5">
+            <span className="px-1.5 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-500/40 text-[10px] font-bold flex items-center gap-0.5">
               <Lock className="w-2.5 h-2.5" /> Khóa
             </span>
           ) : (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-0.5">
               <Unlock className="w-2.5 h-2.5" /> Mở
             </span>
           )}

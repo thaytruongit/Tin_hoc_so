@@ -215,28 +215,28 @@ export default function ProgrammingPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* HEADER BANNER */}
-      <div className="text-center max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex p-3 rounded-2xl bg-emerald-100 text-emerald-600 mb-1">
-          <Code2 className="w-8 h-8" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 cyber-grid-bg">
+      {/* HEADER BANNER VÕ ĐÀI CYBER */}
+      <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className="inline-flex p-3 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-neon-purple/40 mb-1">
+          <Code2 className="w-8 h-8 animate-pulse text-cyan-300" />
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-          Luyện Lập Trình Thực Tế: Python &amp; C++
+        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight glow-text-cyan">
+          Võ Đài Lập Trình Python &amp; C++
         </h1>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Biên dịch và chạy thật 100% bằng <strong>Python WebAssembly (Pyodide)</strong> ngay trên trình duyệt. Góc rèn thuật toán &amp; bồi dưỡng học sinh giỏi môn Tin học — <strong>Thầy Đỗ Mạnh Trường</strong>.
+        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Biên dịch và thực thi 100% bằng <strong className="text-cyan-400">Python 3.12 WebAssembly (Pyodide)</strong> ngay trên trình duyệt. Đấu quái vật Bug qua hệ thống Multi-Test Cases chuẩn VNOI — <strong className="text-purple-300">Thầy Đỗ Mạnh Trường</strong>.
         </p>
 
         {/* BỘ LỌC NGÔN NGỮ & KHỐI LỚP */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           {/* Lọc Ngôn ngữ */}
-          <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl">
+          <div className="flex gap-1.5 p-1.5 bg-slate-950/80 rounded-2xl border border-slate-800">
             <button
               type="button"
               onClick={() => setSelectedLang('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedLang === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                selectedLang === 'all' ? 'bg-cyan-500 text-slate-950 font-black shadow-neon-cyan/40' : 'text-slate-400 hover:text-white'
               }`}
             >
               Tất cả ngôn ngữ
@@ -245,17 +245,17 @@ export default function ProgrammingPage() {
               type="button"
               onClick={() => setSelectedLang('Python')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                selectedLang === 'Python' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                selectedLang === 'Python' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-neon-mana/40' : 'text-slate-400 hover:text-white'
               }`}
             >
               <span>Python 3.12 (Pyodide)</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </button>
             <button
               type="button"
               onClick={() => setSelectedLang('C++')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedLang === 'C++' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                selectedLang === 'C++' ? 'bg-blue-600 text-white font-black' : 'text-slate-400 hover:text-white'
               }`}
             >
               C++ (HSG)
@@ -263,7 +263,7 @@ export default function ProgrammingPage() {
           </div>
 
           {/* Lọc Khối Lớp */}
-          <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl">
+          <div className="flex gap-1.5 p-1.5 bg-slate-950/80 rounded-2xl border border-slate-800">
             {(['all', 'Khối 8', 'Khối 9', 'Bồi dưỡng HSG'] as const).map((g) => (
               <button
                 key={g}
@@ -271,8 +271,8 @@ export default function ProgrammingPage() {
                 onClick={() => setSelectedGradeFilter(g)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   selectedGradeFilter === g
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-purple-600 text-white font-black shadow-neon-purple/40'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {g === 'all' ? 'Tất cả khối' : g}
@@ -285,9 +285,9 @@ export default function ProgrammingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* DANH SÁCH BÀI TẬP */}
         <div className="space-y-3">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-emerald-600" />
-            <span>Danh sách bài tập ({filteredChallenges.length})</span>
+          <h2 className="text-base font-black text-white flex items-center gap-2 glow-text-cyan">
+            <BookOpen className="w-4 h-4 text-cyan-400" />
+            <span>Thử Thách Võ Đài ({filteredChallenges.length})</span>
           </h2>
 
           <div className="space-y-2.5">
@@ -298,23 +298,23 @@ export default function ProgrammingPage() {
                 onClick={() => handleSelectChallenge(c)}
                 className={`w-full text-left p-4 rounded-2xl border transition-all ${
                   activeChallenge.id === c.id
-                    ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-cyan-400 bg-cyan-950/60 shadow-neon-cyan/30 ring-1 ring-cyan-400/50'
+                    : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    c.language === 'C++' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    c.language === 'C++' ? 'bg-blue-950 text-blue-300 border border-blue-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
                   }`}>
                     {c.language} · {c.gradeLevel}
                   </span>
-                  <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                  <span className="text-[10px] font-black text-amber-400 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     +{c.xpReward} XP
                   </span>
                 </div>
-                <h3 className="font-bold text-sm text-slate-900 line-clamp-1">{c.title}</h3>
-                <span className="text-[11px] text-slate-500 mt-1 inline-block">Độ khó: {c.difficulty}</span>
+                <h3 className="font-black text-sm text-white line-clamp-1">{c.title}</h3>
+                <span className="text-[11px] text-slate-400 mt-1 inline-block">Độ khó: <strong className="text-slate-300">{c.difficulty}</strong></span>
               </button>
             ))}
           </div>
@@ -323,27 +323,27 @@ export default function ProgrammingPage() {
         {/* KHUNG SOẠN THẢO VÀ CHẤM ĐIỂM */}
         <div className="lg:col-span-2 space-y-6">
           {/* CHI TIẾT ĐỀ BÀI */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="cyber-hud-card rounded-3xl border border-cyan-500/30 p-6 shadow-neon-cyan/10 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg text-slate-900">{activeChallenge.title}</h2>
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                activeChallenge.language === 'Python' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+              <h2 className="font-black text-lg text-white glow-text-cyan">{activeChallenge.title}</h2>
+              <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                activeChallenge.language === 'Python' ? 'bg-emerald-950 text-emerald-300 border border-emerald-400/40' : 'bg-blue-950 text-blue-300 border border-blue-400/40'
               }`}>
                 {activeChallenge.language}
               </span>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed">{activeChallenge.description}</p>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{activeChallenge.description}</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-800 block mb-1">Dữ liệu vào mẫu (Sample Input):</span>
-                <div className="font-mono bg-white p-2.5 rounded-xl border border-slate-200 text-slate-800">
+              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
+                <span className="font-bold text-slate-400 block mb-1">Dữ liệu vào mẫu (Sample Input):</span>
+                <div className="font-mono bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-cyan-300">
                   {activeChallenge.sampleInput}
                 </div>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-800 block mb-1">Kết quả mong đợi (Expected Output):</span>
-                <div className="font-mono bg-white p-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold text-emerald-700">
+              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
+                <span className="font-bold text-slate-400 block mb-1">Kết quả mong đợi (Expected Output):</span>
+                <div className="font-mono bg-slate-900 p-2.5 rounded-xl border border-slate-800 font-black text-emerald-400">
                   {activeChallenge.sampleOutput}
                 </div>
               </div>

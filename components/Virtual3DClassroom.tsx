@@ -17,7 +17,11 @@ import {
   Award,
   Maximize2,
   RefreshCw,
-  Info
+  Info,
+  Crown,
+  Zap,
+  Radio,
+  Shield
 } from 'lucide-react';
 import { LabMachineState, HelpRequest } from '@/lib/classroom-control';
 
@@ -57,13 +61,13 @@ export default function Virtual3DClassroom({
     return map;
   }, [machines]);
 
-  // Quy chuẩn đánh số máy ziczac phòng thực hành từ phải qua trái theo yêu cầu của Thầy:
-  // Hàng 1 (Dãy 1): 4, 3, 2, 1
-  // Hàng 2 (Dãy 1): 5, 6, 7, 8
-  // Hàng 3 (Dãy 1): 12, 11, 10, 9
-  // Hàng 4 (Dãy 1): 13, 14, 15, 16
-  // Hàng 5 (Dãy 1): 20, 19, 18, 17
-  // Hàng 6 (Dãy 1): 21, 22, 23, 24
+  // Quy chuẩn đánh số máy ziczac phòng thực hành từ phải qua trái theo chuẩn y của Thầy:
+  // Hàng 1: 4, 3, 2, 1
+  // Hàng 2: 5, 6, 7, 8
+  // Hàng 3: 12, 11, 10, 9
+  // Hàng 4: 13, 14, 15, 16
+  // Hàng 5: 20, 19, 18, 17
+  // Hàng 6: 21, 22, 23, 24
   const classroomRows = useMemo(() => {
     return [
       { rowNum: 1, machineIds: [4, 3, 2, 1] },
@@ -75,7 +79,7 @@ export default function Virtual3DClassroom({
     ];
   }, []);
 
-  // Top vinh danh học sinh tích cực nhất
+  // Top vinh danh chiến binh dẫn đầu phòng máy
   const leaderboard = useMemo(() => {
     return [...machines]
       .filter((m) => m.student1Name || m.starsEarned > 0 || m.progress > 0)
@@ -83,7 +87,7 @@ export default function Virtual3DClassroom({
       .slice(0, 4);
   }, [machines]);
 
-  // Thống kê tổng quan phòng máy
+  // Thống kê radar tổng quan
   const stats = useMemo(() => {
     const active = machines.filter((m) => m.student1Name).length;
     const completed = machines.filter((m) => m.progress === 100).length;
@@ -98,24 +102,24 @@ export default function Virtual3DClassroom({
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-amber-50 via-amber-100/40 to-slate-100 rounded-3xl p-4 sm:p-6 border border-amber-200/80 shadow-lg relative overflow-hidden">
-      {/* 1. THANH TRẠNG THÁI TRÊN CÙNG: BỤC GIẢNG & THỜI GIAN ẤN ĐỊNH */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-amber-300 shadow-xs mb-6">
+    <div className="w-full cyber-hud-card rounded-3xl p-5 sm:p-7 border border-cyan-500/30 shadow-neon-cyan/20 relative overflow-hidden">
+      {/* 1. THANH TRẠNG THÁI TRÊN CÙNG: ĐÀI CHỈ HUY & ĐỒNG HỒ TÁC CHIẾN */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-950/80 backdrop-blur-md p-4 rounded-2xl border border-cyan-500/30 shadow-xs mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 font-black text-lg">
-            👩‍🏫
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-neon-cyan/50 font-black text-lg border border-cyan-300/40">
+            <Crown className="w-6 h-6 text-amber-300" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
-                Thầy Đỗ Mạnh Trường Đang Giảng Dạy
+              <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-400/40 glow-text-cyan">
+                Thầy Đỗ Mạnh Trường · Tổng Chỉ Huy
               </span>
-              <span className="text-xs font-extrabold text-indigo-700">
+              <span className="text-xs font-extrabold text-purple-300">
                 {lessonTitle}
               </span>
             </div>
-            <p className="text-xs font-medium text-slate-600 mt-0.5">
-              Hoạt động hiện tại: <strong className="text-slate-900">{activeActivityName}</strong> (Thời gian ấn định: {activityDurationMinutes} phút)
+            <p className="text-xs font-medium text-slate-300 mt-0.5">
+              Nhiệm vụ: <strong className="text-cyan-400">{activeActivityName}</strong> (Thời gian ấn định: {activityDurationMinutes} phút)
             </p>
           </div>
         </div>
@@ -123,39 +127,45 @@ export default function Virtual3DClassroom({
         {/* Đồng hồ ấn định & trạng thái chốt */}
         <div className="flex items-center gap-3">
           {isTimeUp ? (
-            <div className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center gap-2 shadow-md animate-pulse">
+            <div className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center gap-2 shadow-neon-mana/50 animate-pulse">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Hết giờ! Đã chốt điểm tự động ({stats.completed}/{stats.active} máy)</span>
+              <span>Hết giờ! Đã chốt điểm ({stats.completed}/{stats.active} trạm)</span>
             </div>
           ) : (
-            <div className="px-4 py-2 rounded-xl bg-slate-900 text-white font-mono font-bold text-xs flex items-center gap-2 shadow-xs">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <span>Thời gian còn:</span>
-              <span className="text-amber-400 font-black text-sm">{formatTimer(remainingSeconds)}</span>
+            <div className="px-4 py-2 rounded-xl bg-slate-900 text-white font-mono font-bold text-xs flex items-center gap-2 border border-slate-800 shadow-xs">
+              <Clock className="w-4 h-4 text-cyan-400" />
+              <span>Đồng hồ:</span>
+              <span className="text-cyan-400 font-black text-sm">{formatTimer(remainingSeconds)}</span>
             </div>
           )}
 
-          <div className="hidden lg:flex items-center gap-2 text-xs font-bold bg-white px-3 py-1.5 rounded-xl border border-slate-200">
-            <span className="text-emerald-600">🟢 {stats.active} Máy online</span>
+          <div className="hidden lg:flex items-center gap-2 text-xs font-bold bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-800">
+            <span className="text-cyan-300 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              {stats.active}/24 Trạm Online
+            </span>
             {stats.pendingHelp > 0 && (
-              <span className="text-rose-600 animate-bounce">🙋‍♂️ {stats.pendingHelp} Cần Thầy giúp</span>
+              <span className="text-rose-400 animate-bounce flex items-center gap-1">
+                <span>🆘</span>
+                <span>{stats.pendingHelp} SOS Cần Cứu Viện</span>
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* 2. KHÔNG GIAN PHÒNG HỌC 3D & BẢNG VINH DANH GÓC PHẢI */}
+      {/* 2. KHÔNG GIAN BÀN GHẾ 3D PHÒNG MÁY & BẢNG VINH DANH GÓC PHẢI */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* KHÔNG GIAN BÀN GHẾ 3D PHÒNG MÁY (9 CỘT) */}
-        <div className="lg:col-span-9 bg-gradient-to-b from-[#fbf4ea] to-[#f4e4cf] p-5 sm:p-7 rounded-3xl border-2 border-[#e6cca8] shadow-inner relative">
+        <div className="lg:col-span-9 bg-slate-950/90 p-5 sm:p-7 rounded-3xl border border-cyan-500/30 shadow-inner relative cyber-grid-bg">
           
           {/* Bục giảng Thầy giáo phía trên */}
           <div className="text-center mb-6">
-            <div className="inline-block px-8 py-2 rounded-xl bg-gradient-to-r from-amber-700 to-amber-800 text-white font-black text-xs tracking-wider shadow-md border-b-4 border-amber-950 uppercase">
-              🖥️ BỤC GIẢNG & MÀN HÌNH CHÍNH CỦA THẦY TRƯỜNG
+            <div className="inline-block px-8 py-2 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 text-white font-black text-xs tracking-wider shadow-neon-cyan/40 border border-cyan-300/40 uppercase">
+              👑 ĐÀI CHỈ HUY TRUNG TÂM · THẦY ĐỖ MẠNH TRƯỜNG
             </div>
-            <p className="text-[11px] text-amber-800/80 font-bold mt-1">
-              Phòng Máy THCS Mão Điền (Đánh số ziczac từ phải qua trái: Hàng 1: [4-3-2-1], Hàng 2: [5-6-7-8]...)
+            <p className="text-[11px] text-cyan-300/80 font-bold mt-1.5">
+              Phòng Máy THCS Mão Điền (Lưới tọa độ Ziczac từ phải qua trái: Hàng 1: [4-3-2-1] ➔ Hàng 2: [5-6-7-8]...)
             </p>
           </div>
 
@@ -163,9 +173,9 @@ export default function Virtual3DClassroom({
           <div className="space-y-6">
             {classroomRows.map((row) => (
               <div key={row.rowNum} className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] font-bold text-amber-900/60 px-1">
+                <div className="flex items-center justify-between text-[11px] font-black text-cyan-400/80 px-1">
                   <span>Hàng {row.rowNum}</span>
-                  <span className="text-[10px] text-amber-700">Mã máy: {row.machineIds.join(' ➔ ')}</span>
+                  <span className="text-[10px] text-purple-300">Trạm máy: {row.machineIds.join(' ➔ ')}</span>
                 </div>
 
                 <div className="grid grid-cols-4 gap-3 sm:gap-4">
@@ -195,12 +205,12 @@ export default function Virtual3DClassroom({
                         onClick={() => setSelectedMachine(machine)}
                         className={`cursor-pointer transition-all duration-200 rounded-2xl p-2.5 sm:p-3 relative group flex flex-col justify-between border-2 ${
                           hasHelp
-                            ? 'bg-amber-100 border-amber-500 shadow-lg shadow-amber-500/30 scale-105 animate-pulse'
+                            ? 'bg-rose-950/80 border-rose-500 shadow-neon-crimson/50 scale-105 animate-pulse'
                             : isOnline
                             ? machine.progress === 100
-                              ? 'bg-emerald-50/90 border-emerald-400 shadow-md hover:-translate-y-1'
-                              : 'bg-white/95 border-indigo-300 shadow-md hover:-translate-y-1 hover:border-indigo-500'
-                            : 'bg-amber-50/40 border-dashed border-amber-300 opacity-60 hover:opacity-100'
+                              ? 'bg-emerald-950/80 border-emerald-400 shadow-neon-mana/40 hover:-translate-y-1'
+                              : 'bg-slate-900/90 border-cyan-500/50 shadow-neon-cyan/20 hover:-translate-y-1 hover:border-cyan-300'
+                            : 'bg-slate-950/50 border-dashed border-slate-800 opacity-60 hover:opacity-100'
                         }`}
                         style={{
                           transform: 'perspective(600px) rotateX(4deg)',
@@ -210,72 +220,71 @@ export default function Virtual3DClassroom({
                         {/* Header của thẻ bàn máy */}
                         <div className="flex items-center justify-between gap-1 mb-1.5">
                           <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 ${
-                            isOnline ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                            isOnline ? 'bg-cyan-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
                           }`}>
                             <Laptop className="w-3 h-3" />
                             <span>M{mId < 10 ? `0${mId}` : mId}</span>
                           </span>
 
                           {/* Sao thi đua */}
-                          <div className="flex items-center text-amber-500 text-[11px] font-black">
-                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                            <span>{machine.starsEarned || 0}</span>
+                          <div className="flex items-center text-amber-400 text-[11px] font-black">
+                            <Star className="w-3.5 h-3.5 fill-amber-400" />
+                            <span className="ml-0.5">{machine.starsEarned || 0}</span>
                           </div>
                         </div>
 
-                        {/* Mô phỏng 2 Học sinh ngồi học theo cặp */}
-                        <div className="my-1.5 flex items-center justify-center gap-2">
-                          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs shadow-xs transition-all ${
-                            isOnline ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-slate-100 border-slate-300 text-slate-400'
-                          }`} title={machine.student1Name || 'Trống'}>
-                            🧑‍💻
-                          </div>
-                          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs shadow-xs transition-all ${
-                            machine.student2Name ? 'bg-indigo-100 border-indigo-400 text-indigo-800' : 'bg-slate-100 border-dashed border-slate-300 text-slate-300'
-                          }`} title={machine.student2Name || 'Chưa ghép bạn'}>
-                            {machine.student2Name ? '🧑‍💻' : '+'}
-                          </div>
-                        </div>
-
-                        {/* Tên cặp học sinh */}
-                        <div className="text-center min-h-[32px] flex flex-col justify-center">
+                        {/* Tên 2 bạn học sinh ngồi cặp */}
+                        <div className="min-h-[38px] flex flex-col justify-center my-1 text-left">
                           {isOnline ? (
                             <>
-                              <div className="text-[11px] font-black text-slate-900 truncate" title={machine.student1Name}>
-                                {machine.student1Name}
+                              <div className="text-xs font-black text-white truncate group-hover:text-cyan-300">
+                                1. {machine.student1Name}
                               </div>
-                              {machine.student2Name && (
-                                <div className="text-[10px] font-bold text-slate-600 truncate" title={machine.student2Name}>
-                                  + {machine.student2Name}
+                              {machine.student2Name ? (
+                                <div className="text-[11px] font-bold text-slate-400 truncate">
+                                  2. {machine.student2Name}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-slate-500 italic">
+                                  (Ngồi 1 bạn)
                                 </div>
                               )}
                             </>
                           ) : (
-                            <span className="text-[10px] text-amber-900/40 italic font-medium">Bàn trống</span>
+                            <div className="text-[11px] text-slate-500 italic text-center py-1">
+                              Trạm chờ kết nối
+                            </div>
                           )}
                         </div>
 
-                        {/* Thanh tiến độ & trạng thái nộp bài */}
-                        {isOnline && (
-                          <div className="mt-2 space-y-0.5">
-                            <div className="flex items-center justify-between text-[9px] font-bold">
-                              <span className="text-slate-500">{machine.completedTasks || 0}/{machine.totalTasks || 7}</span>
-                              <span className="text-indigo-600">{machine.progress || 0}%</span>
+                        {/* Thanh tiến độ hoặc cảnh báo SOS */}
+                        {hasHelp ? (
+                          <div className="bg-rose-500 text-white font-black text-[10px] py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 animate-bounce">
+                            <AlertTriangle className="w-3 h-3" />
+                            <span>Cần Thầy Giúp!</span>
+                          </div>
+                        ) : isOnline ? (
+                          <div className="space-y-1 mt-1">
+                            <div className="flex items-center justify-between text-[10px] font-black">
+                              <span className="text-slate-400">Tiến độ</span>
+                              <span className={machine.progress === 100 ? 'text-emerald-400 font-extrabold' : 'text-cyan-300'}>
+                                {machine.progress}%
+                              </span>
                             </div>
-                            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                               <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all"
-                                style={{ width: `${machine.progress || 0}%` }}
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  machine.progress === 100
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                    : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                                }`}
+                                style={{ width: `${machine.progress}%` }}
                               />
                             </div>
                           </div>
-                        )}
-
-                        {/* Nhãn báo cần giúp đỡ */}
-                        {hasHelp && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black tracking-wider uppercase shadow-md flex items-center gap-1">
-                            <HelpCircle className="w-3 h-3" />
-                            <span>Cần Thầy!</span>
+                        ) : (
+                          <div className="text-[10px] text-slate-600 text-center py-0.5">
+                            Trống
                           </div>
                         )}
                       </div>
@@ -287,49 +296,52 @@ export default function Virtual3DClassroom({
           </div>
         </div>
 
-        {/* BẢNG VINH DANH & HÀNH ĐỘNG NHANH CỦA THẦY GÓC PHẢI (3 CỘT) */}
+        {/* CỘT PHẢI: BẢNG VINH DANH SERVER & KHUNG QUẢN TRỊ TRẠM MÁY (3 CỘT) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* BẢNG VINH DANH TIẾT HỌC (GIỐNG ẢNH THẦY GỬI) */}
-          <div className="bg-white/90 backdrop-blur-md rounded-3xl p-5 border border-amber-200 shadow-md">
-            <div className="flex items-center gap-2 border-b border-amber-100 pb-3 mb-3">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                🌟 Bảng Tuyên Dương Tiết Học
-              </h3>
+          {/* BẢNG VINH DANH THI ĐUA */}
+          <div className="cyber-hud-card rounded-3xl p-5 border border-amber-500/30 shadow-neon-gold/20">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
+              <span className="font-black text-xs text-amber-400 uppercase tracking-wider flex items-center gap-1.5 glow-text-gold">
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>Chiến Binh Tiêu Biểu</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 font-bold border border-amber-500/40">
+                Top Máy
+              </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {leaderboard.length === 0 ? (
-                <p className="text-xs text-slate-400 italic text-center py-4">
-                  Chưa có nhóm nào hoàn thành bài tập
+                <p className="text-xs text-slate-500 italic text-center py-4">
+                  Chưa có trạm nào hoàn thành
                 </p>
               ) : (
                 leaderboard.map((item, idx) => (
                   <div
                     key={item.machineId}
-                    className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between gap-2"
+                    className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
                         idx === 0
-                          ? 'bg-amber-400 text-amber-950 shadow-xs'
+                          ? 'bg-amber-400 text-slate-950 shadow-neon-gold/40'
                           : idx === 1
-                          ? 'bg-slate-300 text-slate-800'
-                          : 'bg-amber-700 text-white text-[10px]'
+                          ? 'bg-cyan-400 text-slate-950'
+                          : 'bg-purple-600 text-white text-[10px]'
                       }`}>
                         {idx === 0 ? '👑' : idx + 1}
                       </span>
                       <div className="truncate">
-                        <div className="text-xs font-black text-slate-900 truncate">
+                        <div className="text-xs font-black text-white truncate">
                           {item.student1Name || `Máy ${item.machineId}`}
                         </div>
-                        <div className="text-[10px] text-amber-700 font-bold">
+                        <div className="text-[10px] text-cyan-400 font-bold">
                           Máy {item.machineId} · {item.progress}% xong
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 font-black text-xs text-amber-600 shrink-0">
+                    <div className="flex items-center gap-1 font-black text-xs text-amber-400 shrink-0">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       <span>{item.starsEarned || 0}</span>
                     </div>
@@ -341,32 +353,32 @@ export default function Virtual3DClassroom({
 
           {/* HỘP CHI TIẾT KHI THẦY NHẤP VÀO 1 MÁY BẤT KỲ */}
           {selectedMachine ? (
-            <div className="bg-white rounded-3xl p-5 border border-indigo-200 shadow-md space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <span className="font-black text-xs text-indigo-900 flex items-center gap-1.5">
-                  <Laptop className="w-4 h-4 text-indigo-600" />
+            <div className="cyber-hud-card rounded-3xl p-5 border border-cyan-500/40 shadow-neon-cyan/30 space-y-3 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <span className="font-black text-xs text-cyan-300 flex items-center gap-1.5">
+                  <Laptop className="w-4 h-4 text-cyan-400" />
                   <span>Chi tiết Máy {selectedMachine.machineId}</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedMachine(null)}
-                  className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  className="text-slate-500 hover:text-white text-xs font-bold"
                 >
                   ✕ Đóng
                 </button>
               </div>
 
-              <div className="text-xs space-y-1">
-                <div className="text-slate-700">
-                  Học sinh 1: <strong>{selectedMachine.student1Name || 'Chưa đăng nhập'}</strong>
+              <div className="text-xs space-y-1 text-slate-300">
+                <div>
+                  Học sinh 1: <strong className="text-cyan-300">{selectedMachine.student1Name || 'Chưa đăng nhập'}</strong>
                 </div>
                 {selectedMachine.student2Name && (
-                  <div className="text-slate-700">
-                    Học sinh 2: <strong>{selectedMachine.student2Name}</strong>
+                  <div>
+                    Học sinh 2: <strong className="text-purple-300">{selectedMachine.student2Name}</strong>
                   </div>
                 )}
-                <div className="text-slate-500">
-                  Tiến độ: <strong>{selectedMachine.progress}%</strong> ({selectedMachine.completedTasks}/{selectedMachine.totalTasks} câu)
+                <div className="text-slate-400">
+                  Tiến độ: <strong className="text-white">{selectedMachine.progress}%</strong> ({selectedMachine.completedTasks}/{selectedMachine.totalTasks} câu)
                 </div>
               </div>
 
@@ -374,28 +386,28 @@ export default function Virtual3DClassroom({
                 <button
                   type="button"
                   onClick={() => onAwardStar(selectedMachine.machineId)}
-                  className="w-full py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-neon-gold/40 transition-all"
                 >
-                  <Star className="w-4 h-4 fill-amber-950" />
+                  <Star className="w-4 h-4 fill-slate-950" />
                   <span>Tặng +1 Sao Tuyên Dương</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onSpotlight(selectedMachine)}
-                  className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-neon-cyan/40 transition-all border border-cyan-400/30"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>Chiếu Bài Mẫu Máy Này</span>
+                  <span>Chiếu Hologram Máy Này</span>
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-3xl bg-amber-50/50 border border-dashed border-amber-300 text-center">
-              <Info className="w-5 h-5 text-amber-600 mx-auto mb-1.5" />
-              <p className="text-xs text-amber-900 font-bold">Mẹo Sư Phạm của Thầy:</p>
-              <p className="text-[11px] text-amber-800/80 mt-1">
-                Nhấp vào từng bàn máy để tặng Sao thi đua hoặc chiếu bài làm mẫu lên toàn bộ phòng máy!
+            <div className="p-4 rounded-3xl cyber-hud-card border border-dashed border-slate-800 text-center">
+              <Info className="w-5 h-5 text-cyan-400 mx-auto mb-1.5" />
+              <p className="text-xs text-cyan-300 font-bold">Đặc quyền của Tổng chỉ huy:</p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Bấm vào bất kỳ trạm máy nào trên radar 3D để Buff Sao Thưởng hoặc Chiếu Hologram bài mẫu toàn phòng!
               </p>
             </div>
           )}

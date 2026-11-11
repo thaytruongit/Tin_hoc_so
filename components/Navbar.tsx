@@ -84,20 +84,23 @@ export default function Navbar() {
   const displayMenus = role === 'teacher' ? [...baseMenus, ...teacherMenus] : baseMenus;
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/90 border-b border-cyan-500/20 shadow-lg shadow-cyan-950/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo chuẩn tên dự án theo TK.docx */}
+          {/* Logo Cyber Game Hub */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <Laptop className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-neon-cyan/50 group-hover:scale-105 group-hover:shadow-cyan-400 transition-all border border-cyan-300/40">
+              <Laptop className="w-5 h-5 animate-pulse text-cyan-200" />
             </div>
             <div>
-              <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight block">
-                THAYTRUONGIT<span className="text-blue-600">-THCS MÃO ĐIỀN</span>
+              <span className="font-black text-sm sm:text-base text-white tracking-wider flex items-center gap-1.5 glow-text-cyan">
+                <span>TIN HỌC SỐ</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-[10px] text-cyan-300 font-extrabold uppercase">
+                  Mão Điền
+                </span>
               </span>
-              <span className="text-[10px] text-slate-500 block -mt-1 font-semibold uppercase tracking-wider">
-                Hệ sinh thái học tập số môn Tin học
+              <span className="text-[10px] text-cyan-400/80 block -mt-0.5 font-bold uppercase tracking-widest">
+                Thầy Đỗ Mạnh Trường · Cyber Academy
               </span>
             </div>
           </Link>
@@ -113,20 +116,23 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all relative ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-bold shadow-2xs'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-neon-cyan/30'
                       : isHighlight
-                      ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-purple-900/40 text-purple-200 border border-purple-500/40 hover:bg-purple-800/50 hover:text-white'
+                      : 'text-slate-400 hover:text-cyan-200 hover:bg-slate-800/60'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isHighlight ? 'text-amber-600' : ''}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-300 animate-pulse' : isHighlight ? 'text-purple-400' : ''}`} />
                   <span>{link.label}</span>
                   {isHighlight && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider ml-0.5">
+                    <span className="px-1.5 py-0.2 rounded-full bg-purple-500 text-white text-[9px] font-black uppercase tracking-wider ml-0.5 animate-pulse">
                       HOT
                     </span>
+                  )}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></span>
                   )}
                 </Link>
               );
@@ -137,29 +143,29 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <Link
               href="/in-class"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-xs"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white transition-all shadow-neon-purple/40 border border-purple-400/30"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-200" />
               <span>Củng cố 7 câu</span>
             </Link>
 
             {role === 'guest' ? (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-neon-cyan/40 transition-all border border-cyan-400/30 hover:scale-105"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Đăng nhập</span>
+                <span>Vào Buồng Lái</span>
               </Link>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-block text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                  {role === 'teacher' ? '👨‍🏫 Thầy Đỗ Mạnh Trường' : isPair ? `👥 ${pairNames || userName}` : `🎓 ${userName}`}
+                <span className="hidden sm:inline-block text-xs font-bold text-cyan-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-cyan-500/30 shadow-xs">
+                  {role === 'teacher' ? '👑 Thầy Đỗ Mạnh Trường' : isPair ? `👥 ${pairNames || userName}` : `🎓 ${userName}`}
                 </span>
                 <button
                   onClick={handleLogout}
-                  title="Đăng xuất"
-                  className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors"
+                  title="Thoát buồng lái"
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 hover:border-rose-500/40 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
