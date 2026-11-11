@@ -100,6 +100,7 @@ export async function uploadHomeworkToDriveOnline(params: {
       fileName: params.file.name,
       standardizedFileName: standardizedFileName,
       fileBase64: fileBase64,
+      base64Data: fileBase64,
       mimeType: params.file.type || 'application/octet-stream',
       note: params.note || '',
       submittedAt: new Date().toISOString()
@@ -193,6 +194,7 @@ export async function uploadPracticalToDriveOnline(params: {
       fileName: params.file.name,
       standardizedFileName: standardizedFileName,
       fileBase64: fileBase64,
+      base64Data: fileBase64,
       mimeType: params.file.type || 'application/octet-stream',
       submittedAt: new Date().toISOString()
     };
