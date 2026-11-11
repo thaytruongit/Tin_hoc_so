@@ -364,8 +364,8 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* TABS QUẢN TRỊ */}
-      <div className="flex border-b border-slate-200 gap-6 text-sm font-bold flex-wrap">
+      {/* TABS QUẢN TRỊ THEO ĐÚNG 4 CHỨC NĂNG CỦA GIÁO VIÊN */}
+      <div className="flex border-b border-slate-200 gap-4 sm:gap-6 text-xs sm:text-sm font-bold flex-wrap">
         <button
           onClick={() => setActiveTab('orchestration')}
           className={`pb-3 flex items-center gap-2 transition-all ${
@@ -375,9 +375,10 @@ export default function TeacherDashboard() {
           }`}
         >
           <Radio className="w-4 h-4 text-rose-600 animate-pulse" />
-          <span>🕹️ Điều khiển lớp học (Command Center)</span>
+          <span>1. Đài Chỉ Huy 24 Trạm (Ziczac)</span>
           <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase">LIVE</span>
         </button>
+
         <button
           onClick={() => setActiveTab('roster')}
           className={`pb-3 flex items-center gap-2 transition-all ${
@@ -387,52 +388,21 @@ export default function TeacherDashboard() {
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Danh sách tài khoản ({currentClass.name} · {classStudents.length} HS)</span>
+          <span>2. Quản Trị 670 HS &amp; Xuất Excel</span>
         </button>
-        <button
-          onClick={() => setActiveTab('submissions')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'submissions'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <UploadCloud className="w-4 h-4 text-amber-500" />
-          <span>Bài thực hành phòng máy ({submissions.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('reinforcement')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'reinforcement'
-              ? 'border-b-2 border-amber-500 text-amber-600 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Ngân hàng Củng cố (7 câu)</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('homework')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
-            activeTab === 'homework'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Camera className="w-4 h-4 text-purple-600" />
-          <span>Bài tập về nhà ({homeworkSubs.length})</span>
-        </button>
+
         <button
           onClick={() => setActiveTab('exams')}
           className={`pb-3 flex items-center gap-2 transition-all ${
             activeTab === 'exams'
-              ? 'border-b-2 border-blue-600 text-blue-600 font-extrabold'
+              ? 'border-b-2 border-indigo-600 text-indigo-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <ClipboardCheck className="w-4 h-4" />
-          <span>Đóng / Mở đề thi</span>
+          <span>3. Điều Phối Tiết Dạy &amp; Ngân Hàng Đề</span>
         </button>
+
         <button
           onClick={() => setActiveTab('drive_config')}
           className={`pb-3 flex items-center gap-2 transition-all ${
@@ -442,7 +412,31 @@ export default function TeacherDashboard() {
           }`}
         >
           <Cloud className="w-4 h-4 text-teal-600" />
-          <span>Cấu hình Google Drive</span>
+          <span>4. Cấu Hình Google Drive Thực Hành</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('submissions')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'submissions'
+              ? 'border-b-2 border-amber-600 text-amber-600 font-extrabold'
+              : 'text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <UploadCloud className="w-4 h-4 text-amber-500" />
+          <span>Bài Thực Hành ({submissions.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('homework')}
+          className={`pb-3 flex items-center gap-2 transition-all ${
+            activeTab === 'homework'
+              ? 'border-b-2 border-purple-600 text-purple-600 font-extrabold'
+              : 'text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Camera className="w-4 h-4 text-purple-600" />
+          <span>Bài Tập Về Nhà ({homeworkSubs.length})</span>
         </button>
       </div>
 

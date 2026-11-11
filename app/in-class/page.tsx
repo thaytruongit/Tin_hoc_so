@@ -453,8 +453,8 @@ function InClassContent() {
 
       {/* CẢNH BÁO PHÂN QUYỀN NẾU CHỌN SAI KHỐI */}
       {permissionNotice && (
-        <div className="p-4 rounded-2xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
-          <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
           <span>{permissionNotice}</span>
         </div>
       )}
@@ -1088,29 +1088,29 @@ function InClassContent() {
             </div>
 
             {/* TRÌNH PHÁT SLIDE */}
-            <div className={`rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 text-white shadow-2xl transition-all ${isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
+            <div className={`rounded-3xl overflow-hidden border border-slate-200 bg-white text-slate-900 shadow-md transition-all ${isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
               }`}>
-              <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
-                  <span className="font-bold text-slate-300">
+                  <span className="w-3 h-3 rounded-full bg-blue-600 inline-block" />
+                  <span className="font-bold text-slate-800">
                     Trang {currentSlideIndex + 1} / {(currentPeriod.slide?.slides.length || 1)}
                   </span>
-                  <span className="text-slate-500 hidden sm:inline">|</span>
-                  <span className="text-slate-400 truncate max-w-xs hidden sm:inline">
+                  <span className="text-slate-400 hidden sm:inline">|</span>
+                  <span className="text-slate-600 truncate max-w-xs hidden sm:inline font-medium">
                     {currentPeriod.slide?.fileName}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-amber-400 font-medium hidden md:inline">
+                  <span className="text-[11px] text-blue-700 font-semibold hidden md:inline">
                     💡 Dùng phím &larr; / &rarr; hoặc nút bấm để chuyển trang
                   </span>
                   {isSlideFullscreen && (
                     <button
                       type="button"
                       onClick={() => setIsSlideFullscreen(false)}
-                      className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs"
+                      className="px-3 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs"
                     >
                       Thoát toàn màn hình
                     </button>
@@ -1119,21 +1119,18 @@ function InClassContent() {
               </div>
 
               {/* NỘI DUNG SLIDE */}
-              <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center items-center text-center space-y-6 relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-black">
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
+              <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center items-center text-center space-y-6 relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-blue-50/20">
                 <div className="relative z-10 max-w-3xl space-y-4">
-                  <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-rose-300 text-xs font-extrabold uppercase tracking-widest border border-white/10">
+                  <div className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-extrabold uppercase tracking-widest border border-blue-200">
                     Slide {currentSlideIndex + 1} · {currentPeriod.title}
                   </div>
 
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug">
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
                     {currentPeriod.slide?.slides[currentSlideIndex]?.split('|')[0]?.replace(/^S\d+:\s*/, '') || currentPeriod.title}
                   </h3>
 
                   {currentPeriod.slide?.slides[currentSlideIndex]?.includes('|') && (
-                    <div className="pt-4 text-base sm:text-lg text-slate-300 font-medium leading-relaxed bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-xs">
+                    <div className="pt-4 text-base sm:text-lg text-slate-700 font-medium leading-relaxed bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
                       {currentPeriod.slide?.slides[currentSlideIndex]?.split('|').slice(1).join(' — ')}
                     </div>
                   )}
@@ -1147,7 +1144,7 @@ function InClassContent() {
                   type="button"
                   onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
                   disabled={currentSlideIndex === 0}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/10 shadow-lg"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-slate-200 shadow-sm"
                   title="Slide trước"
                 >
                   <ChevronLeft className="w-6 h-6" />
@@ -1157,7 +1154,7 @@ function InClassContent() {
                   type="button"
                   onClick={() => setCurrentSlideIndex(prev => Math.min((currentPeriod.slide?.slides.length || 1) - 1, prev + 1))}
                   disabled={currentSlideIndex >= (currentPeriod.slide?.slides.length || 1) - 1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/10 shadow-lg"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-slate-200 shadow-sm"
                   title="Slide tiếp theo"
                 >
                   <ChevronRight className="w-6 h-6" />
@@ -1165,7 +1162,7 @@ function InClassContent() {
               </div>
 
               {/* THUMBNAIL ĐIỀU HƯỚNG */}
-              <div className="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto">
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 overflow-x-auto">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin py-1">
                   {currentPeriod.slide?.slides.map((_, sIdx) => (
                     <button
@@ -1173,8 +1170,8 @@ function InClassContent() {
                       type="button"
                       onClick={() => setCurrentSlideIndex(sIdx)}
                       className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center justify-center ${currentSlideIndex === sIdx
-                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-400'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                         }`}
                     >
                       {sIdx + 1}
@@ -1186,7 +1183,7 @@ function InClassContent() {
                   <button
                     type="button"
                     onClick={() => setCurrentSlideIndex(0)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200"
                   >
                     Về đầu
                   </button>
