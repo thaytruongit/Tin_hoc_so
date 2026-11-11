@@ -77,7 +77,7 @@ export default function HomePage() {
                     Củng Cố Bài Học — 7 Câu Trắc Nghiệm Tự Động Chấm Điểm
                   </h3>
                   <p className="text-xs sm:text-sm text-white/90">
-                    Phân hóa chuẩn Bộ GD&ĐT: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>. Làm bài trên máy tính, nhận điểm tức thì và xem lời giải thích chi tiết của Thầy Trương!
+                    Phân hóa chuẩn Bộ GD&ĐT: <strong>3 câu Nhận biết · 2 câu Thông hiểu · 2 câu Vận dụng</strong>. Làm bài trên máy tính, nhận điểm tức thì và xem lời giải thích chi tiết của Thầy Trương Thành Trường!
                   </p>
                 </div>
                 <Link
@@ -248,9 +248,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
                 <FileText className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-xl text-slate-900">2. Phiếu học tập điện tử 4 pha</h3>
+              <h3 className="font-bold text-xl text-slate-900">2. Phiếu học tập Khám phá cặp đôi</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Thiết kế bám sát bài giảng trên lớp theo 4 pha: Khởi động, Khám phá, Luyện tập và Vận dụng. Học sinh hoàn thành nhận điểm thưởng XP.
+                Thiết kế bám sát bài giảng trên lớp cho cặp đôi 2 học sinh cùng máy (Kỹ thuật viên &amp; Thư ký), máy tự động chấm điểm và tích lũy XP.
               </p>
               <Link
                 href="/worksheets"

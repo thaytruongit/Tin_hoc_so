@@ -23,7 +23,7 @@ export default function WorksheetsPage() {
           Phiếu Học Tập Điện Tử
         </h1>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Thực hành trực tuyến theo 4 pha bài học (Khởi động - Khám phá - Luyện tập - Vận dụng). Tự động chấm điểm và tích lũy XP.
+          Hoạt động Khám phá cặp đôi theo bài học (Kỹ thuật viên &amp; Thư ký). Máy tự động chấm điểm và tích lũy XP.
         </p>
 
         {/* Grade Filters */}

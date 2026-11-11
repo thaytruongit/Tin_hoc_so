@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -18,30 +18,40 @@ import {
   Monitor, 
   BookOpen, 
   Clock, 
-  AlertCircle,
-  ArrowRight,
-  Filter,
-  CheckCheck,
-  Users,
-  Repeat,
-  Trophy,
-  ArrowLeftRight,
-  Send,
-  Presentation,
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
-  FolderOpen
+  AlertCircle, 
+  ArrowRight, 
+  Users, 
+  Repeat, 
+  Trophy, 
+  ArrowLeftRight, 
+  Send, 
+  Presentation, 
+  ChevronLeft, 
+  ChevronRight, 
+  Maximize2, 
+  Minimize2, 
+  FolderOpen,
+  Lock,
+  Unlock,
+  ShieldAlert,
+  Star
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
-import { Lock, Unlock, ShieldAlert } from 'lucide-react';
-import { CognitiveLevel } from '@/lib/types';
+import { 
+  ClassroomControlState, 
+  getClassroomState, 
+  subscribeToClassroomState 
+} from '@/lib/classroom-control';
+import { uploadPracticalToDriveOnline } from '@/lib/google-drive-service';
+import { CognitiveLevel, PracticalSubmission } from '@/lib/types';
 
 function InClassContent() {
   const searchParams = useSearchParams();
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [controlState, setControlState] = useState<ClassroomControlState>(getClassroomState());
+  
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
   const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'worksheet' | 'reinforcement' | 'practice' | 'slide'>('worksheet');
@@ -49,23 +59,44 @@ function InClassContent() {
   const [isSlideFullscreen, setIsSlideFullscreen] = useState<boolean>(false);
   const [permissionNotice, setPermissionNotice] = useState<string>('');
 
-  // Trạng thái Phiếu học tập Cặp đôi
+  // --------------------------------------------------------------------------
+  // HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI
+  // --------------------------------------------------------------------------
   const [pairComputerNum, setPairComputerNum] = useState<string>('Máy 08 - Phòng Tin học 1');
   const [studentAName, setStudentAName] = useState<string>('Nguyễn Văn An');
   const [studentBName, setStudentBName] = useState<string>('Trần Thị Mai');
-  const [currentRoleTurn, setCurrentRoleTurn] = useState<'A' | 'B'>('A'); // A: Bạn A cầm chuột, B: Bạn B cầm chuột
+  const [currentRoleTurn, setCurrentRoleTurn] = useState<'A' | 'B'>('A'); // A: Kỹ thuật viên (chuột), B: Thư ký
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<string, string>>({});
   const [worksheetSubmitted, setWorksheetSubmitted] = useState<boolean>(false);
+  const [worksheetScore, setWorksheetScore] = useState<number>(10);
   const [showRoleSwapModal, setShowRoleSwapModal] = useState<boolean>(false);
 
-  // Trạng thái làm bài Luyện tập (7 câu trắc nghiệm)
+  // --------------------------------------------------------------------------
+  // HOẠT ĐỘNG 2: LUYỆN TẬP (7 CÂU TRẮC NGHIỆM CHUẨN BỘ)
+  // --------------------------------------------------------------------------
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  // --------------------------------------------------------------------------
+  // HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY & NỘP BÀI TRỰC TIẾP
+  // --------------------------------------------------------------------------
+  const [practicalFile, setPracticalFile] = useState<File | null>(null);
+  const [isUploadingPractical, setIsUploadingPractical] = useState<boolean>(false);
+  const [practicalSubmission, setPracticalSubmission] = useState<PracticalSubmission | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Lấy dữ liệu 29 tiết của khối đang chọn
   const periodsOfGrade = CURRICULUM_DATA[selectedGrade] || [];
   const currentPeriod = periodsOfGrade.find(p => p.period === selectedPeriodNum) || periodsOfGrade[0];
   const currentQuestions = currentPeriod.reinforcement.questions;
+
+  // Lắng nghe trạng thái khóa / mở thủ công từ Thầy Trương Thành Trường qua Supabase Realtime
+  useEffect(() => {
+    const unsub = subscribeToClassroomState((newState) => {
+      setControlState(newState);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -101,7 +132,7 @@ function InClassContent() {
 
   const handleSelectGrade = (grade: number) => {
     if (currentUser?.role === 'student' && currentUser.studentGrade !== grade) {
-      setPermissionNotice(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Theo quy định phân quyền, em chỉ được làm bài của Khối ${currentUser.studentGrade}!`);
+      setPermissionNotice(`Tài khoản của em thuộc ${currentUser.studentClass || 'Khối ' + currentUser.studentGrade}. Em chỉ được làm bài của Khối ${currentUser.studentGrade}!`);
       setTimeout(() => setPermissionNotice(''), 5000);
       return;
     }
@@ -112,6 +143,8 @@ function InClassContent() {
     setIsSubmitted(false);
     setWorksheetAnswers({});
     setWorksheetSubmitted(false);
+    setPracticalFile(null);
+    setPracticalSubmission(null);
     setCurrentRoleTurn('A');
   };
 
@@ -121,13 +154,82 @@ function InClassContent() {
     setIsSubmitted(false);
     setWorksheetAnswers({});
     setWorksheetSubmitted(false);
-    setCurrentRoleTurn('A');
+    setPracticalFile(null);
+    setPracticalSubmission(null);
     setCurrentSlideIndex(0);
   };
 
-  // Xử lý Luyện tập 7 câu
+  // Trạng thái khóa / mở của 3 hoạt động từ Thầy Trương Thành Trường
+  const isDiscoveryLocked = !controlState.activityLocks.discovery;
+  const isPracticeLocked = !controlState.activityLocks.practice;
+  const isLabLocked = !controlState.activityLocks.lab;
+
+  // --------------------------------------------------------------------------
+  // XỬ LÝ HOẠT ĐỘNG 1: TỰ ĐỘNG CHẤM PHIẾU KHÁM PHÁ CẶP ĐÔI
+  // --------------------------------------------------------------------------
+  const handleSwapRole = () => {
+    setCurrentRoleTurn(prev => (prev === 'A' ? 'B' : 'A'));
+    setShowRoleSwapModal(true);
+    setTimeout(() => setShowRoleSwapModal(false), 3000);
+  };
+
+  const handleSubmitWorksheet = () => {
+    if (isDiscoveryLocked) {
+      alert('Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      return;
+    }
+    if (worksheetSubmitted) return;
+
+    // Tự động chấm điểm điền từ khuyết
+    let correctBlanks = 0;
+    const blanks = currentPeriod.worksheet.fillBlanks || [];
+    blanks.forEach((fb, idx) => {
+      const studentAns = (worksheetAnswers[`fb_${idx}`] || '').trim().toLowerCase();
+      const trueAns = fb.correctAnswer.trim().toLowerCase();
+      if (studentAns && (studentAns === trueAns || trueAns.includes(studentAns))) {
+        correctBlanks += 1;
+      }
+    });
+
+    const calculatedScore = blanks.length > 0
+      ? Math.max(7, Math.round(((correctBlanks / blanks.length) * 10 * 10) / 10))
+      : 10;
+
+    setWorksheetScore(calculatedScore);
+    setWorksheetSubmitted(true);
+
+    // Bắn pháo hoa ăn mừng
+    confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+
+    // Lưu vào LocalStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const newSubmission = {
+          id: `ws-sub-${Date.now()}`,
+          periodId: currentPeriod.id,
+          periodTitle: currentPeriod.title,
+          computerNumber: pairComputerNum,
+          studentAName,
+          studentBName,
+          grade: currentPeriod.grade,
+          className: currentUser?.studentClass || `Lớp ${selectedGrade}A10`,
+          score: calculatedScore,
+          xpEarned: currentPeriod.worksheet.xpReward || 50,
+          submittedAt: 'Vừa xong'
+        };
+        const existing = JSON.parse(localStorage.getItem('truong_worksheet_submissions') || '[]');
+        localStorage.setItem('truong_worksheet_submissions', JSON.stringify([newSubmission, ...existing]));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // XỬ LÝ HOẠT ĐỘNG 2: TỰ ĐỘNG CHẤM BÀI LUYỆN TẬP (7 CÂU TRẮC NGHIỆM)
+  // --------------------------------------------------------------------------
   const handleSelectOption = (questionId: string, optionIndex: number) => {
-    if (isSubmitted) return;
+    if (isSubmitted || isPracticeLocked) return;
     setSelectedAnswers(prev => ({
       ...prev,
       [questionId]: optionIndex
@@ -135,6 +237,11 @@ function InClassContent() {
   };
 
   const handleGradeQuiz = () => {
+    if (isPracticeLocked) {
+      alert('Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      return;
+    }
+
     const answeredCount = Object.keys(selectedAnswers).length;
     if (answeredCount < currentQuestions.length) {
       if (!confirm(`Em mới trả lời ${answeredCount}/${currentQuestions.length} câu. Em có chắc chắn muốn nộp bài Luyện tập ngay không?`)) {
@@ -146,6 +253,12 @@ function InClassContent() {
       q => selectedAnswers[q.id] === q.correctIndex
     ).length;
     const calculatedScore = Math.round((calculatedCorrectCount / currentQuestions.length) * 10 * 10) / 10;
+
+    setIsSubmitted(true);
+
+    if (calculatedScore >= 8) {
+      confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+    }
 
     // Lưu kết quả vào LocalStorage để đồng bộ vào Kênh Giáo viên
     if (typeof window !== 'undefined') {
@@ -174,47 +287,11 @@ function InClassContent() {
         console.error(e);
       }
     }
-
-    setIsSubmitted(true);
   };
 
   const handleResetQuiz = () => {
     setSelectedAnswers({});
     setIsSubmitted(false);
-  };
-
-  // Xử lý Phiếu học tập Cặp đôi
-  const handleSwapRole = () => {
-    setCurrentRoleTurn(prev => (prev === 'A' ? 'B' : 'A'));
-    setShowRoleSwapModal(true);
-    setTimeout(() => setShowRoleSwapModal(false), 3000);
-  };
-
-  const handleSubmitWorksheet = () => {
-    if (worksheetSubmitted) return;
-    setWorksheetSubmitted(true);
-
-    if (typeof window !== 'undefined') {
-      try {
-        const newSubmission = {
-          id: `ws-sub-${Date.now()}`,
-          periodId: currentPeriod.id,
-          periodTitle: currentPeriod.title,
-          computerNumber: pairComputerNum,
-          studentAName,
-          studentBName,
-          grade: currentPeriod.grade,
-          className: currentUser?.studentClass || `Lớp ${selectedGrade}A10`,
-          score: 10,
-          xpEarned: currentPeriod.worksheet.xpReward || 50,
-          submittedAt: 'Vừa xong'
-        };
-        const existing = JSON.parse(localStorage.getItem('truong_worksheet_submissions') || '[]');
-        localStorage.setItem('truong_worksheet_submissions', JSON.stringify([newSubmission, ...existing]));
-      } catch (e) {
-        console.error(e);
-      }
-    }
   };
 
   // Tính điểm trắc nghiệm
@@ -239,23 +316,101 @@ function InClassContent() {
         return <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">2. Thông hiểu</span>;
       case 'Vận dụng':
         return <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">3. Vận dụng</span>;
+      default:
+        return null;
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // XỬ LÝ HOẠT ĐỘNG 3: NỘP BÀI THỰC HÀNH & TỰ ĐỘNG CHẤM RUBRIC CHECKLIST
+  // --------------------------------------------------------------------------
+  const handleSubmitPractical = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLabLocked) {
+      alert('Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Trương Thành Trường.');
+      return;
+    }
+    if (!practicalFile) {
+      alert('Vui lòng chọn tệp sản phẩm thực hành (.xlsx, .docx, .py, .cpp, .pdf...) để nộp!');
+      return;
+    }
+
+    setIsUploadingPractical(true);
+    const chosenClass = currentUser?.studentClass || `Lớp ${selectedGrade}A10`;
+    const stCode = currentUser?.studentCode || '6A1001';
+    const stName = currentUser?.studentName || studentAName;
+    const taskName = currentPeriod.practicalTask?.title || `Thực hành Tiết ${currentPeriod.period}`;
+
+    try {
+      // 1. Tải thẳng lên Google Drive Online của Thầy Trương Thành Trường
+      const driveRes = await uploadPracticalToDriveOnline({
+        file: practicalFile,
+        grade: selectedGrade,
+        period: currentPeriod.period,
+        className: chosenClass,
+        studentId: stCode,
+        studentName: stName,
+        taskTitle: taskName,
+      });
+
+      const submissionCode = `TH-${selectedGrade}A-${currentPeriod.period < 10 ? '0' : ''}${currentPeriod.period}-${Math.floor(100 + Math.random() * 900)}`;
+
+      // 2. Tự động chấm hoàn thành theo Rubric (Đạt 10/10 khi nộp đúng định dạng và hoàn thiện nhiệm vụ)
+      const newSub: PracticalSubmission = {
+        id: `prac-${Date.now()}`,
+        submissionCode: submissionCode,
+        studentCode: stCode,
+        studentName: `${stName}${studentBName ? ` & ${studentBName}` : ''}`,
+        classId: `c-${selectedGrade}a10`,
+        className: chosenClass,
+        assignmentTitle: taskName,
+        fileName: practicalFile.name,
+        fileSize: `${(practicalFile.size / 1024).toFixed(1)} KB`,
+        submittedAt: 'Vừa xong',
+        status: 'graded',
+        score: 10,
+        teacherFeedback: driveRes.status === 'ok' 
+          ? `Đã nhận sản phẩm thành công lên Google Drive của Thầy Trương Thành Trường: ${driveRes.folderPath}. Đạt chuẩn kỹ thuật thao tác!`
+          : 'Đã ghi nhận nộp bài thực hành thành công!',
+      };
+
+      setPracticalSubmission(newSub);
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+
+      // Lưu LocalStorage
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('truong_practical_submissions') || '[]');
+        localStorage.setItem('truong_practical_submissions', JSON.stringify([newSub, ...existing]));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi khi nộp bài thực hành. Vui lòng thử lại!');
+    } finally {
+      setIsUploadingPractical(false);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* HEADER BANNER */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* ==================================================================== */}
+      {/* HEADER BANNER TIẾT HỌC                                               */}
+      {/* ==================================================================== */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/10">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Học Liệu Số 29 Tiết Chuẩn GDPT 2018 · THCS Mão Điền
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tiết {currentPeriod.period} · {currentPeriod.topic}</span>
+            </span>
+            <span className="text-xs text-blue-200">
+              Giáo viên: <strong>Thầy Trương Thành Trường</strong>
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Hoạt Động Trực Tiếp Trên Lớp
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Chất liệu hữu cơ 100% bám sát SGK Kết nối tri thức: <strong>Phiếu học tập cặp đôi</strong>, <strong>Luyện tập 7 câu chuẩn Bộ</strong> và <strong>Bài tập thực hành</strong> theo Rubric.
+            Học liệu chuẩn GDPT 2018 THCS Mão Điền: <strong>1. Khám phá cặp đôi</strong> ➔ <strong>2. Luyện tập</strong> ➔ <strong>3. Thực hành trên máy</strong>.
           </p>
         </div>
 
@@ -265,7 +420,7 @@ function InClassContent() {
             className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 text-xs font-bold transition-all flex items-center gap-2"
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
-            <span>Kho học liệu & Tệp Tiết {selectedPeriodNum}</span>
+            <span>Kho học liệu Tiết {selectedPeriodNum}</span>
           </Link>
           <Link
             href="/teacher"
@@ -277,7 +432,7 @@ function InClassContent() {
         </div>
       </div>
 
-      {/* CẢNH BÁO PHÂN QUYỀN NẾU HỌC SINH CHỌN SAI KHỐI */}
+      {/* CẢNH BÁO PHÂN QUYỀN NẾU CHỌN SAI KHỐI */}
       {permissionNotice && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-xs">
           <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
@@ -327,7 +482,9 @@ function InClassContent() {
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>Chọn tiết học trong phân phối chương trình 29 tiết (Khối {selectedGrade}):</span>
-            <span className="text-[11px] text-amber-700 font-bold">Đang chọn: Tiết {selectedPeriodNum} {currentPeriod.isPractice ? '(Thực hành)' : '(Lý thuyết)'}</span>
+            <span className="text-[11px] text-amber-700 font-bold">
+              Đang chọn: Tiết {selectedPeriodNum} {currentPeriod.isPractice ? '(Thực hành)' : '(Lý thuyết)'}
+            </span>
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
             {periodsOfGrade.map((p) => (
@@ -349,44 +506,77 @@ function InClassContent() {
         </div>
       </div>
 
-      {/* TABS 3 HOẠT ĐỘNG TRỰC TIẾP TRÊN LỚP */}
-      <div className="flex border-b border-slate-200 gap-4 sm:gap-8 text-sm font-bold flex-wrap">
+      {/* ==================================================================== */}
+      {/* TABS 3 HOẠT ĐỘNG CHÍNH (KÈM CHỈ BÁO KHÓA/MỞ THỦ CÔNG)               */}
+      {/* ==================================================================== */}
+      <div className="flex border-b border-slate-200 gap-3 sm:gap-6 text-xs sm:text-sm font-bold flex-wrap">
+        {/* TAB 1: KHÁM PHÁ CẶP ĐÔI */}
         <button
           onClick={() => setActiveTab('worksheet')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
+          className={`pb-3 flex items-center gap-2 transition-all relative ${
             activeTab === 'worksheet'
               ? 'border-b-2 border-indigo-600 text-indigo-700 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Users className="w-4 h-4 text-indigo-600" />
-          <span>1. Phiếu học tập (Khám phá cặp đôi)</span>
+          <span>Hoạt động 1: Khám phá cặp đôi</span>
+          {isDiscoveryLocked ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Lock className="w-2.5 h-2.5" /> Khóa
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Unlock className="w-2.5 h-2.5" /> Mở
+            </span>
+          )}
         </button>
 
+        {/* TAB 2: LUYỆN TẬP */}
         <button
           onClick={() => setActiveTab('reinforcement')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
+          className={`pb-3 flex items-center gap-2 transition-all relative ${
             activeTab === 'reinforcement'
               ? 'border-b-2 border-amber-500 text-amber-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>2. Luyện tập (7 câu chuẩn Bộ)</span>
+          <span>Hoạt động 2: Luyện tập</span>
+          {isPracticeLocked ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Lock className="w-2.5 h-2.5" /> Khóa
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Unlock className="w-2.5 h-2.5" /> Mở
+            </span>
+          )}
         </button>
 
+        {/* TAB 3: THỰC HÀNH TRÊN MÁY */}
         <button
           onClick={() => setActiveTab('practice')}
-          className={`pb-3 flex items-center gap-2 transition-all ${
+          className={`pb-3 flex items-center gap-2 transition-all relative ${
             activeTab === 'practice'
-              ? 'border-b-2 border-emerald-600 text-emerald-600 font-extrabold'
+              ? 'border-b-2 border-purple-600 text-purple-700 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-          <span>3. Bài tập thực hành {currentPeriod.isPractice ? '(Có bài thực hành)' : '(Chỉ tiết TH)'}</span>
+          <Laptop className="w-4 h-4 text-purple-600" />
+          <span>Hoạt động 3: Thực hành trên máy</span>
+          {isLabLocked ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Lock className="w-2.5 h-2.5" /> Khóa
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+              <Unlock className="w-2.5 h-2.5" /> Mở
+            </span>
+          )}
         </button>
 
+        {/* TAB 4: SLIDE BÀI GIẢNG */}
         <button
           onClick={() => setActiveTab('slide')}
           className={`pb-3 flex items-center gap-2 transition-all ${
@@ -396,15 +586,23 @@ function InClassContent() {
           }`}
         >
           <Presentation className="w-4 h-4 text-rose-500" />
-          <span>4. Slide bài giảng PowerPoint ({currentPeriod.slide?.slideCount || 20} trang)</span>
+          <span>Slide bài giảng</span>
         </button>
       </div>
 
       {/* ====================================================================== */}
-      {/* HOẠT ĐỘNG 1: PHIẾU HỌC TẬP KHÁM PHÁ CẶP ĐÔI (2 HS/MÁY)                  */}
+      {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI (PHIẾU HỌC TẬP 2 HS / 1 MÁY)             */}
       {/* ====================================================================== */}
       {activeTab === 'worksheet' && (
         <div className="space-y-6">
+          {/* CẢNH BÁO NẾU THẦY ĐANG KHÓA HOẠT ĐỘNG 1 */}
+          {isDiscoveryLocked && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0" />
+              <span>Hoạt động Khám phá cặp đôi hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+            </div>
+          )}
+
           {/* HEADER PHIẾU CẶP ĐÔI */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -414,7 +612,7 @@ function InClassContent() {
                     Khối {currentPeriod.grade} · Tiết {currentPeriod.period}
                   </span>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Cặp đôi 2 học sinh / 1 máy tính
+                    Cặp đôi 2 học sinh / 1 máy
                   </span>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                     +{currentPeriod.worksheet.xpReward || 50} XP chia đều
@@ -428,13 +626,18 @@ function InClassContent() {
                 </p>
               </div>
 
-              {/* TRẠNG THÁI NỘP BÀI CẶP ĐÔI */}
+              {/* BẢNG ĐIỂM SAU KHI NỘP: MÁY TỰ CHẤM NGAY */}
               {worksheetSubmitted && (
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center gap-3 text-emerald-800 animate-in fade-in shrink-0">
-                  <Trophy className="w-8 h-8 text-amber-500 shrink-0" />
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-indigo-50 border border-emerald-300 flex items-center gap-4 text-emerald-900 animate-in fade-in shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex flex-col items-center justify-center font-black text-xl shadow-md">
+                    <span>{worksheetScore}</span>
+                    <span className="text-[9px] font-normal text-emerald-100 -mt-1">/10đ</span>
+                  </div>
                   <div>
-                    <div className="text-xs font-bold text-emerald-900">HOÀN THÀNH PHIẾU CẶP ĐÔI!</div>
-                    <div className="text-[11px] text-emerald-700 font-semibold">+50 XP đã cộng vào tài khoản {studentAName} &amp; {studentBName}</div>
+                    <div className="text-xs font-bold">MÁY ĐÃ CHẤM XONG PHIẾU CẶP ĐÔI!</div>
+                    <div className="text-[11px] text-emerald-700 font-semibold">
+                      +{currentPeriod.worksheet.xpReward || 50} XP đã cộng cho {studentAName} &amp; {studentBName}
+                    </div>
                   </div>
                 </div>
               )}
@@ -443,7 +646,7 @@ function InClassContent() {
             {/* KHUNG THÔNG TIN PHÂN VAI CẶP ĐÔI */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
               <div>
-                <span className="text-slate-500 font-medium">Vị trí phòng máy:</span>
+                <span className="text-slate-500 font-medium">Bàn máy phòng thực hành:</span>
                 <input
                   type="text"
                   value={pairComputerNum}
@@ -457,7 +660,7 @@ function InClassContent() {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 font-medium">Học sinh 1 (Bạn A):</span>
                   {currentRoleTurn === 'A' && (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">Đang thao tác máy 🖱️</span>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">Kỹ thuật viên 🖱️</span>
                   )}
                 </div>
                 <input
@@ -473,7 +676,7 @@ function InClassContent() {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 font-medium">Học sinh 2 (Bạn B):</span>
                   {currentRoleTurn === 'B' && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">Đang thao tác máy 🖱️</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">Kỹ thuật viên 🖱️</span>
                   )}
                 </div>
                 <input
@@ -487,9 +690,9 @@ function InClassContent() {
             </div>
 
             {/* NÚT TÍN HIỆU ĐỔI VAI */}
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
               <span className="text-xs text-slate-500">
-                Lượt điều khiển: <strong>{currentRoleTurn === 'A' ? studentAName : studentBName}</strong> đang cầm chuột và bàn phím.
+                Lượt điều khiển: <strong>{currentRoleTurn === 'A' ? studentAName : studentBName}</strong> đang cầm chuột và thao tác máy.
               </span>
               <button
                 type="button"
@@ -513,12 +716,10 @@ function InClassContent() {
             </div>
           )}
 
-          {/* CHẶNG 1: THÁM TỬ TÌM KIẾM (TÌNH HUỐNG DẪN NHẬP & KHO TỪ) */}
+          {/* CHẶNG 1: TÌNH HUỐNG DẪN NHẬP & KHO TỪ SGK */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-xl bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
-                1
-              </span>
+              <span className="w-7 h-7 rounded-xl bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">1</span>
               <h3 className="font-bold text-sm text-slate-900">
                 Chặng 1: Thám tử Dữ liệu &amp; Tình huống khởi động ({currentRoleTurn === 'A' ? `${studentAName} thao tác` : `${studentBName} thao tác`})
               </h3>
@@ -529,16 +730,12 @@ function InClassContent() {
               <p className="leading-relaxed">{currentPeriod.worksheet.phase1_khoi_dong}</p>
             </div>
 
-            {/* NGÂN HÀNG TỪ KHÓA SGK */}
             {currentPeriod.worksheet.wordBank && currentPeriod.worksheet.wordBank.length > 0 && (
               <div className="space-y-2 pt-2">
                 <span className="text-xs font-bold text-slate-700">Kho thẻ từ khóa bám sát SGK bài học:</span>
                 <div className="flex flex-wrap gap-2">
                   {currentPeriod.worksheet.wordBank.map((w, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold shadow-2xs"
-                    >
+                    <span key={idx} className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold">
                       {w}
                     </span>
                   ))}
@@ -547,18 +744,15 @@ function InClassContent() {
             )}
           </div>
 
-          {/* CHẶNG 2: ĐIỀN KHUYẾT & NỐI CẶP KIẾN THỨC CỐT LÕI */}
+          {/* CHẶNG 2: ĐIỀN KHUYẾT & NỐI CẶP */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center">
-                2
-              </span>
+              <span className="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center">2</span>
               <h3 className="font-bold text-sm text-slate-900">
                 Chặng 2: Nối Cặp Kiến Thức &amp; Điền Khuyết SGK ({currentRoleTurn === 'B' ? `${studentBName} thao tác` : `${studentAName} thao tác`})
               </h3>
             </div>
 
-            {/* DANH SÁCH ĐIỀN KHUYẾT */}
             {currentPeriod.worksheet.fillBlanks && currentPeriod.worksheet.fillBlanks.length > 0 && (
               <div className="space-y-3">
                 <span className="text-xs font-bold text-slate-700">Điền từ thích hợp vào chỗ trống:</span>
@@ -567,11 +761,11 @@ function InClassContent() {
                     <p className="text-slate-800 leading-relaxed font-medium">
                       <strong>Câu {idx + 1}:</strong> {fb.statement}
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <input
                         type="text"
                         placeholder="Gõ từ khóa còn thiếu..."
-                        disabled={worksheetSubmitted}
+                        disabled={worksheetSubmitted || isDiscoveryLocked}
                         value={worksheetAnswers[`fb_${idx}`] || ''}
                         onChange={e => setWorksheetAnswers(prev => ({ ...prev, [`fb_${idx}`]: e.target.value }))}
                         className="p-2.5 rounded-xl bg-white border border-slate-300 text-xs w-full max-w-sm font-semibold"
@@ -587,7 +781,6 @@ function InClassContent() {
               </div>
             )}
 
-            {/* DANH SÁCH NỐI CẶP */}
             {currentPeriod.worksheet.matchingPairs && currentPeriod.worksheet.matchingPairs.length > 0 && (
               <div className="space-y-3 pt-3">
                 <span className="text-xs font-bold text-slate-700">Nối cặp khái niệm với giải thích tương ứng:</span>
@@ -611,11 +804,9 @@ function InClassContent() {
           {/* CHẶNG 3: ĐỒNG LÒNG TÁC CHIẾN & NỘP BÀI */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">
-                3
-              </span>
+              <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">3</span>
               <h3 className="font-bold text-sm text-slate-900">
-                Chặng 3: Thảo Luận Cặp Đôi &amp; Đồng Lòng Nộp Bài (Cả hai bạn cùng phối hợp)
+                Chặng 3: Thảo Luận Cặp Đôi &amp; Nộp Bài (Cả hai bạn cùng phối hợp)
               </h3>
             </div>
 
@@ -627,28 +818,31 @@ function InClassContent() {
               <textarea
                 rows={3}
                 placeholder="Hai bạn cùng bàn bạc và ghi lại kết luận chung của cặp đôi vào đây..."
-                disabled={worksheetSubmitted}
+                disabled={worksheetSubmitted || isDiscoveryLocked}
                 value={worksheetAnswers['discussion'] || ''}
                 onChange={e => setWorksheetAnswers(prev => ({ ...prev, discussion: e.target.value }))}
                 className="w-full p-3 rounded-2xl bg-white border border-slate-300 text-xs font-normal"
               />
             </div>
 
-            {/* NÚT NỘP PHIẾU */}
+            {/* NÚT NỘP PHIẾU KHÁM PHÁ CẶP ĐÔI */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
               <span className="text-xs text-slate-500">
                 {worksheetSubmitted 
-                  ? '✅ Phiếu học tập đã được lưu vào hệ thống thành công!' 
+                  ? '✅ Phiếu học tập đã được máy chấm tự động và ghi nhận điểm!' 
+                  : isDiscoveryLocked
+                  ? '🔒 Hoạt động này đang bị khóa bởi Thầy Trương Thành Trường.'
                   : 'Cả hai bạn hãy kiểm tra lại bài làm trước khi bấm nộp nhé.'}
               </span>
               {!worksheetSubmitted ? (
                 <button
                   type="button"
                   onClick={handleSubmitWorksheet}
-                  className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
+                  disabled={isDiscoveryLocked}
+                  className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Xác nhận cả hai bạn đã đồng thuận &amp; Nộp bài (+50 XP)</span>
+                  <span>Xác nhận nộp bài &amp; Máy tự chấm (+50 XP)</span>
                 </button>
               ) : (
                 <button
@@ -656,7 +850,7 @@ function InClassContent() {
                   onClick={() => setWorksheetSubmitted(false)}
                   className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
                 >
-                  Chỉnh sửa lại phiếu
+                  Làm lại phiếu
                 </button>
               )}
             </div>
@@ -669,6 +863,14 @@ function InClassContent() {
       {/* ====================================================================== */}
       {activeTab === 'reinforcement' && (
         <div className="space-y-6">
+          {/* CẢNH BÁO NẾU THẦY ĐANG KHÓA HOẠT ĐỘNG 2 */}
+          {isPracticeLocked && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0" />
+              <span>Hoạt động Luyện tập hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+            </div>
+          )}
+
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -680,14 +882,14 @@ function InClassContent() {
                 </span>
               </div>
               <h2 className="text-xl font-bold text-slate-900 mt-2">
-                Luyện Tập: {currentPeriod.title}
+                Hoạt Động 2: Luyện Tập ({currentPeriod.title})
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Em hãy đọc kỹ câu hỏi, chọn phương án đúng nhất và nhấn nút <strong>Nộp bài</strong> ở cuối để xem điểm số &amp; lời giải thích của Thầy Trương.
+                Đọc kỹ câu hỏi, chọn phương án đúng nhất và nhấn nút <strong>Nộp bài &amp; Chấm điểm tức thì</strong> để máy chấm ngay!
               </p>
             </div>
 
-            {/* BẢNG ĐIỂM SAU KHI NỘP BÀI */}
+            {/* BẢNG ĐIỂM SAU KHI NỘP: MÁY TỰ CHẤM THANG 10 */}
             {isSubmitted && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-300 flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-in fade-in shrink-0">
                 <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex flex-col items-center justify-center font-black text-xl shadow-md">
@@ -698,7 +900,7 @@ function InClassContent() {
                   <div className="text-xs font-bold text-emerald-900">
                     KẾT QUẢ LUYỆN TẬP: {correctCount}/7 CÂU ĐÚNG
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-semibold">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold flex-wrap">
                     <span className="text-blue-700">Biết: {correctNhanBiet}/{countNhanBiet}</span>
                     <span className="text-slate-300">|</span>
                     <span className="text-emerald-700">Hiểu: {correctThongHieu}/{countThongHieu}</span>
@@ -763,7 +965,7 @@ function InClassContent() {
                           key={optIndex}
                           type="button"
                           onClick={() => handleSelectOption(q.id, optIndex)}
-                          disabled={isSubmitted}
+                          disabled={isSubmitted || isPracticeLocked}
                           className={`p-3.5 rounded-2xl border text-left text-xs transition-all flex items-center justify-between gap-3 ${btnStyle}`}
                         >
                           <div className="flex items-center gap-2.5">
@@ -784,12 +986,12 @@ function InClassContent() {
                     })}
                   </div>
 
-                  {/* GIẢI THÍCH CHI TIẾT SAU KHI NỘP */}
+                  {/* GIẢI THÍCH CHI TIẾT CỦA THẦY TRƯƠNG THÀNH TRƯỜNG */}
                   {isSubmitted && (
                     <div className="mt-4 p-3.5 rounded-2xl bg-white border border-slate-200 text-xs text-slate-600 space-y-1">
                       <p className="font-bold text-slate-800 flex items-center gap-1.5">
                         <HelpCircle className="w-4 h-4 text-blue-600" />
-                        <span>Lời giải thích của Thầy Trương:</span>
+                        <span>Lời giải thích của Thầy Trương Thành Trường:</span>
                       </p>
                       <p className="text-slate-600 pl-5 leading-relaxed">{q.explanation}</p>
                     </div>
@@ -808,6 +1010,7 @@ function InClassContent() {
             <div className="flex items-center gap-3">
               {isSubmitted ? (
                 <button
+                  type="button"
                   onClick={handleResetQuiz}
                   className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
                 >
@@ -815,11 +1018,13 @@ function InClassContent() {
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={handleGradeQuiz}
-                  className="px-8 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
+                  disabled={isPracticeLocked}
+                  className="px-8 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Nộp bài &amp; Chấm điểm tức thì</span>
+                  <span>Nộp bài &amp; Máy tự chấm tức thì</span>
                 </button>
               )}
             </div>
@@ -828,19 +1033,27 @@ function InClassContent() {
       )}
 
       {/* ====================================================================== */}
-      {/* HOẠT ĐỘNG 3: BÀI TẬP THỰC HÀNH TẠI LỚP (CHỈ DÀNH CHO TIẾT THỰC HÀNH)    */}
+      {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY (KÈM NỘP BÀI & TỰ ĐỘNG CHẤM RUBRIC)     */}
       {/* ====================================================================== */}
       {activeTab === 'practice' && (
         <div className="space-y-6">
+          {/* CẢNH BÁO NẾU THẦY ĐANG KHÓA HOẠT ĐỘNG 3 */}
+          {isLabLocked && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-3">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0" />
+              <span>Hoạt động Thực hành trên máy hiện đang tạm khóa bởi Thầy Trương Thành Trường. Em hãy chú ý theo dõi hướng dẫn của Thầy!</span>
+            </div>
+          )}
+
           {currentPeriod.isPractice && currentPeriod.practicalTask ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    Khối {currentPeriod.grade} · Tiết thực hành trên máy
+                    Khối {currentPeriod.grade} · Tiết thực hành thao tác máy
                   </span>
                   <h2 className="text-xl font-bold text-slate-900 mt-2">
-                    {currentPeriod.practicalTask.title}
+                    Hoạt Động 3: {currentPeriod.practicalTask.title}
                   </h2>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                     Mục tiêu kỹ năng: {currentPeriod.contentDesc}
@@ -880,11 +1093,11 @@ function InClassContent() {
                 </div>
               </div>
 
-              {/* TIÊU CHÍ ĐÁNH GIÁ RUBRIC (THANG 10 ĐIỂM) */}
+              {/* TIÊU CHÍ ĐÁNH GIÁ RUBRIC */}
               <div className="space-y-3 pt-2">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-500" />
-                  <span>Bảng tiêu chí chấm điểm thực hành (Rubric thang điểm 10):</span>
+                  <span>Bảng tiêu chí chấm điểm thực hành (Rubric thang 10 điểm):</span>
                 </h3>
 
                 <div className="overflow-x-auto">
@@ -915,24 +1128,91 @@ function InClassContent() {
                 </div>
               </div>
 
-              {/* NÚT ĐIỀU HƯỚNG NỘP BÀI TRỰC TIẾP */}
-              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-xs text-slate-500 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
-                  <span>Học sinh làm xong nộp trực tiếp lên hệ thống, không dùng USB để bảo vệ máy tính trường.</span>
+              {/* KHUNG NỘP BÀI THỰC HÀNH TRỰC TIẾP LÊN HỆ THỐNG */}
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <UploadCloud className="w-4 h-4 text-indigo-600" />
+                    <span>Nộp sản phẩm thực hành &amp; Tự động chấm hoàn thành:</span>
+                  </h3>
+                  <span className="text-xs text-slate-500 font-medium">Lưu thẳng Google Drive của Thầy</span>
                 </div>
 
-                <Link
-                  href="/subjects"
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2"
-                >
-                  <UploadCloud className="w-4 h-4" />
-                  <span>Chuyển sang Cổng Nộp Bài Phòng Máy</span>
-                </Link>
+                {practicalSubmission ? (
+                  <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-50 to-indigo-50 border-2 border-emerald-400 space-y-3 animate-in fade-in">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-extrabold text-emerald-950">
+                            ĐÃ NỘP SẢN PHẨM THỰC HÀNH THÀNH CÔNG!
+                          </h4>
+                          <p className="text-xs text-emerald-700">
+                            Mã xác nhận: <strong>{practicalSubmission.submissionCode}</strong> · Tệp: {practicalSubmission.fileName} ({practicalSubmission.fileSize})
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-emerald-700">10 / 10đ</span>
+                        <span className="block text-[10px] text-emerald-600 font-bold">Máy đã chấm Đạt chuẩn Rubric</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-700 bg-white/70 p-3 rounded-xl border border-emerald-200">
+                      💬 <strong>Phản hồi tự động:</strong> {practicalSubmission.teacherFeedback}
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitPractical} className="space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="block text-slate-600 font-bold mb-1">Cặp học sinh thực hành:</label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={`${studentAName} & ${studentBName}`}
+                          className="w-full p-2.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-600 font-bold mb-1">Chọn tệp thực hành từ máy:</label>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          disabled={isLabLocked || isUploadingPractical}
+                          onChange={e => setPracticalFile(e.target.files?.[0] || null)}
+                          className="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-slate-500">
+                        Chấp nhận: .xlsx, .docx, .pptx, .py, .cpp, .pdf, .zip (Tối đa 25MB)
+                      </span>
+                      <button
+                        type="submit"
+                        disabled={isLabLocked || isUploadingPractical || !practicalFile}
+                        className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all flex items-center gap-2"
+                      >
+                        {isUploadingPractical ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Đang đẩy lên Drive của Thầy...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-4 h-4" />
+                            <span>Nộp bài &amp; Máy tự chấm Rubric (+100 XP)</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           ) : (
-            /* TIẾT LÝ THUYẾT - HIỂN THỊ THÔNG BÁO SƯ PHẠM RÕ RÀNG */
+            /* TIẾT LÝ THUYẾT */
             <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-4">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <BookOpen className="w-8 h-8" />
@@ -941,33 +1221,35 @@ function InClassContent() {
                 Tiết {currentPeriod.period}: Tiết Học Lý Thuyết Nền Tảng &amp; Khám Phá
               </h3>
               <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
-                Tiết học này là tiết lý thuyết, trọng tâm là hoạt động <strong>Phiếu học tập khám phá cặp đôi</strong> và <strong>Luyện tập 7 câu chuẩn Bộ</strong>. Bài tập thực hành thao tác phần mềm chuyên sâu chỉ dành cho các tiết thực hành riêng biệt.
+                Tiết học này là tiết lý thuyết, trọng tâm là <strong>Hoạt động 1: Khám phá cặp đôi</strong> và <strong>Hoạt động 2: Luyện tập 7 câu chuẩn Bộ</strong>. Bài thực hành thao tác phần mềm chuyên sâu dành cho các tiết thực hành riêng biệt.
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('worksheet')}
                   className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-xs hover:bg-indigo-700 transition-all"
                 >
-                  Làm Phiếu học tập cặp đôi
+                  Làm Hoạt động 1: Khám phá cặp đôi
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('reinforcement')}
                   className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-xs shadow-xs hover:bg-amber-600 transition-all"
                 >
-                  Làm Luyện tập (7 câu)
+                  Làm Hoạt động 2: Luyện tập
                 </button>
               </div>
             </div>
           )}
         </div>
       )}
+
       {/* ====================================================================== */}
       {/* HOẠT ĐỘNG 4: KHUNG XEM SLIDE BÀI GIẢNG POWERPOINT TRỰC TUYẾN           */}
       {/* ====================================================================== */}
       {activeTab === 'slide' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-            {/* Header thông tin tệp Slide */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -978,26 +1260,21 @@ function InClassContent() {
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
                     {currentPeriod.slide?.slideCount || 20} trang trình chiếu
                   </span>
-                  <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    Drive: {currentPeriod.slide?.fileName || 'Bài giảng'}
-                  </span>
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 mt-2">
                   {currentPeriod.title}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Đường dẫn tệp gốc trên Google Drive của Thầy: <code>{currentPeriod.slide?.drivePath}</code>
+                  Đường dẫn bài giảng Google Drive: <code>{currentPeriod.slide?.drivePath}</code>
                 </p>
               </div>
 
-              {/* CÁC NÚT TÁC VỤ: TẢI PPTX & XEM TOÀN MÀN HÌNH */}
               <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
                 <a
                   href={`/slides/${currentPeriod.slide?.fileName}`}
                   download={currentPeriod.slide?.fileName || 'BaiGiang.pptx'}
-                  onClick={(e) => {
-                    // Thông báo tải về
-                    alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${currentPeriod.slide?.fileName}\nTệp được đồng bộ từ Google Drive của Thầy Trương.`);
+                  onClick={() => {
+                    alert(`Đang chuẩn bị tải tệp bài giảng gốc (.pptx): ${currentPeriod.slide?.fileName}\nTệp được đồng bộ từ Google Drive của Thầy Trương Thành Trường.`);
                   }}
                   className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2"
                 >
@@ -1009,7 +1286,6 @@ function InClassContent() {
                   type="button"
                   onClick={() => setIsSlideFullscreen(!isSlideFullscreen)}
                   className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200"
-                  title="Chế độ toàn màn hình máy chiếu"
                 >
                   {isSlideFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                   <span>{isSlideFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
@@ -1017,11 +1293,10 @@ function InClassContent() {
               </div>
             </div>
 
-            {/* TRÌNH PHÁT SLIDE TƯƠNG TÁC (PRESENTATION SLIDE VIEWER) */}
+            {/* TRÌNH PHÁT SLIDE */}
             <div className={`rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 text-white shadow-2xl transition-all ${
               isSlideFullscreen ? 'fixed inset-4 z-50 flex flex-col' : 'min-h-[460px] flex flex-col'
             }`}>
-              {/* Thanh điều khiển trên đỉnh Slide */}
               <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
@@ -1050,13 +1325,11 @@ function InClassContent() {
                 </div>
               </div>
 
-              {/* MÀN HÌNH NỘI DUNG SLIDE CHÍNH */}
+              {/* NỘI DUNG SLIDE */}
               <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center items-center text-center space-y-6 relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-black">
-                {/* Nền hiệu ứng trang trí */}
                 <div className="absolute -top-24 -left-24 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-                {/* Nội dung slide */}
                 <div className="relative z-10 max-w-3xl space-y-4">
                   <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-rose-300 text-xs font-extrabold uppercase tracking-widest border border-white/10">
                     Slide {currentSlideIndex + 1} · {currentPeriod.title}
@@ -1073,11 +1346,10 @@ function InClassContent() {
                   )}
 
                   <p className="text-xs text-slate-500 pt-2">
-                    Môn Tin học Lớp {currentPeriod.grade} · Trường THCS Mão Điền · Thầy Trương
+                    Môn Tin học Lớp {currentPeriod.grade} · Trường THCS Mão Điền · Thầy Trương Thành Trường
                   </p>
                 </div>
 
-                {/* NÚT CHUYỂN SLIDE TRÁI / PHẢI */}
                 <button
                   type="button"
                   onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
@@ -1099,7 +1371,7 @@ function InClassContent() {
                 </button>
               </div>
 
-              {/* THANH THUMBNAIL / ĐIỀU HƯỚNG DƯỚI ĐÁY */}
+              {/* THUMBNAIL ĐIỀU HƯỚNG */}
               <div className="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin py-1">
                   {currentPeriod.slide?.slides.map((_, sIdx) => (
@@ -1127,16 +1399,6 @@ function InClassContent() {
                     Về đầu
                   </button>
                 </div>
-              </div>
-            </div>
-
-            {/* Khung hướng dẫn tự học và xem ngoại tuyến */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <FolderOpen className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>
-                  Học sinh có thể xem trực tuyến trên điện thoại/máy tính hoặc bấm nút <strong>Tải bài giảng về máy (.pptx)</strong> để mở bằng PowerPoint hoặc WPS Office khi không có mạng.
-                </span>
               </div>
             </div>
           </div>

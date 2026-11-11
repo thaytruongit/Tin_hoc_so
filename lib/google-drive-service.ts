@@ -4,10 +4,7 @@ import { compressImageFile } from './image-compressor';
 
 // ============================================================================
 // DỊCH VỤ ĐỒNG BỘ & LƯU TRỮ GOOGLE DRIVE ONLINE (GOOGLE APPS SCRIPT WEB APP)
-// Hoạt động 24/7 trên Đám mây Google:
-// • Học sinh nộp bài ở trường hay ở nhà (điện thoại/laptop) đều lưu thẳng lên Drive của Thầy.
-// • Máy tính của Thầy không cần bật, dữ liệu vẫn được phân thư mục tự động trên Mây.
-// • Khi Thầy bật máy tính cá nhân, Google Drive for Desktop tự động đồng bộ về ổ H:\.
+// Giáo viên: Thầy Trương Thành Trường — THCS Mão Điền
 // ============================================================================
 
 export interface DriveUploadResult {
@@ -19,9 +16,11 @@ export interface DriveUploadResult {
   message: string;
 }
 
+const DEFAULT_GAS_URL = process.env.NEXT_PUBLIC_GAS_WEB_APP_URL || '';
+
 export function getGasWebAppUrl(): string {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('truong_gas_web_app_url') || '';
+  if (typeof window === 'undefined') return DEFAULT_GAS_URL;
+  return localStorage.getItem('truong_gas_web_app_url') || DEFAULT_GAS_URL;
 }
 
 export function setGasWebAppUrl(url: string): void {

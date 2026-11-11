@@ -1,7 +1,7 @@
 # 🚀 TRUONG DIGITAL CLASSROOM
 
 **Hệ sinh thái giáo dục số & Cổng học tập môn Tin học THCS (Khối 6, 7, 8, 9)**  
-*Dành riêng cho giáo viên & học sinh trường THCS Mão Điền — Thầy Trương IT.*
+*Dành riêng cho giáo viên & học sinh trường THCS Mão Điền — Thầy Trương Thành Trường.*
 
 🔗 **Địa chỉ website trực tuyến (GitHub Pages):**  
 👉 **[https://thaytruongit.github.io/teacher/](https://thaytruongit.github.io/teacher/)**
@@ -29,10 +29,10 @@ Dự án được xây dựng theo mô hình **GitHub First** và triển khai t
 
 ## 🌟 3. Các phân hệ chính
 1. **Cổng môn học (Subjects):** Học liệu chuẩn 4 khối 6, 7, 8, 9 (Chủ đề A đến F) & góc bồi dưỡng HSG C++/Python.
-2. **Phiếu học tập tương tác (Worksheets):** Tương ứng 4 pha giảng dạy (Khởi động, Khám phá, Luyện tập, Vận dụng) với phản hồi giải thích ngay.
-3. **Phòng kiểm tra trực tuyến (Exams):** Đếm ngược thời gian, đếm số lần chuyển tab (chống gian lận), tự động chấm điểm và bảo mật đáp án server-side.
+2. **Hoạt động trực tiếp trên lớp (In-class):** 3 hoạt động cốt lõi (1. Khám phá cặp đôi, 2. Luyện tập củng cố, 3. Thực hành trên máy) có công tắc khóa/mở thủ công và tự động chấm điểm độc lập.
+3. **Phòng kiểm tra trực tuyến (Exams):** Đếm ngược thời gian, đếm số lần chuyển tab (chống gian lận) và tự động chấm điểm.
 4. **Không gian học sinh (Student Dashboard):** Theo dõi tiến trình lên cấp, chuỗi ngày học liên tục (Streak), bộ sưu tập huy hiệu và thứ hạng lớp.
-5. **Kênh quản trị giáo viên (Teacher Dashboard):** Quản lý danh sách lớp, cấp/đổi mật khẩu học sinh, khóa/mở đề thi theo tiết học và xuất báo cáo Excel.
+5. **Kênh quản trị giáo viên (Teacher Dashboard):** Quản lý danh sách lớp, điều khiển phòng máy qua Supabase Realtime và xuất báo cáo Excel.
 6. **Bảng vàng thi đua (Achievements):** Tuyên dương học sinh có điểm kinh nghiệm (XP) dẫn đầu.
 
 ---
@@ -48,4 +48,4 @@ Dự án được xây dựng theo mô hình **GitHub First** và triển khai t
 
 ---
 
-© 2026 Thầy Trương IT · THCS Mão Điền.
+© 2026 Thầy Trương Thành Trường · THCS Mão Điền.

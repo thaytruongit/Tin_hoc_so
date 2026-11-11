@@ -30,7 +30,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const savedRole = localStorage.getItem('truong_user_role') as 'student' | 'teacher' | null;
-    const name = localStorage.getItem('truong_student_name') || 'Thầy Trương';
+    const name = localStorage.getItem('truong_student_name') || 'Thầy Trương Thành Trường';
     const pair = localStorage.getItem('truong_is_pair') === 'true';
     const pairDisplay = localStorage.getItem('truong_pair_names') || '';
 
@@ -65,7 +65,7 @@ export default function Navbar() {
   // Cấu trúc Menu chuẩn hệ sinh thái học tập số môn Tin học
   const baseMenus = [
     { href: '/', label: 'Trang chủ', icon: Home },
-    { href: '/in-class', label: 'Hoạt động trên lớp (4 Pha)', icon: Laptop, highlight: true },
+    { href: '/in-class', label: 'Hoạt động trên lớp', icon: Laptop, highlight: true },
     { href: '/subjects', label: 'Kho học liệu & Thực hành', icon: BookOpen },
     { href: '/homework', label: 'Bài tập về nhà', icon: UploadCloud },
     { href: '/worksheets', label: 'Phiếu học tập', icon: FileText },

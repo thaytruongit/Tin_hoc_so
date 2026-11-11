@@ -387,7 +387,7 @@ function SubjectsContent() {
                 Học Liệu 29 Tiết Học Môn Tin Học Khối {selectedGrade === 'all' ? 'Tất cả' : selectedGrade}
               </h2>
               <p className="text-xs text-slate-600 mt-1">
-                Mỗi tiết học tích hợp đầy đủ 4 hoạt động: <strong>Phiếu học tập 4 pha · Củng cố 7 câu chuẩn Bộ · Thực hành phòng máy · Bài tập về nhà</strong>.
+                Mỗi tiết học tích hợp đầy đủ 3 hoạt động trực tiếp: <strong>Khám phá cặp đôi · Luyện tập 7 câu chuẩn Bộ · Thực hành phòng máy</strong> kèm Bài tập về nhà.
               </p>
             </div>
             <Link
@@ -658,7 +658,7 @@ function SubjectsContent() {
                     <p><strong>Thời gian:</strong> {submissionSuccess.submittedAt}</p>
                   </div>
                   <p className="text-xs text-emerald-800 font-medium">
-                    Thầy Trương đã nhận được bài làm của em. Điểm số và nhận xét sẽ được cập nhật trong Kênh Giáo viên.
+                    Thầy Trương Thành Trường đã nhận được bài làm của em. Điểm số và nhận xét sẽ được cập nhật trong Kênh Giáo viên.
                   </p>
                 </div>
               )}

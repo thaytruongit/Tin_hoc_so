@@ -209,7 +209,7 @@ function LoginForm() {
                 Đăng nhập Cổng Tin học Số
               </h1>
               <p className="text-xs sm:text-sm text-blue-100 font-medium mt-0.5">
-                Trường THCS Mão Điền · Năm học 2025 - 2026 · Thầy Trương IT
+                Trường THCS Mão Điền · Năm học 2025 - 2026 · Thầy Trương Thành Trường
               </p>
             </div>
           </div>
@@ -238,7 +238,7 @@ function LoginForm() {
               }`}
             >
               <UserCheck className="w-4 h-4" />
-              <span>Thầy Trương IT</span>
+              <span>Thầy Trương Thành Trường</span>
             </button>
           </div>
         </div>
@@ -644,7 +644,7 @@ function LoginForm() {
               disabled={loading}
               className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-4"
             >
-              <span>{loading ? 'Đang xác thực quản trị...' : 'Vào kênh Quản trị Thầy Trương'}</span>
+              <span>{loading ? 'Đang xác thực quản trị...' : 'Vào kênh Quản trị Thầy Trương Thành Trường'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -652,7 +652,7 @@ function LoginForm() {
 
         <div className="pt-4 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
-            Học sinh quên tài khoản hoặc cần hỗ trợ ghép cặp hãy liên hệ trực tiếp <strong>Thầy Trương</strong> tại phòng máy Tin học.
+            Học sinh quên tài khoản hoặc cần hỗ trợ ghép cặp hãy liên hệ trực tiếp <strong>Thầy Trương Thành Trường</strong> tại phòng máy Tin học.
           </p>
         </div>
       </div>
