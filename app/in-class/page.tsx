@@ -433,13 +433,14 @@ function InClassContent() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <Link
-            href={`/subjects?grade=${selectedGrade}&period=${selectedPeriodNum}&section=29periods`}
+          <button
+            type="button"
+            onClick={() => setActiveTab('slide')}
             className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition-all flex items-center gap-2"
           >
             <BookOpen className="w-4 h-4 text-blue-600" />
-            <span>Kho Học Liệu Tiết {selectedPeriodNum}</span>
-          </Link>
+            <span>Slide Bài Giảng Tiết {selectedPeriodNum}</span>
+          </button>
           <Link
             href="/teacher"
             className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all flex items-center gap-2"

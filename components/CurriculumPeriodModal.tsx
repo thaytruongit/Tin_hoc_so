@@ -261,10 +261,10 @@ export default function CurriculumPeriodModal({
             <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
               <span className="text-[11px] text-slate-500">Định dạng nộp: Ảnh chụp vở (.jpg, .png), Excel (.xlsx), Word (.docx)</span>
               <Link
-                href="/homework"
+                href={`/in-class?grade=${period.grade}&period=${period.period}&tab=practice`}
                 className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] shadow-xs"
               >
-                Cổng nộp BTVN →
+                Vào làm bài thực hành →
               </Link>
             </div>
           </div>

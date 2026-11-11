@@ -183,10 +183,10 @@ export default function StudentDashboard() {
               </div>
 
               <Link
-                href={`/subjects?grade=${gradeNumber}&section=29periods`}
+                href={`/in-class?grade=${gradeNumber}`}
                 className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
               >
-                <span>Kho học liệu 29 Tiết</span>
+                <span>Vào Buồng Lái Lớp Học</span>
                 <ChevronRight className="w-4 h-4 text-white" />
               </Link>
             </div>
@@ -613,9 +613,9 @@ export default function StudentDashboard() {
                 <Trophy className="w-4 h-4 text-amber-500" />
                 Huy hiệu đạt được
               </h3>
-              <Link href="/achievements" className="text-xs text-blue-600 font-bold hover:underline">
-                Xem tất cả
-              </Link>
+              <span className="text-xs text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                4 Danh hiệu chuẩn
+              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
