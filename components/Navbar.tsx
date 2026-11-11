@@ -22,20 +22,26 @@ import {
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState<'student' | 'teacher' | 'guest'>('guest');
   const [userName, setUserName] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('truong_user_role') as 'student' | 'teacher' | null;
-    const name = localStorage.getItem('truong_student_name') || (savedRole === 'teacher' ? 'Thầy Đỗ Mạnh Trường' : '');
+    setMounted(true);
+    try {
+      const savedRole = localStorage.getItem('truong_user_role') as 'student' | 'teacher' | null;
+      const name = localStorage.getItem('truong_student_name') || (savedRole === 'teacher' ? 'Thầy Đỗ Mạnh Trường' : '');
 
-    if (savedRole) {
-      setRole(savedRole);
-      setUserName(name || (savedRole === 'teacher' ? 'Thầy Đỗ Mạnh Trường' : 'Học sinh'));
-    } else {
+      if (savedRole) {
+        setRole(savedRole);
+        setUserName(name || (savedRole === 'teacher' ? 'Thầy Đỗ Mạnh Trường' : 'Học sinh'));
+      } else {
+        setRole('guest');
+        setUserName('');
+      }
+    } catch (e) {
       setRole('guest');
-      setUserName('');
     }
   }, [pathname]);
 
@@ -161,7 +167,7 @@ export default function Navbar() {
 
           {/* GÓC PHẢI: USER STATUS HOẶC NÚT ĐĂNG NHẬP */}
           <div className="flex items-center gap-2 shrink-0">
-            {role === 'guest' ? (
+            {!mounted || role === 'guest' ? (
               <Link
                 href="/login"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-neon-cyan/40 transition-all border border-cyan-300/40 hover:scale-105"

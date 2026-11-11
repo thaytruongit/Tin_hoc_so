@@ -117,10 +117,10 @@ export function createDefaultMachines(className: string = 'Lớp 7A11'): LabMach
       student1Code: `HS${num}A`,
       student2Name: pair.s2,
       student2Code: pair.s2 ? `HS${num}B` : '',
-      progress: Math.floor(Math.random() * 40) + 60,
-      completedTasks: Math.floor(Math.random() * 3) + 5,
+      progress: 60 + ((num * 7) % 40),
+      completedTasks: 5 + (num % 3),
       totalTasks: 7,
-      starsEarned: Math.floor(Math.random() * 3) + 1,
+      starsEarned: 1 + (num % 3),
       status: 'submitted',
       hasHelpRequest: idx === 2 || idx === 10,
       scoreH1: h1,
@@ -296,25 +296,42 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
 
   const handleLocalUpdate = (e: Event) => {
     const customEvent = e as CustomEvent<ClassroomControlState>;
-    if (customEvent.detail) {
+    if (customEvent && customEvent.detail) {
       callback(customEvent.detail);
     }
   };
 
   window.addEventListener('truong_classroom_update', handleLocalUpdate);
 
-  const channel = supabase
-    .channel(CHANNEL_NAME)
-    .on('broadcast', { event: 'state_change' }, ({ payload }) => {
-      if (payload) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        callback(payload as ClassroomControlState);
-      }
-    })
-    .subscribe();
+  // Chỉ kết nối Supabase channel nếu được cấu hình thực sự, tránh lỗi WebSocket fail trên mock domain
+  let channel: ReturnType<typeof supabase.channel> | null = null;
+  const isRealSupabase = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('mock-tin-hoc')
+  );
+
+  if (isRealSupabase) {
+    try {
+      channel = supabase
+        .channel(CHANNEL_NAME)
+        .on('broadcast', { event: 'state_change' }, ({ payload }) => {
+          if (payload) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            callback(payload as ClassroomControlState);
+          }
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime channel unavailable:', e);
+    }
+  }
 
   return () => {
     window.removeEventListener('truong_classroom_update', handleLocalUpdate);
-    supabase.removeChannel(channel);
+    if (channel) {
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {}
+    }
   };
 }

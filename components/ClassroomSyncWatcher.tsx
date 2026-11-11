@@ -20,6 +20,7 @@ import {
 import { 
   ClassroomControlState, 
   getClassroomState, 
+  getDefaultClassroomState,
   subscribeToClassroomState,
   sendStudentHelpRequest 
 } from '@/lib/classroom-control';
@@ -28,26 +29,33 @@ import { getCurrentUser, UserSession } from '@/lib/auth';
 export default function ClassroomSyncWatcher() {
   const router = useRouter();
   const pathname = usePathname();
-  
+  const [mounted, setMounted] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
-  const [state, setState] = useState<ClassroomControlState>(getClassroomState());
+  const [state, setState] = useState<ClassroomControlState>(getDefaultClassroomState());
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [helpMessage, setHelpMessage] = useState('');
   const [helpSent, setHelpSent] = useState(false);
   const [closedBroadcast, setClosedBroadcast] = useState<string>('');
 
   useEffect(() => {
+    setMounted(true);
     setCurrentUser(getCurrentUser());
+    setState(getClassroomState());
   }, [pathname]);
 
   useEffect(() => {
+    if (!mounted) return;
     // Đăng ký nhận sự kiện điều khiển thời gian thực qua Supabase Realtime / Broadcast
     const unsubscribe = subscribeToClassroomState((newState) => {
       setState(newState);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [mounted]);
+
+  if (!mounted) {
+    return null;
+  }
 
   // Nếu người dùng là Giáo viên hoặc đang ở trang giáo viên thì không cần xem thông báo phòng máy
   const isTeacher = currentUser?.role === 'teacher' || pathname.startsWith('/teacher') || pathname.startsWith('/admin');

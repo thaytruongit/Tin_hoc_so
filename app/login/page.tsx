@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   GraduationCap, 
   UserCheck, 
@@ -31,10 +31,20 @@ import { Student, ClassItem } from '@/lib/types';
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
-
-  const [role, setRole] = useState<'student' | 'teacher'>(initialRole);
+  const [mounted, setMounted] = useState(false);
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('role') === 'teacher') {
+          setRole('teacher');
+        }
+      } catch (e) {}
+    }
+  }, []);
   
   // 1. Lựa chọn Khối và Lớp
   const [selectedGrade, setSelectedGrade] = useState<number>(7);
@@ -190,6 +200,15 @@ function LoginForm() {
       router.push('/teacher');
     }, 300);
   };
+
+  if (!mounted) {
+    return (
+      <div className="w-full max-w-4xl mx-auto cyber-hud-card rounded-3xl border border-cyan-500/40 p-12 text-center text-cyan-300">
+        <Zap className="w-8 h-8 text-cyan-400 animate-pulse mx-auto mb-3" />
+        <p className="text-sm font-bold">Đang khởi tạo Trạm Căn Cước 670 Học Sinh...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto cyber-hud-card rounded-3xl border border-cyan-500/40 shadow-neon-cyan/20 overflow-hidden">
@@ -527,9 +546,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 cyber-grid-bg">
-      <Suspense fallback={<div className="p-8 text-center text-cyan-400">Đang khởi tạo trạm đăng nhập...</div>}>
-        <LoginForm />
-      </Suspense>
+      <LoginForm />
     </div>
   );
 }
