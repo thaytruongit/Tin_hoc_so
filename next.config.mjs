@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
-const isVercel = Boolean(process.env.VERCEL);
-// Khi chạy trên Vercel: basePath là '' (trực tiếp tại root domain).
-// Khi chạy trên GitHub Pages repo thaytruongit/teacher: basePath là '/teacher'.
-// Có thể tùy biến qua biến môi trường NEXT_PUBLIC_BASE_PATH nếu cần.
+
+// Cấu hình triển khai chuẩn cho GitHub Pages: https://thaytruongit.github.io/teacher
+// basePath luôn là '/teacher' khi build production trên GitHub Pages
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH !== undefined
   ? process.env.NEXT_PUBLIC_BASE_PATH
-  : (isVercel ? '' : (isProd ? '/teacher' : ''));
+  : (isProd ? '/teacher' : '');
 
 const nextConfig = {
   output: 'export',

@@ -28,3 +28,4 @@ for g_str in ['6', '7', '8', '9']:
     final_questions = final_questions[:16]
 
     print(f"Khối {g}: Giữa kỳ {len(mid_questions)} câu, Cuối kỳ {len(final_questions)} câu")
+

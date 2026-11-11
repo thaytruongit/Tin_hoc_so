@@ -151,3 +151,4 @@ if match:
     print("Đã cập nhật thành công vào lib/mock-data.ts!")
 else:
     print("Không tìm thấy MOCK_EXAMS trong lib/mock-data.ts")
+
