@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { MOCK_STUDENTS } from '@/lib/mock-data';
+import { MOCK_STUDENTS, MOCK_CLASSES } from '@/lib/mock-data';
+import { ClassItem } from '@/lib/types';
 
 // Cấu hình môi trường kết nối Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock-tin-hoc-thcs-mao-dien.supabase.co';
@@ -448,4 +449,33 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
       } catch (e) {}
     }
   };
+}
+
+const CLASSES_STORAGE_KEY = 'truong_custom_classes';
+
+/**
+ * Lấy danh sách lớp học hiện hành (kết hợp MOCK_CLASSES và lớp thầy tạo thêm)
+ */
+export function getSavedClasses(): ClassItem[] {
+  if (typeof window === 'undefined') return MOCK_CLASSES;
+  try {
+    const raw = localStorage.getItem(CLASSES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return MOCK_CLASSES;
+}
+
+/**
+ * Lưu danh sách lớp học và thông báo cho toàn hệ thống
+ */
+export function saveClasses(classes: ClassItem[]) {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(classes));
+      window.dispatchEvent(new CustomEvent('truong_classes_update', { detail: classes }));
+    } catch (e) {}
+  }
 }
