@@ -400,27 +400,36 @@ export default function GradebookPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           
           {/* Chọn Khối */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-bold text-slate-600 mr-1">Khối:</span>
-            {[6, 7, 8, 9].map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => {
-                  setSelectedGrade(g);
-                  const firstCls = MOCK_CLASSES.find(c => c.grade === g);
-                  if (firstCls) setSelectedClassId(firstCls.id);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                  selectedGrade === g
-                    ? 'bg-teal-600 text-white border-teal-600 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Khối {g}
-              </button>
-            ))}
-          </div>
+          {currentUser?.role === 'student' ? (
+            <div className="flex items-center gap-2">
+              <span className="px-3.5 py-1.5 rounded-xl bg-teal-600 text-white font-black text-xs shadow-2xs flex items-center gap-1.5">
+                <span>{currentClass.name} · Khối {selectedGrade}</span>
+                <span className="text-[11px] opacity-90 font-normal">(Sổ điểm lớp của em)</span>
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-bold text-slate-600 mr-1">Khối:</span>
+              {[6, 7, 8, 9].map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => {
+                    setSelectedGrade(g);
+                    const firstCls = MOCK_CLASSES.find(c => c.grade === g);
+                    if (firstCls) setSelectedClassId(firstCls.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    selectedGrade === g
+                      ? 'bg-teal-600 text-white border-teal-600 shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  Khối {g}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Chọn Kỳ học */}
           <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
@@ -454,38 +463,40 @@ export default function GradebookPage() {
           </div>
         </div>
 
-        {/* Danh sách lớp thuộc Khối */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 flex-wrap">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-            <span className="text-xs font-bold text-slate-600 shrink-0 mr-1">Lớp:</span>
-            {classesInGrade.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setSelectedClassId(c.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 border ${
-                  selectedClassId === c.id
-                    ? 'bg-teal-50 border-teal-400 text-teal-900 shadow-2xs'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
+        {/* Danh sách lớp thuộc Khối (chỉ hiện cho giáo viên hoặc khách) */}
+        {currentUser?.role !== 'student' && (
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 flex-wrap">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+              <span className="text-xs font-bold text-slate-600 shrink-0 mr-1">Lớp:</span>
+              {classesInGrade.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedClassId(c.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 border ${
+                    selectedClassId === c.id
+                      ? 'bg-teal-50 border-teal-400 text-teal-900 shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
 
-          {/* Ô tìm kiếm học sinh */}
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm nhanh học sinh theo tên/mã..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-teal-500"
-            />
+            {/* Ô tìm kiếm học sinh */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm nhanh học sinh theo tên/mã..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-teal-500"
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* BẢNG ĐIỂM CHUẨN THÔNG TƯ 22 */}

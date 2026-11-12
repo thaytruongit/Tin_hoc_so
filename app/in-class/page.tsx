@@ -145,9 +145,45 @@ export default function InClassPage() {
     return () => unsub();
   }, []);
 
+  // KIỂM TRA SỰ PHẢN HỒI TỪ GIÁO VIÊN:
+  // Đối với lớp học số phải có sự phản hồi từ giáo viên tiết học, dữ liệu tiết học đó sẽ được hiển thị;
+  // Nếu chưa có phản hồi từ giáo viên sẽ là trang dữ liệu trắng
+  const hasTeacherResponse = useMemo(() => {
+    // 1. Phải có tín hiệu phát trực tiếp từ giáo viên
+    if (!controlState.isLive) return false;
+
+    // 2. Giáo viên phải đã chọn tiết học (activePeriod > 0)
+    if (!controlState.activePeriod || controlState.activePeriod <= 0) return false;
+
+    // 3. Nếu là giáo viên đang xem thì luôn mở
+    if (currentUser?.role === 'teacher') return true;
+
+    // 4. Nếu là học sinh: Phải đúng với lớp hoặc khối mà Thầy đang điều phối
+    if (currentUser?.role === 'student') {
+      const stClass = currentUser.studentClass;
+      const stGrade = currentUser.studentGrade;
+
+      // Khớp Khối lớp
+      if (stGrade && controlState.activeGrade && controlState.activeGrade !== stGrade) {
+        return false;
+      }
+
+      // Khớp Lớp học nếu có
+      if (stClass && controlState.activeClassName) {
+        const cleanSt = stClass.replace('Lớp ', '').trim().toLowerCase();
+        const cleanAct = controlState.activeClassName.replace('Lớp ', '').trim().toLowerCase();
+        if (cleanSt !== cleanAct && !cleanAct.includes(cleanSt) && !cleanSt.includes(cleanAct)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }, [controlState.isLive, controlState.activePeriod, controlState.activeGrade, controlState.activeClassName, currentUser]);
+
   // LẤY DỮ LIỆU BÀI HỌC THEO LỆNH PHÁT TỪ GIÁO VIÊN
-  const activeGrade = controlState.activeGrade || 7;
-  const activePeriodNum = controlState.activePeriod || 6;
+  const activeGrade = controlState.activeGrade || currentUser?.studentGrade || 7;
+  const activePeriodNum = controlState.activePeriod || 1;
   const periodsOfGrade = CURRICULUM_DATA[activeGrade] || CURRICULUM_DATA[7] || [];
   const currentPeriod: CurriculumPeriod = useMemo(() => {
     return periodsOfGrade.find(p => p.period === activePeriodNum) || periodsOfGrade[0];
@@ -327,9 +363,12 @@ export default function InClassPage() {
   }
 
   // ==========================================================================
-  // KHI GIÁO VIÊN CHƯA PHÁT TRỰC TIẾP: HIỂN THỊ BẢNG TRẮNG KÈM THÔNG BÁO CỦA THẦY
   // ==========================================================================
-  if (!controlState.isLive) {
+  // KHI CHƯA CÓ PHẢN HỒI TỪ GIÁO VIÊN: HIỂN THỊ BẢNG TRẮNG (TRANG DỮ LIỆU TRẮNG)
+  // ==========================================================================
+  if (!hasTeacherResponse) {
+    const isWaitingCurrentClass = controlState.isLive && controlState.activeClassName && currentUser?.studentClass && controlState.activeClassName !== currentUser.studentClass;
+
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* BANNER THÔNG BÁO DÀNH CHO GIÁO VIÊN NẾU LÀ THẦY TRƯỜNG ĐANG TRUY CẬP */}
@@ -382,7 +421,11 @@ export default function InClassPage() {
             <div className="flex items-center justify-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 text-amber-900 border border-amber-200 text-xs sm:text-sm font-bold shadow-xs animate-pulse">
                 <Clock className="w-4 h-4 text-amber-600" />
-                <span>⏳ ĐANG CHỜ TÍN HIỆU PHÁT TRỰC TIẾP TỪ THẦY ĐỖ MẠNH TRƯỜNG...</span>
+                <span>
+                  {isWaitingCurrentClass
+                    ? `⏳ THẦY ĐANG ĐIỀU PHỐI ${controlState.activeClassName?.toUpperCase()} · CHỜ THẦY CHUYỂN SANG LỚP CỦA EM...`
+                    : '⏳ ĐANG CHỜ PHẢN HỒI TIẾT HỌC TỪ THẦY ĐỖ MẠNH TRƯỜNG...'}
+                </span>
               </div>
             </div>
 
@@ -397,7 +440,7 @@ export default function InClassPage() {
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                 <span className="text-[11px] font-bold text-slate-500 block uppercase">Lớp học</span>
                 <span className="text-base font-extrabold text-slate-800">
-                  {currentUser?.studentClass || controlState.activeClassName || 'Lớp 6A10'}
+                  {currentUser?.studentClass || controlState.activeClassName || 'Lớp 7A12'}
                 </span>
               </div>
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
@@ -416,13 +459,15 @@ export default function InClassPage() {
               </div>
               <div className="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2">
                 <p>
-                  Thầy Đỗ Mạnh Trường chưa phát lệnh bắt đầu bài dạy trực tiếp cho lớp của em. Trong thời gian chuẩn bị, các em vui lòng:
+                  {isWaitingCurrentClass
+                    ? `Thầy Đỗ Mạnh Trường đang điều phối tiết học cho ${controlState.activeClassName}. Khi Thầy chuyển điều phối sang ${currentUser?.studentClass || 'lớp của em'}, dữ liệu tiết học sẽ xuất hiện ngay.`
+                    : 'Thầy Đỗ Mạnh Trường chưa phát lệnh bắt đầu bài dạy trực tiếp cho tiết học này. Trong thời gian chờ phản hồi, các em vui lòng:'}
                 </p>
                 <ol className="list-decimal pl-5 space-y-1 font-medium text-slate-800">
                   <li><strong>Ổn định vị trí:</strong> Ngồi đúng số máy được phân công, giữ gìn trật tự và vệ sinh chung.</li>
                   <li><strong>Chuẩn bị đồ dùng:</strong> Mở sẵn sách giáo khoa Tin học và vở ghi bài trên bàn.</li>
                   <li><strong>Kiểm tra thiết bị:</strong> Thử rê chuột và gõ phím bên dưới để chắc chắn máy trạm hoạt động bình thường.</li>
-                  <li><strong>Sẵn sàng học tập:</strong> Khi Thầy Trường bấm <em>&quot;Phát trực tiếp bài dạy&quot;</em> từ Bàn quản lý, màn hình máy trạm sẽ tự động chuyển ngay sang 3 Hoạt động lớp học số mà không cần thao tác gì thêm!</li>
+                  <li><strong>Sẵn sàng học tập:</strong> Khi Thầy Trường chọn Tiết học và bấm <em>&quot;Phát trực tiếp bài dạy&quot;</em> từ Bàn quản lý, màn hình máy trạm sẽ tự động chuyển ngay sang 3 Hoạt động lớp học số mà không cần thao tác gì thêm!</li>
                 </ol>
               </div>
             </div>

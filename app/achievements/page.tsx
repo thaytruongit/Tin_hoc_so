@@ -204,24 +204,17 @@ export default function AchievementsPage() {
           
           {/* Chọn Phạm vi: Toàn trường / Theo Khối / Theo Lớp */}
           <div className="inline-flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setFilterScope('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                filterScope === 'all' ? 'bg-white text-purple-800 shadow-2xs' : 'text-slate-600'
-              }`}
-            >
-              Toàn Trường (670 HS)
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterScope('grade')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                filterScope === 'grade' ? 'bg-white text-purple-800 shadow-2xs' : 'text-slate-600'
-              }`}
-            >
-              Theo Khối ({selectedGrade})
-            </button>
+            {currentUser?.role !== 'student' && (
+              <button
+                type="button"
+                onClick={() => setFilterScope('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  filterScope === 'all' ? 'bg-white text-purple-800 shadow-2xs' : 'text-slate-600'
+                }`}
+              >
+                Toàn Trường (670 HS)
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setFilterScope('class')}
@@ -230,6 +223,15 @@ export default function AchievementsPage() {
               }`}
             >
               Theo Lớp ({currentClass.name})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterScope('grade')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filterScope === 'grade' ? 'bg-white text-purple-800 shadow-2xs' : 'text-slate-600'
+              }`}
+            >
+              Toàn Khối ({selectedGrade})
             </button>
           </div>
 
@@ -249,46 +251,54 @@ export default function AchievementsPage() {
         {/* Nút chọn Khối và Lớp nếu chọn phạm vi Khối / Lớp */}
         {filterScope !== 'all' && (
           <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-600">Khối:</span>
-              {[6, 7, 8, 9].map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => {
-                    setSelectedGrade(g);
-                    const firstCls = MOCK_CLASSES.find(c => c.grade === g);
-                    if (firstCls) setSelectedClassId(firstCls.id);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                    selectedGrade === g
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  Khối {g}
-                </button>
-              ))}
-            </div>
-
-            {filterScope === 'class' && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-                <span className="text-xs font-bold text-slate-600 shrink-0">Lớp:</span>
-                {classesInGrade.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setSelectedClassId(c.id)}
-                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all shrink-0 border ${
-                      selectedClassId === c.id
-                        ? 'bg-purple-50 border-purple-400 text-purple-900'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
+            {currentUser?.role === 'student' ? (
+              <div className="text-xs font-bold text-slate-500">
+                Xếp hạng thi đua: <strong className="text-purple-700">{currentClass.name} · Khối {selectedGrade}</strong>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-600">Khối:</span>
+                  {[6, 7, 8, 9].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => {
+                        setSelectedGrade(g);
+                        const firstCls = MOCK_CLASSES.find(c => c.grade === g);
+                        if (firstCls) setSelectedClassId(firstCls.id);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                        selectedGrade === g
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Khối {g}
+                    </button>
+                  ))}
+                </div>
+
+                {filterScope === 'class' && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+                    <span className="text-xs font-bold text-slate-600 shrink-0">Lớp:</span>
+                    {classesInGrade.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedClassId(c.id)}
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all shrink-0 border ${
+                          selectedClassId === c.id
+                            ? 'bg-purple-50 border-purple-400 text-purple-900'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

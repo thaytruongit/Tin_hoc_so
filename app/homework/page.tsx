@@ -24,6 +24,7 @@ import confetti from 'canvas-confetti';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { CURRICULUM_DATA, CurriculumPeriod } from '@/lib/curriculum-data';
 import { HomeworkSubmission } from '@/lib/types';
+import { getClassroomState } from '@/lib/classroom-control';
 
 export default function HomeworkPage() {
   const [mounted, setMounted] = useState(false);
@@ -48,8 +49,16 @@ export default function HomeworkPage() {
     const user = getCurrentUser();
     setCurrentUser(user);
 
+    const clsState = getClassroomState();
+
     if (user.role === 'student' && user.studentGrade) {
       setSelectedGrade(user.studentGrade);
+      if (clsState.activePeriod && clsState.activePeriod > 0 && (clsState.activeGrade === user.studentGrade || !clsState.activeGrade)) {
+        setSelectedPeriodNum(clsState.activePeriod);
+      }
+    } else if (clsState.activeGrade && clsState.activePeriod) {
+      setSelectedGrade(clsState.activeGrade);
+      setSelectedPeriodNum(clsState.activePeriod);
     }
 
     if (typeof window !== 'undefined') {
@@ -192,26 +201,33 @@ export default function HomeworkPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-700">Khối:</span>
-            {[6, 7, 8, 9].map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => {
-                  setSelectedGrade(g);
-                  setSelectedPeriodNum(1);
-                  setSelectedFile(null);
-                  setPreviewImageUrl(null);
-                  setSubmittedReceipt(null);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                  selectedGrade === g
-                    ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Khối {g}
-              </button>
-            ))}
+            {currentUser?.role === 'student' ? (
+              <span className="px-3 py-1.5 rounded-xl bg-amber-600 text-white font-black text-xs shadow-2xs flex items-center gap-1.5">
+                <span>Khối {selectedGrade}</span>
+                <span className="text-[11px] opacity-90 font-normal">({currentUser.studentClass || 'Học sinh'})</span>
+              </span>
+            ) : (
+              [6, 7, 8, 9].map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => {
+                    setSelectedGrade(g);
+                    setSelectedPeriodNum(1);
+                    setSelectedFile(null);
+                    setPreviewImageUrl(null);
+                    setSubmittedReceipt(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    selectedGrade === g
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  Khối {g}
+                </button>
+              ))
+            )}
           </div>
 
           <span className="text-xs font-bold text-slate-500">

@@ -1,12 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FileCheck2, Clock, ShieldAlert, Lock, ArrowRight, CheckCircle2, ShieldCheck, School } from 'lucide-react';
 import { MOCK_EXAMS } from '@/lib/mock-data';
+import { getCurrentUser, UserSession } from '@/lib/auth';
 
 export default function ExamsPage() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | 'all'>('all');
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (user.role === 'student' && user.studentGrade) {
+      setSelectedGrade(user.studentGrade);
+    }
+  }, []);
 
   const filteredExams = selectedGrade === 'all'
     ? MOCK_EXAMS
@@ -27,31 +37,40 @@ export default function ExamsPage() {
         </p>
 
         {/* BỘ LỌC KHỐI LỚP */}
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-          <button
-            onClick={() => setSelectedGrade('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              selectedGrade === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            Tất cả 8 Bộ đề
-          </button>
-          {[6, 7, 8, 9].map((g) => (
+        {currentUser?.role === 'student' ? (
+          <div className="pt-2">
+            <span className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs inline-flex items-center gap-2">
+              <span>Đề kiểm tra định kỳ Khối {selectedGrade}</span>
+              <span className="opacity-90 font-normal">({currentUser.studentClass || 'Học sinh'})</span>
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <button
-              key={g}
-              onClick={() => setSelectedGrade(g)}
+              onClick={() => setSelectedGrade('all')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                selectedGrade === g
+                selectedGrade === 'all'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              Khối {g}
+              Tất cả 8 Bộ đề
             </button>
-          ))}
-        </div>
+            {[6, 7, 8, 9].map((g) => (
+              <button
+                key={g}
+                onClick={() => setSelectedGrade(g)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  selectedGrade === g
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                Khối {g}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* DANH SÁCH BỘ ĐỀ */}

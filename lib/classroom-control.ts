@@ -128,16 +128,16 @@ export function createDefaultMachines(className: string = 'Lớp 6A10'): LabMach
 
 export function getDefaultClassroomState(): ClassroomControlState {
   return {
-    isLive: true, // Tiết học dạy trực tiếp kết nối 24 máy trạm
-    activeGrade: 6,
-    activeClassId: 'c-6a10',
-    activeClassName: 'Lớp 6A10',
-    activePeriod: 1,
-    lessonTitle: 'Tiết 1: Thông tin và dữ liệu',
+    isLive: false, // Mặc định chưa phát trực tiếp: Học sinh thấy Bảng Trắng cho tới khi có phản hồi tiết học từ Thầy
+    activeGrade: 7,
+    activeClassId: 'c-7a12',
+    activeClassName: 'Lớp 7A12',
+    activePeriod: 0, // Chưa có tiết nào được chọn ban đầu -> Trang dữ liệu trắng
+    lessonTitle: '',
     activityLocks: {
-      discovery: true,
-      practice: true,
-      lab: true,
+      discovery: false,
+      practice: false,
+      lab: false,
     },
     activityDurations: {
       discovery: 10, // 10 phút
@@ -146,12 +146,12 @@ export function getDefaultClassroomState(): ClassroomControlState {
     },
     currentActivity: 'discovery',
     timerRemainingSeconds: 600,
-    isTimerRunning: true,
+    isTimerRunning: false,
     isTimeUp: false,
     spotlightMachineId: null,
-    broadcastMessage: '🔔 Chào mừng các em đến với Tiết học Tin học · Thầy Đỗ Mạnh Trường!',
-    broadcastTime: '08:00',
-    machines: createMachinesForClass('c-6a10', 'Lớp 6A10'),
+    broadcastMessage: '⏳ Đang chờ Thầy Đỗ Mạnh Trường chọn tiết học và phát trực tiếp bài dạy...',
+    broadcastTime: '--:--',
+    machines: createMachinesForClass('c-7a12', 'Lớp 7A12'),
     helpRequests: [],
   };
 }
@@ -203,6 +203,11 @@ export function updateClassroomState(
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       window.dispatchEvent(new CustomEvent('truong_classroom_update', { detail: next }));
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('truong_classroom_sync');
+        bc.postMessage(next);
+        bc.close();
+      }
     } catch (e) {}
   }
 
@@ -490,7 +495,29 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     }
   };
 
+  const handleStorageEvent = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        callback(parsed);
+      } catch (err) {}
+    }
+  };
+
   window.addEventListener('truong_classroom_update', handleLocalUpdate);
+  window.addEventListener('storage', handleStorageEvent);
+
+  let bc: BroadcastChannel | null = null;
+  if ('BroadcastChannel' in window) {
+    try {
+      bc = new BroadcastChannel('truong_classroom_sync');
+      bc.onmessage = (event) => {
+        if (event.data) {
+          callback(event.data);
+        }
+      };
+    } catch (err) {}
+  }
 
   // Chỉ kết nối Supabase channel nếu được cấu hình thực sự, tránh lỗi WebSocket fail trên mock domain
   let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -517,6 +544,12 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
 
   return () => {
     window.removeEventListener('truong_classroom_update', handleLocalUpdate);
+    window.removeEventListener('storage', handleStorageEvent);
+    if (bc) {
+      try {
+        bc.close();
+      } catch (e) {}
+    }
     if (channel) {
       try {
         supabase.removeChannel(channel);

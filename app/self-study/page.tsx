@@ -111,23 +111,30 @@ export default function SelfStudyPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-700">Khối:</span>
-            {[6, 7, 8, 9].map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => {
-                  setSelectedGrade(g);
-                  handleSelectPeriod(1);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                  selectedGrade === g
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Khối {g}
-              </button>
-            ))}
+            {currentUser?.role === 'student' ? (
+              <span className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-2xs flex items-center gap-1.5">
+                <span>Khối {selectedGrade}</span>
+                <span className="text-[11px] opacity-90 font-normal">({currentUser.studentClass || 'Học sinh'})</span>
+              </span>
+            ) : (
+              [6, 7, 8, 9].map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => {
+                    setSelectedGrade(g);
+                    handleSelectPeriod(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    selectedGrade === g
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  Khối {g}
+                </button>
+              ))
+            )}
           </div>
 
           <span className="text-xs font-bold text-slate-500">
