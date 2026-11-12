@@ -169,37 +169,31 @@ export default function InClassPage() {
   // Đối với lớp học số phải có sự phản hồi từ giáo viên tiết học, dữ liệu tiết học đó sẽ được hiển thị;
   // Nếu chưa có phản hồi từ giáo viên sẽ là trang dữ liệu trắng
   const hasTeacherResponse = useMemo(() => {
-    // 1. Phải có tín hiệu phát trực tiếp từ giáo viên
-    if (!controlState.isLive) return false;
+    // 1. Kiểm tra nếu Thầy đã mở bất kỳ hoạt động nào (Khám phá, Luyện tập, Thực hành)
+    const isAnyActivityUnlocked = Boolean(
+      controlState.activityLocks &&
+      (controlState.activityLocks.discovery || controlState.activityLocks.practice || controlState.activityLocks.lab)
+    );
 
-    // 2. Giáo viên phải đã chọn tiết học (activePeriod > 0)
-    if (!controlState.activePeriod || controlState.activePeriod <= 0) return false;
+    // 2. Giáo viên phải có tín hiệu phát trực tiếp HOẶC đã mở khóa bất kỳ hoạt động nào
+    const isBroadcasting = Boolean(controlState.isLive || isAnyActivityUnlocked);
+    if (!isBroadcasting) return false;
 
     // 3. Nếu là giáo viên đang xem thì luôn mở
     if (currentUser?.role === 'teacher') return true;
 
-    // 4. Nếu là học sinh: Phải đúng với lớp hoặc khối mà Thầy đang điều phối
+    // 4. Nếu là học sinh: Phải đúng Khối lớp mà Thầy đang điều phối
     if (currentUser?.role === 'student') {
-      const stClass = currentUser.studentClass;
       const stGrade = currentUser.studentGrade;
 
-      // Khớp Khối lớp
+      // Khớp Khối lớp: Nếu Thầy đang điều phối Khối khác thì chờ Thầy chuyển khối
       if (stGrade && controlState.activeGrade && controlState.activeGrade !== stGrade) {
         return false;
-      }
-
-      // Khớp Lớp học nếu có
-      if (stClass && controlState.activeClassName) {
-        const cleanSt = stClass.replace('Lớp ', '').trim().toLowerCase();
-        const cleanAct = controlState.activeClassName.replace('Lớp ', '').trim().toLowerCase();
-        if (cleanSt !== cleanAct && !cleanAct.includes(cleanSt) && !cleanSt.includes(cleanAct)) {
-          return false;
-        }
       }
     }
 
     return true;
-  }, [controlState.isLive, controlState.activePeriod, controlState.activeGrade, controlState.activeClassName, currentUser]);
+  }, [controlState.isLive, controlState.activeGrade, controlState.activityLocks, currentUser]);
 
   // LẤY DỮ LIỆU BÀI HỌC THEO LỆNH PHÁT TỪ GIÁO VIÊN
   const activeGrade = controlState.activeGrade || currentUser?.studentGrade || 7;
@@ -483,7 +477,7 @@ export default function InClassPage() {
   // KHI CHƯA CÓ PHẢN HỒI TỪ GIÁO VIÊN: HIỂN THỊ BẢNG TRẮNG (TRANG DỮ LIỆU TRẮNG)
   // ==========================================================================
   if (!hasTeacherResponse) {
-    const isWaitingCurrentClass = controlState.isLive && controlState.activeClassName && currentUser?.studentClass && controlState.activeClassName !== currentUser.studentClass;
+    const isWaitingCurrentClass = controlState.isLive && controlState.activeGrade && currentUser?.studentGrade && controlState.activeGrade !== currentUser.studentGrade;
 
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -539,7 +533,7 @@ export default function InClassPage() {
                 <Clock className="w-4 h-4 text-amber-600" />
                 <span>
                   {isWaitingCurrentClass
-                    ? `⏳ THẦY ĐANG ĐIỀU PHỐI ${controlState.activeClassName?.toUpperCase()} · CHỜ THẦY CHUYỂN SANG LỚP CỦA EM...`
+                    ? `⏳ THẦY ĐANG ĐIỀU PHỐI KHỐI ${controlState.activeGrade} (${controlState.activeClassName}) · CHỜ THẦY CHUYỂN SANG KHỐI ${currentUser?.studentGrade}...`
                     : '⏳ ĐANG CHỜ PHẢN HỒI TIẾT HỌC TỪ THẦY ĐỖ MẠNH TRƯỜNG...'}
                 </span>
               </div>

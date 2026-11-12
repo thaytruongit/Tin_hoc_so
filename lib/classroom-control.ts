@@ -194,7 +194,8 @@ export function getClassroomState(): ClassroomControlState {
 }
 
 // KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT & XUYÊN THIẾT BỊ (ĐẢM BẢO 100% HOẠT ĐỘNG TẠI VN)
-const CLOUD_SYNC_ENDPOINT = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1ce1faf851114';
+const CLOUD_SYNC_TOPIC = 'thay_truong_mao_dien_classroom_sync_666';
+const CLOUD_SYNC_URL = 'https://ntfy.sh';
 
 export function updateClassroomState(
   updater: (prev: ClassroomControlState) => ClassroomControlState
@@ -212,17 +213,29 @@ export function updateClassroomState(
         bc.close();
       }
 
-      // ĐẨY LÊN ĐÁM MÂY REST API XUYÊN MỌI TRÌNH DUYỆT (CHROME ⇄ EDGE ⇄ 24 MÁY TRẠM)
-      fetch(CLOUD_SYNC_ENDPOINT, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'THCS_MAO_DIEN_CLASSROOM_SYNC_THAY_TRUONG_IT',
-          data: {
-            ...next,
-            updatedAt: Date.now(),
-          },
+      // ĐẨY LÊN ĐÁM MÂY XUYÊN MỌI TRÌNH DUYỆT (CHROME ⇄ EDGE ⇄ 24 MÁY TRẠM) DƯỚI 4KB
+      const compactSync = {
+        topic: CLOUD_SYNC_TOPIC,
+        title: 'CLASSROOM_STATE_UPDATE',
+        message: JSON.stringify({
+          isLive: next.isLive,
+          activePeriod: next.activePeriod,
+          activeGrade: next.activeGrade,
+          activeClassId: next.activeClassId,
+          activeClassName: next.activeClassName,
+          lessonTitle: next.lessonTitle,
+          activityLocks: next.activityLocks,
+          currentActivity: next.currentActivity,
+          broadcastMessage: next.broadcastMessage,
+          broadcastTime: next.broadcastTime,
+          updatedAt: Date.now(),
         }),
+      };
+
+      fetch(CLOUD_SYNC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(compactSync),
       }).catch(() => {});
     } catch (e) {}
   }
@@ -252,9 +265,12 @@ export function toggleActivityLock(activity: ClassroomActivityKey): ClassroomCon
     const currentStatus = prev.activityLocks[activity];
     const newStatus = !currentStatus;
     const durMinutes = prev.activityDurations[activity] || 10;
+    const willBeAnyUnlocked = newStatus || Object.entries(prev.activityLocks).some(([k, v]) => k !== activity && v);
 
     return {
       ...prev,
+      isLive: willBeAnyUnlocked ? true : prev.isLive, // Mở hoạt động thì tự động bật phát trực tiếp
+      activePeriod: prev.activePeriod && prev.activePeriod > 0 ? prev.activePeriod : 1,
       currentActivity: activity,
       timerRemainingSeconds: durMinutes * 60,
       isTimerRunning: newStatus,
@@ -550,60 +566,101 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
   }
 
   // 4. KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (CHROME ⇄ EDGE ⇄ CỐC CỐC ⇄ 24 MÁY TRẠM)
-  // a) Khởi tạo: Lấy ngay trạng thái Live mới nhất từ Cloud khi vừa mở trang (200-300ms)
   let lastSyncedTimestamp = 0;
 
   const syncFromCloud = () => {
-    // Thêm _t timestamp để chống cache trình duyệt hoàn toàn (Bypass HTTP cache)
-    fetch(`${CLOUD_SYNC_ENDPOINT}?_t=${Date.now()}`, { cache: 'no-store' })
-      .then((res) => {
-        if (!res.ok) return null;
-        return res.json();
-      })
-      .then((result) => {
-        if (result && result.data) {
-          const cloud = result.data;
-          const current = getClassroomState();
-          
-          // Kiểm tra nếu có dữ liệu mới từ máy Thầy hoặc trạng thái live/tiết học thay đổi
-          const isStateChanged = 
-            cloud.isLive !== current.isLive ||
-            cloud.activePeriod !== current.activePeriod ||
-            cloud.activeGrade !== current.activeGrade ||
-            cloud.activeClassId !== current.activeClassId ||
-            (cloud.activityLocks && JSON.stringify(cloud.activityLocks) !== JSON.stringify(current.activityLocks)) ||
-            (cloud.updatedAt && cloud.updatedAt > lastSyncedTimestamp);
+    fetch(`https://ntfy.sh/${CLOUD_SYNC_TOPIC}/json?poll=1&_t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => res.text())
+      .then((text) => {
+        if (!text) return;
+        const lines = text.trim().split('\n').filter(Boolean);
+        for (let i = lines.length - 1; i >= 0; i--) {
+          try {
+            const parsed = JSON.parse(lines[i]);
+            if (parsed && parsed.message) {
+              let cloud: any = null;
+              if (typeof parsed.message === 'string' && parsed.message.startsWith('{')) {
+                cloud = JSON.parse(parsed.message);
+              }
+              if (cloud && typeof cloud.isLive === 'boolean') {
+                const current = getClassroomState();
+                const isStateChanged =
+                  cloud.isLive !== current.isLive ||
+                  cloud.activePeriod !== current.activePeriod ||
+                  cloud.activeGrade !== current.activeGrade ||
+                  cloud.activeClassId !== current.activeClassId ||
+                  (cloud.activityLocks && JSON.stringify(cloud.activityLocks) !== JSON.stringify(current.activityLocks)) ||
+                  (cloud.updatedAt && cloud.updatedAt > lastSyncedTimestamp);
 
-          if (isStateChanged) {
-            lastSyncedTimestamp = cloud.updatedAt || Date.now();
-            const cloudLocks = cloud.activityLocks || (cloud.isLive ? { discovery: true, practice: true, lab: true } : current.activityLocks);
-            const mergedState: ClassroomControlState = {
-              ...current,
-              isLive: Boolean(cloud.isLive),
-              activeGrade: cloud.activeGrade || current.activeGrade,
-              activeClassId: cloud.activeClassId || current.activeClassId,
-              activeClassName: cloud.activeClassName || current.activeClassName,
-              activePeriod: cloud.activePeriod || current.activePeriod,
-              lessonTitle: cloud.lessonTitle || current.lessonTitle,
-              activityLocks: cloudLocks,
-              broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
-              broadcastTime: cloud.broadcastTime || current.broadcastTime,
-            };
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
-            } catch (e) {}
-            callback(mergedState);
-          }
+                if (isStateChanged) {
+                  lastSyncedTimestamp = cloud.updatedAt || Date.now();
+                  const cloudLocks = cloud.activityLocks || (cloud.isLive ? { discovery: true, practice: true, lab: true } : current.activityLocks);
+                  const mergedState: ClassroomControlState = {
+                    ...current,
+                    isLive: Boolean(cloud.isLive),
+                    activeGrade: cloud.activeGrade || current.activeGrade,
+                    activeClassId: cloud.activeClassId || current.activeClassId,
+                    activeClassName: cloud.activeClassName || current.activeClassName,
+                    activePeriod: cloud.activePeriod || current.activePeriod,
+                    lessonTitle: cloud.lessonTitle || current.lessonTitle,
+                    activityLocks: cloudLocks,
+                    currentActivity: cloud.currentActivity || current.currentActivity,
+                    broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
+                    broadcastTime: cloud.broadcastTime || current.broadcastTime,
+                  };
+                  try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
+                  } catch (e) {}
+                  callback(mergedState);
+                }
+                break;
+              }
+            }
+          } catch (e) {}
         }
       })
       .catch(() => {});
   };
 
-  // Kích hoạt đồng bộ ngay lập tức khi load trang
   syncFromCloud();
-
-  // b) Polling định kỳ mỗi 1.2 giây để cập nhật trạng thái thời gian thực giữa các trình duyệt
   const pollIntervalId = setInterval(syncFromCloud, 1200);
+
+  // Kênh SSE nhận tức thì khi Thầy thao tác
+  let es: EventSource | null = null;
+  if ('EventSource' in window) {
+    try {
+      es = new EventSource(`https://ntfy.sh/${CLOUD_SYNC_TOPIC}/sse`);
+      es.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          if (parsed && parsed.message && typeof parsed.message === 'string' && parsed.message.startsWith('{')) {
+            const cloud = JSON.parse(parsed.message);
+            if (cloud && typeof cloud.isLive === 'boolean') {
+              const current = getClassroomState();
+              const cloudLocks = cloud.activityLocks || (cloud.isLive ? { discovery: true, practice: true, lab: true } : current.activityLocks);
+              const mergedState: ClassroomControlState = {
+                ...current,
+                isLive: Boolean(cloud.isLive),
+                activeGrade: cloud.activeGrade || current.activeGrade,
+                activeClassId: cloud.activeClassId || current.activeClassId,
+                activeClassName: cloud.activeClassName || current.activeClassName,
+                activePeriod: cloud.activePeriod || current.activePeriod,
+                lessonTitle: cloud.lessonTitle || current.lessonTitle,
+                activityLocks: cloudLocks,
+                currentActivity: cloud.currentActivity || current.currentActivity,
+                broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
+                broadcastTime: cloud.broadcastTime || current.broadcastTime,
+              };
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
+              } catch (e) {}
+              callback(mergedState);
+            }
+          }
+        } catch (err) {}
+      };
+    } catch (e) {}
+  }
 
   // 5. KÊNH SUPABASE REALTIME (NẾU CÓ DỰ ÁN THẬT)
   let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -634,6 +691,11 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     if (bc) {
       try {
         bc.close();
+      } catch (e) {}
+    }
+    if (es) {
+      try {
+        es.close();
       } catch (e) {}
     }
     clearInterval(pollIntervalId);

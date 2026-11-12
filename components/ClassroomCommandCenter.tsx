@@ -372,14 +372,75 @@ export default function ClassroomCommandCenter({
       alert('Tiết học hiện tại là bài lý thuyết thuần túy. Hoạt động thực hành trên máy không áp dụng cho tiết này!');
       return;
     }
-    const nextState = toggleActivityLock(act);
+    const nextState = updateClassroomState((prev) => {
+      const currentStatus = prev.activityLocks[act];
+      const newStatus = !currentStatus;
+      const durMinutes = prev.activityDurations[act] || 10;
+      const willBeAnyUnlocked = newStatus || Object.entries(prev.activityLocks).some(([k, v]) => k !== act && v);
+
+      return {
+        ...prev,
+        isLive: willBeAnyUnlocked ? true : prev.isLive, // Khi mở hoạt động: tự động kích hoạt isLive = true!
+        activePeriod: prev.activePeriod && prev.activePeriod > 0 ? prev.activePeriod : (activeLesson.period || selectedPeriod || 1),
+        lessonTitle: prev.lessonTitle || activeLesson.title,
+        activeGrade: currentClass.grade || prev.activeGrade || 7,
+        activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
+        activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
+        currentActivity: act,
+        timerRemainingSeconds: durMinutes * 60,
+        isTimerRunning: newStatus,
+        isTimeUp: false,
+        activityLocks: {
+          ...prev.activityLocks,
+          [act]: newStatus,
+        },
+        broadcastMessage: newStatus
+          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ ${act === 'discovery' ? 'Hoạt động 1 (Khám phá)' : act === 'practice' ? 'Hoạt động 2 (Luyện tập)' : 'Hoạt động 3 (Thực hành)'}!`
+          : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM KHÓA ${act === 'discovery' ? 'Hoạt động 1' : act === 'practice' ? 'Hoạt động 2' : 'Hoạt động 3'}.`,
+        broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      };
+    });
     setControlState(nextState);
+  };
+
+  // Bật/Tắt phát trực tiếp bài dạy ngay (Đồng bộ giữa Live và Bảng Trắng)
+  const handleToggleLiveBroadcast = (live: boolean) => {
+    const nextState = updateClassroomState((prev) => ({
+      ...prev,
+      isLive: live,
+      activePeriod: prev.activePeriod && prev.activePeriod > 0 ? prev.activePeriod : (activeLesson.period || selectedPeriod || 1),
+      lessonTitle: prev.lessonTitle || activeLesson.title,
+      activeGrade: currentClass.grade || prev.activeGrade || 7,
+      activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
+      activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
+      activityLocks: live
+        ? {
+            discovery: true,
+            practice: true,
+            lab: isPracticalLesson ? true : false,
+          }
+        : prev.activityLocks,
+      broadcastMessage: live
+        ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${currentClass.name || prev.activeClassName}! Mời các em vào học.`
+        : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp. Các em chú ý lên bảng trắng.`,
+      broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    }));
+    setControlState(nextState);
+    if (live) {
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.5 } });
+    }
   };
 
   // Mở hoặc Đóng tất cả hoạt động theo lệnh của Thầy (phân biệt tiết thực hành)
   const handleSetAllActivities = (isOpen: boolean) => {
     const nextState = updateClassroomState((prev) => ({
       ...prev,
+      isLive: isOpen ? true : prev.isLive, // Khi mở hoạt động: tự động kích hoạt isLive = true!
+      activePeriod: prev.activePeriod && prev.activePeriod > 0 ? prev.activePeriod : (activeLesson.period || selectedPeriod || 1),
+      lessonTitle: prev.lessonTitle || activeLesson.title,
+      activeGrade: currentClass.grade || prev.activeGrade || 7,
+      activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
+      activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
       activityLocks: {
         discovery: isOpen,
         practice: isOpen,
@@ -640,7 +701,122 @@ export default function ClassroomCommandCenter({
   return (
     <div className="space-y-6">
       {/* ==================================================================== */}
-      {/* 1. THANH CỐ ĐỊNH TIẾT HỌC GIẢNG DẠY TRỰC TIẾP (ĐỒNG BỘ 24 MÁY TRẠM)   */}
+      {/* 1. THANH TRẠNG THÁI TIẾT HỌC: TẠM DỪNG (HỌC SINH THẤY BẢNG TRẮNG) / LIVE */}
+      {/* ==================================================================== */}
+      {!controlState.isLive ? (
+        <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 border-2 border-slate-700/80 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-slate-800 text-slate-300 flex items-center justify-center font-bold shadow-xs shrink-0 border border-slate-700">
+              <Pause className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-sm sm:text-base text-white tracking-tight flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
+                  <span>ĐANG TẠM DỪNG (HỌC SINH THẤY BẢNG TRẮNG)</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 text-teal-300 font-extrabold text-xs border border-teal-500/30">
+                  {currentClass.name}
+                </span>
+                <span className="text-xs text-slate-300 font-medium">
+                  Tiết {activeLesson.period}: {activeLesson.title}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Học sinh đang dừng ở màn hình Bảng Trắng kèm thông báo của Thầy Trường để ổn định chỗ ngồi và kiểm tra thiết bị.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleToggleLiveBroadcast(true)}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs sm:text-sm shadow-md shadow-rose-600/30 transition-all flex items-center gap-2 cursor-pointer animate-pulse"
+              title="Bắt đầu phát trực tiếp bài dạy và mở hoạt động cho học sinh vào học"
+            >
+              <Radio className="w-4 h-4" />
+              <span>(()) Phát trực tiếp bài dạy ngay</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetAllActivities(true)}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Mở tất cả hoạt động"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>{isPracticalLesson ? 'Mở Cả 3 HĐ' : 'Mở HĐ1 & HĐ2'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetAllActivities(false)}
+              className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Đóng tất cả hoạt động"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Đóng Tất Cả</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 border-2 border-emerald-600/70 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0 animate-pulse">
+              <Radio className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-sm sm:text-base text-emerald-300 tracking-tight flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  <span>ĐANG PHÁT TRỰC TIẾP BÀI DẠY (24 MÁY TRẠM HOẠT ĐỘNG)</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-900/80 text-emerald-200 font-extrabold text-xs border border-emerald-500/40">
+                  {currentClass.name}
+                </span>
+                <span className="text-xs text-emerald-200/90 font-medium">
+                  Tiết {activeLesson.period}: {activeLesson.title}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200/80 mt-1">
+                24 máy trạm học sinh đã đồng bộ bài dạy trực tiếp. Thầy đang điều khiển mở/đóng từng hoạt động bên dưới.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleToggleLiveBroadcast(false)}
+              className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-400/40 shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              title="Tạm dừng bài dạy và chuyển màn hình học sinh về Bảng Trắng"
+            >
+              <Pause className="w-4 h-4 text-amber-400" />
+              <span>Tạm dừng (Về Bảng Trắng)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetAllActivities(true)}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Mở tất cả hoạt động"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>{isPracticalLesson ? 'Mở Cả 3 HĐ' : 'Mở HĐ1 & HĐ2'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetAllActivities(false)}
+              className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Đóng tất cả hoạt động"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Đóng Tất Cả</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* 2. THANH CỐ ĐỊNH TIẾT HỌC GIẢNG DẠY TRỰC TIẾP (ĐỒNG BỘ 24 MÁY TRẠM)   */}
       {/* ==================================================================== */}
       <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">

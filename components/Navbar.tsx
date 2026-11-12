@@ -283,7 +283,7 @@ export default function Navbar() {
                 </span>
               </div>
               <span className="text-xs text-slate-500 font-medium block">
-                {user.role === 'teacher' ? 'Quản Lý Tiết Dạy · Thầy Đỗ Mạnh Trường' : 'THCS Mão Điền · Thầy Đỗ Mạnh Trường'}
+                {user.role === 'teacher' ? 'Tiết Dạy Trực Tiếp · Thầy Đỗ Mạnh Trường' : 'THCS Mão Điền · Thầy Đỗ Mạnh Trường'}
               </span>
             </div>
           </Link>
@@ -511,11 +511,11 @@ export default function Navbar() {
 
       {mounted && isClassModalOpen && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+          className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 flex min-h-full items-center justify-center"
           onClick={closeClassModal}
         >
           <div 
-            className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-2xl space-y-4 my-auto max-h-[calc(100vh-2rem)] flex flex-col"
+            className="relative bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-2xl space-y-4 my-auto max-h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Modal & Stepper 2 Bước */}
