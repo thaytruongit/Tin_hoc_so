@@ -100,9 +100,21 @@ function TeacherDashboardContent() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
 
-  // MẶC ĐỊNH KHỐI 6 (BỎ HOÀN TOÀN 'TẤT CẢ LỚP')
-  const [selectedGradeFilter, setSelectedGradeFilter] = useState<number>(6);
-  const [selectedClassId, setSelectedClassId] = useState<string>('c-6a10'); // Mặc định Lớp 6A10
+  // ĐỒNG BỘ KHỐI & LỚP THEO TRẠNG THÁI HỆ THỐNG
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const cls = getClassroomState();
+      if (cls.activeGrade) return cls.activeGrade;
+    }
+    return 7;
+  });
+  const [selectedClassId, setSelectedClassId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const cls = getClassroomState();
+      if (cls.activeClassId) return cls.activeClassId;
+    }
+    return 'c-7a12';
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState('');
 

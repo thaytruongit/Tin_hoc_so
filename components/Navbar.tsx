@@ -154,6 +154,10 @@ export default function Navbar() {
     localStorage.removeItem('truong_partner_code');
     localStorage.removeItem('truong_partner_name');
     localStorage.removeItem('truong_pair_names');
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('truong_login_show_period_modal');
+      sessionStorage.removeItem('truong_period_modal_dismissed');
+    }
     setUser({ isLoggedIn: false, role: 'guest' });
     setMachineNum('');
     router.push('/');
