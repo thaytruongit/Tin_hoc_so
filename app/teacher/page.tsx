@@ -108,20 +108,26 @@ function TeacherDashboardContent() {
 
   // 5 CHỨC NĂNG QUẢN TRỊ CHÍNH TÁCH RIÊNG HOÀN TOÀN
   const [activeTab, setActiveTab] = useState<TeacherTab>('in-class');
+  const [initialSubFeature, setInitialSubFeature] = useState<'control' | 'grading' | 'homework' | 'grid' | 'ranking' | 'summary'>('control');
 
-  // ĐỒNG BỘ QUERY PARAM URL (?tab=...)
+  // ĐỒNG BỘ QUERY PARAM URL (?tab=...&sub=...)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'class-roster' || tabParam === 'roster') {
+    const subParam = searchParams.get('sub');
+    if (tabParam === 'homework' || subParam === 'homework') {
+      setActiveTab('in-class');
+      setInitialSubFeature('homework');
+    } else if (tabParam === 'class-roster' || tabParam === 'roster') {
       setActiveTab('class-roster');
     } else if (tabParam === 'exams') {
       setActiveTab('exams');
-    } else if (tabParam === 'homework') {
-      setActiveTab('homework');
     } else if (tabParam === 'gradebook') {
       setActiveTab('gradebook');
     } else {
       setActiveTab('in-class');
+      if (subParam) {
+        setInitialSubFeature(subParam as any);
+      }
     }
   }, [searchParams]);
 
@@ -129,11 +135,20 @@ function TeacherDashboardContent() {
   useEffect(() => {
     const handleTabSwitch = (e: any) => {
       if (e.detail) {
-        if (e.detail === 'in-class') setActiveTab('in-class');
-        else if (e.detail === 'class-roster') setActiveTab('class-roster');
-        else if (e.detail === 'exams') setActiveTab('exams');
-        else if (e.detail === 'homework') setActiveTab('homework');
-        else if (e.detail === 'gradebook') setActiveTab('gradebook');
+        const detailStr = String(e.detail);
+        if (detailStr.includes('homework')) {
+          setActiveTab('in-class');
+          setInitialSubFeature('homework');
+        } else if (detailStr.startsWith('in-class')) {
+          setActiveTab('in-class');
+          setInitialSubFeature('control');
+        } else if (detailStr === 'class-roster') {
+          setActiveTab('class-roster');
+        } else if (detailStr === 'exams') {
+          setActiveTab('exams');
+        } else if (detailStr === 'gradebook') {
+          setActiveTab('gradebook');
+        }
       }
     };
     window.addEventListener('truong_tab_switch', handleTabSwitch);
@@ -751,6 +766,7 @@ function TeacherDashboardContent() {
           <ClassroomCommandCenter
             currentClass={currentClass}
             classStudents={classStudents}
+            initialSubFeature={initialSubFeature}
             onSelectClass={(id) => {
               const cls = classList.find(c => c.id === id);
               if (cls) handleSelectClass(cls);
@@ -1087,117 +1103,18 @@ function TeacherDashboardContent() {
         )}
 
         {/* ================================================================== */}
-        {/* TAB 4: BÀI TẬP VỀ NHÀ (CHỈ THỰC HIỆN TRÊN ĐÚNG 1 LỚP NÀY)           */}
+        {/* TAB 4: BÀI TẬP VỀ NHÀ (ĐÃ DI CHUYỂN VÀO LỚP HỌC SỐ & ẤN ĐỊNH THEO TIẾT) */}
         {/* ================================================================== */}
         {activeTab === 'homework' && (
-          <div className="space-y-5">
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-amber-600" />
-                  <span>Giao &amp; Chấm Bài Tập Về Nhà · {currentClass.name}</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Giao bài tập củng cố, xem ảnh chụp trang vở của học sinh phóng to và chấm bài theo chuẩn <strong>Thông tư 22/2021/TT-BGDĐT</strong>
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowAssignHwModal(true)}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1.5"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>+ Giao Bài Tập Mới</span>
-              </button>
-            </div>
-
-            {/* DANH SÁCH BÀI TẬP VỀ NHÀ HỌC SINH ĐÃ NỘP */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-sm text-slate-900">
-                  Danh sách bài nộp của học sinh {currentClass.name}
-                </h4>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-[10px] uppercase">
-                    <tr>
-                      <th className="py-3 px-4">Học Sinh</th>
-                      <th className="py-3 px-3">Lớp</th>
-                      <th className="py-3 px-4">Tiêu Đề Bài Tập</th>
-                      <th className="py-3 px-4">Tệp / Ảnh Vở Nộp</th>
-                      <th className="py-3 px-3 text-center">Đánh Giá TT22</th>
-                      <th className="py-3 px-4">Lời Phê Của Thầy</th>
-                      <th className="py-3 px-3 text-right">Thao Tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {homeworkSubs.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-4 font-bold text-slate-900">
-                          <div>{sub.studentName}</div>
-                          <div className="font-mono text-[11px] text-slate-400 font-normal">{sub.studentCode}</div>
-                        </td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">{sub.className}</td>
-                        <td className="py-3 px-4 text-slate-800 max-w-xs truncate" title={sub.homeworkTitle}>
-                          {sub.homeworkTitle}
-                        </td>
-                        <td className="py-3 px-4">
-                          {sub.fileType === 'image' ? (
-                            <button
-                              onClick={() => {
-                                setPreviewImage(sub.fileDataUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80');
-                                setImageRotation(0);
-                                setImageZoom(1);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-bold text-[11px] transition-colors"
-                            >
-                              <Camera className="w-3.5 h-3.5 text-purple-600" />
-                              <span>Xem ảnh vở</span>
-                            </button>
-                          ) : (
-                            <span className="text-slate-500 font-mono text-[11px] flex items-center gap-1">
-                              <FileText className="w-3.5 h-3.5 text-blue-500" />
-                              <span>{sub.fileName || 'Tệp thực hành'}</span>
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-3 text-center">
-                          {sub.status === 'graded' ? (
-                            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
-                              (sub.grade || 0) >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              {sub.feedback?.includes('Đạt') ? 'Đạt' : `${sub.grade}đ`}
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                              Chờ chấm
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 max-w-xs truncate text-[11px]">
-                          {sub.feedback || <span className="text-slate-400 italic">Chưa nhận xét</span>}
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <button
-                            onClick={() => {
-                              setGradingHwId(sub.id);
-                              setHwScore(sub.grade ? String(sub.grade) : '10');
-                              setHwFeedback(sub.feedback || 'Bài làm rất tốt, trình bày sạch đẹp!');
-                            }}
-                            className="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition-colors"
-                          >
-                            Chấm bài
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <ClassroomCommandCenter
+            currentClass={currentClass}
+            classStudents={classStudents}
+            initialSubFeature="homework"
+            onSelectClass={(id) => {
+              const cls = classList.find(c => c.id === id);
+              if (cls) handleSelectClass(cls);
+            }}
+          />
         )}
 
         {/* ================================================================== */}

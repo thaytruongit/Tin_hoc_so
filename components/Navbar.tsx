@@ -77,7 +77,9 @@ export default function Navbar() {
 
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
-      setCurrentTabQuery(sp.get('tab') || 'in-class');
+      const t = sp.get('tab') || 'in-class';
+      const s = sp.get('sub');
+      setCurrentTabQuery(s ? `${t}&sub=${s}` : t);
     }
 
     // Đăng ký đồng bộ real-time khi lớp thay đổi từ bất kỳ đâu
@@ -201,7 +203,7 @@ export default function Navbar() {
     },
     {
       title: 'Bài Tập Về Nhà',
-      href: '/teacher?tab=homework',
+      href: '/teacher?tab=in-class&sub=homework',
       icon: BookOpen,
     },
     {
@@ -289,8 +291,9 @@ export default function Navbar() {
             {activeMenus.map((item) => {
               const Icon = item.icon;
               const isTeacherLinkActive = user.role === 'teacher' && pathname === '/teacher' && (
-                (item.href.includes('tab=in-class') && (!currentTabQuery || currentTabQuery === 'in-class')) ||
-                (item.href.includes('tab=') && item.href.includes(`tab=${currentTabQuery}`))
+                (item.href === '/teacher?tab=in-class' && (!currentTabQuery || currentTabQuery === 'in-class')) ||
+                (item.href.includes('sub=homework') && currentTabQuery?.includes('sub=homework')) ||
+                (!item.href.includes('sub=homework') && item.href.includes('tab=') && currentTabQuery && item.href.endsWith(`tab=${currentTabQuery}`))
               );
               const isActive = isTeacherLinkActive || (user.role !== 'teacher' && (
                 pathname === item.href || (item.href !== '/' && !item.href.includes('#') && !item.href.includes('?') && pathname.startsWith(item.href))
@@ -302,9 +305,9 @@ export default function Navbar() {
                   href={item.href}
                   onClick={() => {
                     if (user.role === 'teacher' && item.href.includes('tab=')) {
-                      const tab = item.href.split('tab=')[1];
-                      setCurrentTabQuery(tab);
-                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tab }));
+                      const tabPart = item.href.split('/teacher?tab=')[1] || item.href.split('tab=')[1] || '';
+                      setCurrentTabQuery(tabPart);
+                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tabPart }));
                     }
                   }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
@@ -436,9 +439,9 @@ export default function Navbar() {
                   onClick={() => {
                     setMobileMenuOpen(false);
                     if (user.role === 'teacher' && item.href.includes('tab=')) {
-                      const tab = item.href.split('tab=')[1];
-                      setCurrentTabQuery(tab);
-                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tab }));
+                      const tabPart = item.href.split('/teacher?tab=')[1] || item.href.split('tab=')[1] || '';
+                      setCurrentTabQuery(tabPart);
+                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tabPart }));
                     }
                   }}
                   className={`flex items-center justify-between p-3 rounded-xl border transition-all ${

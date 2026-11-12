@@ -38,11 +38,20 @@ import {
   Filter,
   ExternalLink,
   Printer,
-  CheckSquare
+  CheckSquare,
+  Camera,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+  PlusCircle,
+  Calendar,
+  MessageSquare,
+  CheckCheck,
+  Upload
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ClassItem, Student } from '@/lib/types';
-import { MOCK_CLASSES, MOCK_STUDENTS } from '@/lib/mock-data';
+import { ClassItem, Student, HomeworkSubmission } from '@/lib/types';
+import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_HOMEWORK_SUBMISSIONS } from '@/lib/mock-data';
 import { CURRICULUM_DATA } from '@/lib/curriculum-data';
 import {
   ClassroomControlState,
@@ -66,12 +75,14 @@ import Virtual3DClassroom from './Virtual3DClassroom';
 interface ClassroomCommandCenterProps {
   currentClass: ClassItem;
   classStudents: Student[];
+  initialSubFeature?: 'control' | 'grading' | 'homework' | 'grid' | 'ranking' | 'summary';
   onSelectClass?: (classId: string) => void;
 }
 
 export default function ClassroomCommandCenter({
   currentClass,
   classStudents,
+  initialSubFeature,
   onSelectClass,
 }: ClassroomCommandCenterProps) {
   const [controlState, setControlState] = useState<ClassroomControlState>(getClassroomState());
@@ -85,8 +96,27 @@ export default function ClassroomCommandCenter({
   const [periodSearch, setPeriodSearch] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  // 5 Phân hệ của Chức năng Lớp học số
-  const [activeSubFeature, setActiveSubFeature] = useState<'control' | 'grading' | 'grid' | 'ranking' | 'summary'>('control');
+  // 6 Phân hệ của Chức năng Lớp học số
+  const [activeSubFeature, setActiveSubFeature] = useState<'control' | 'grading' | 'homework' | 'grid' | 'ranking' | 'summary'>(initialSubFeature || 'control');
+
+  useEffect(() => {
+    if (initialSubFeature) {
+      setActiveSubFeature(initialSubFeature);
+    }
+  }, [initialSubFeature]);
+
+  // STATE BÀI TẬP VỀ NHÀ (ẤN ĐỊNH THEO TIẾT HỌC HIỆN TẠI)
+  const [hwList, setHwList] = useState<HomeworkSubmission[]>([]);
+  const [hwFilter, setHwFilter] = useState<'all' | 'submitted' | 'pending' | 'graded' | 'not_submitted'>('all');
+  const [hwSearch, setHwSearch] = useState<string>('');
+  const [selectedHwSub, setSelectedHwSub] = useState<HomeworkSubmission | null>(null);
+  const [hwImageZoom, setHwImageZoom] = useState<number>(1);
+  const [hwImageRotation, setHwImageRotation] = useState<number>(0);
+  const [hwGradingType, setHwGradingType] = useState<'tt22' | 'score'>('tt22');
+  const [hwTt22Status, setHwTt22Status] = useState<'Đạt' | 'Chưa đạt'>('Đạt');
+  const [hwScoreValue, setHwScoreValue] = useState<string>('10');
+  const [hwTeacherFeedback, setHwTeacherFeedback] = useState<string>('Vở ghi chép sạch đẹp, giải bài tập chính xác!');
+  const [hwNotification, setHwNotification] = useState<string>('');
 
   // Trạng thái chấm bài thực hành
   const [gradingMachineId, setGradingMachineId] = useState<number | null>(null);
@@ -205,6 +235,123 @@ export default function ClassroomCommandCenter({
     }));
     confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
     setOnlineGradingMachine(null);
+  };
+
+  // ĐỒNG BỘ VÀ ẤN ĐỊNH BÀI TẬP VỀ NHÀ THEO TIẾT ĐANG CHỌN CHO LỚP
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = localStorage.getItem('truong_homework_submissions');
+      let allSaved: HomeworkSubmission[] = [];
+      if (saved) {
+        allSaved = JSON.parse(saved);
+      }
+
+      const targetHwId = `hw-p${activeLesson.period}-g${currentClass.grade}`;
+      const filtered = allSaved.filter(
+        (s) =>
+          (s.homeworkId === targetHwId || s.homeworkTitle?.includes(`Tiết ${activeLesson.period}`)) &&
+          (s.classId === currentClass.id || s.className === currentClass.name)
+      );
+
+      if (filtered.length > 0) {
+        setHwList(filtered);
+      } else {
+        const sampleNotebooks = [
+          'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80',
+          'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=80',
+          'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80',
+          'https://images.unsplash.com/photo-1584697964190-705a8b79f8c6?auto=format&fit=crop&w=900&q=80',
+        ];
+        const studentPool = classStudents.length > 0 ? classStudents : MOCK_STUDENTS.filter(s => s.classId === currentClass.id);
+        const seeded: HomeworkSubmission[] = (studentPool.length > 0 ? studentPool : studentPool.slice(0, 16)).map((st, idx) => {
+          const isGraded = idx < 6;
+          const isImg = !activeLesson.practicalTask || idx % 2 !== 0;
+          return {
+            id: `hwsub-${currentClass.id}-p${activeLesson.period}-${st.studentCode}`,
+            homeworkId: targetHwId,
+            homeworkTitle: activeLesson.homework?.title || `BTVN Tiết ${activeLesson.period}: ${activeLesson.title}`,
+            studentCode: st.studentCode,
+            studentName: st.fullName,
+            classId: currentClass.id,
+            className: currentClass.name,
+            fileType: isImg ? 'image' : 'xlsx',
+            fileName: isImg
+              ? `${currentClass.name}_${st.studentCode}_VoBaiTap_Tiet${activeLesson.period}.jpg`
+              : `${currentClass.name}_${st.studentCode}_ThucHanh_Tiet${activeLesson.period}.xlsx`,
+            fileSize: isImg ? `${(1.2 + (idx % 4) * 0.3).toFixed(1)} MB` : `${42 + idx * 6} KB`,
+            fileDataUrl: isImg ? sampleNotebooks[idx % sampleNotebooks.length] : undefined,
+            note:
+              idx % 3 === 0
+                ? 'Em đã hoàn thành bài tập SGK và vẽ sơ đồ tư duy vào vở ạ.'
+                : idx % 3 === 1
+                ? 'Thưa Thầy, em nộp bài tập củng cố và tóm tắt kiến thức bài học.'
+                : 'Em đã nộp bài tập về nhà đúng hạn theo yêu cầu của Thầy.',
+            submittedAt: `Hôm qua lúc ${18 + (idx % 4)}:${(15 + idx * 3) % 60 < 10 ? '0' : ''}${(15 + idx * 3) % 60}`,
+            grade: isGraded ? (idx === 0 ? 10 : idx === 1 ? 9.5 : idx === 2 ? 10 : 9) : undefined,
+            feedback: isGraded
+              ? idx === 0
+                ? 'Vở ghi bài sạch đẹp, giải bài tập chính xác 100%!'
+                : idx === 1
+                ? 'Sơ đồ tư duy trực quan, trình bày khoa học, hoàn thành xuất sắc!'
+                : 'Bài làm rất tốt, nắm vững kiến thức trọng tâm!'
+              : undefined,
+            status: isGraded ? ('graded' as const) : ('submitted' as const),
+          };
+        });
+
+        setHwList(seeded);
+        const combined = [...allSaved, ...seeded];
+        localStorage.setItem('truong_homework_submissions', JSON.stringify(combined));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [activeLesson.period, currentClass.id, currentClass.grade, currentClass.name, classStudents]);
+
+  const handleOpenHwGrading = (sub: HomeworkSubmission) => {
+    setSelectedHwSub(sub);
+    setHwImageZoom(1);
+    setHwImageRotation(0);
+    if (sub.grade) {
+      setHwScoreValue(String(sub.grade));
+      setHwTt22Status(sub.grade >= 7 ? 'Đạt' : 'Chưa đạt');
+    } else {
+      setHwScoreValue('10');
+      setHwTt22Status('Đạt');
+    }
+    setHwTeacherFeedback(sub.feedback || 'Vở ghi chép sạch đẹp, giải bài tập chính xác và đúng yêu cầu!');
+  };
+
+  const handleSaveHwGrade = () => {
+    if (!selectedHwSub) return;
+    const numScore = hwGradingType === 'tt22' ? (hwTt22Status === 'Đạt' ? 10 : 5) : parseFloat(hwScoreValue) || 10;
+    const finalFeedback =
+      hwTeacherFeedback.trim() || (hwTt22Status === 'Đạt' ? 'Bài làm đạt yêu cầu!' : 'Cần bổ sung hoàn thiện bài!');
+
+    const updatedSub: HomeworkSubmission = {
+      ...selectedHwSub,
+      grade: numScore,
+      feedback: finalFeedback,
+      status: 'graded',
+    };
+
+    const updatedList = hwList.map((s) => (s.id === updatedSub.id ? updatedSub : s));
+    setHwList(updatedList);
+
+    try {
+      const saved = localStorage.getItem('truong_homework_submissions');
+      const existing: HomeworkSubmission[] = saved ? JSON.parse(saved) : [];
+      const newStorage = [updatedSub, ...existing.filter((s) => s.id !== updatedSub.id)];
+      localStorage.setItem('truong_homework_submissions', JSON.stringify(newStorage));
+    } catch (e) {
+      console.error(e);
+    }
+
+    setSelectedHwSub(null);
+    setHwNotification(`✅ Đã lưu đánh giá Thông tư 22 cho học sinh ${selectedHwSub.studentName} thành công!`);
+    setTimeout(() => setHwNotification(''), 3500);
+    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
   };
 
   // Đồng bộ thông tin tiết và lớp vào trạng thái điều khiển
@@ -567,15 +714,16 @@ export default function ClassroomCommandCenter({
       </div>
 
       {/* ==================================================================== */}
-      {/* 2. MENU 5 PHÂN HỆ CỐT LÕI CỦA LỚP HỌC SỐ                            */}
+      {/* 2. MENU 6 PHÂN HỆ CỐT LÕI CỦA LỚP HỌC SỐ                             */}
       {/* ==================================================================== */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-slate-200 pb-3">
         {[
-          { id: 'control', name: '1. Điều khiển 3 hoạt động trực tiếp', icon: Radio },
-          { id: 'grading', name: '2. Chấm bài thực hành', icon: CheckSquare },
-          { id: 'grid', name: '3. Lưới theo dõi 24 máy', icon: Monitor },
-          { id: 'ranking', name: '4. Bảng xếp hạng lớp', icon: Trophy },
-          { id: 'summary', name: '5. Tổng hợp kết quả', icon: FileSpreadsheet },
+          { id: 'control', name: '1. Điều khiển 3 HĐ trực tiếp', icon: Radio },
+          { id: 'grading', name: `2. Chấm bài thực hành (Tiết ${activeLesson.period})`, icon: CheckSquare },
+          { id: 'homework', name: `3. Bài tập về nhà (Tiết ${activeLesson.period})`, icon: BookOpen },
+          { id: 'grid', name: '4. Lưới theo dõi 24 máy', icon: Monitor },
+          { id: 'ranking', name: '5. Bảng xếp hạng lớp', icon: Trophy },
+          { id: 'summary', name: '6. Tổng hợp kết quả', icon: FileSpreadsheet },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSubFeature === tab.id;
@@ -871,30 +1019,17 @@ export default function ClassroomCommandCenter({
             </div>
           </div>
 
-          {/* NẾU LÀ TIẾT LÝ THUYẾT: THÔNG BÁO RÕ RÀNG VÀ GỢI Ý CHUYỂN TIẾT THỰC HÀNH */}
+          {/* NẾU LÀ TIẾT LÝ THUYẾT: THÔNG BÁO RÕ RÀNG ĐÃ CỐ ĐỊNH ẤN ĐỊNH */}
           {!isPracticalLesson && (
             <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-3">
               <div className="flex items-center gap-2 font-black text-sm">
                 <BookOpen className="w-5 h-5 text-amber-700" />
-                <span>Tiết {activeLesson.period}: {activeLesson.title} là TIẾT LÝ THUYẾT</span>
+                <span>Tiết {activeLesson.period}: {activeLesson.title} là TIẾT LÝ THUYẾT ĐÃ ẤN ĐỊNH</span>
               </div>
               <p className="text-xs text-amber-800 leading-relaxed">
-                Tiết học này không có bài tập thực hành trên máy. Học sinh tập trung hoàn thành Phiếu khám phá (HĐ1) và Trắc nghiệm (HĐ2).
-                Để xem và chấm bài thực hành, Thầy có thể chọn các tiết thực hành của Khối {currentClass.grade}:
+                Tiết học này không có bài tập thực hành trên máy. Học sinh tập trung hoàn thành Hoạt động 1 (Khám phá kiến thức) và Hoạt động 2 (Luyện tập trắc nghiệm).
+                Chức năng chấm bài thực hành phòng máy chỉ áp dụng cho các Tiết Thực Hành. Nếu Thầy muốn đổi sang tiết thực hành, vui lòng nhấn nút <strong>"Đổi Tiết Học"</strong> ở thanh điều khiển trên cùng.
               </p>
-              <div className="flex items-center gap-2 flex-wrap pt-1">
-                {gradeCurriculum.filter(l => Boolean(l.practicalTask)).slice(0, 6).map(l => (
-                  <button
-                    key={l.period}
-                    type="button"
-                    onClick={() => handleSelectPeriod(l.period, l.title)}
-                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Tiết {l.period}: {l.title}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-amber-700" />
-                  </button>
-                ))}
-              </div>
             </div>
           )}
 
@@ -1034,7 +1169,243 @@ export default function ClassroomCommandCenter({
         </div>
       )}
 
-      {/* PHÂN HỆ 3: LƯỚI THEO DÕI 24 MÁY */}
+      {/* PHÂN HỆ 3: BÀI TẬP VỀ NHÀ (ẤN ĐỊNH THEO TIẾT HỌC HIỆN TẠI) */}
+      {activeSubFeature === 'homework' && (
+        <div className="space-y-6">
+          {/* BANNER THÔNG TIN BÀI TẬP VỀ NHÀ ĐÃ ẤN ĐỊNH */}
+          <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/60 to-white rounded-3xl border border-amber-200/90 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <BookOpen className="w-4 h-4" />
+                  </span>
+                  <h3 className="font-extrabold text-lg text-slate-900">
+                    Bài Tập Về Nhà · Tiết {activeLesson.period}: {activeLesson.title}
+                  </h3>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 flex items-center gap-1">
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Đã Ấn Định Giao Cho Lớp {currentClass.name}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 pl-10.5">
+                  Nội dung bài tập về nhà được hệ thống tự động đồng bộ theo <strong>Tiết {activeLesson.period}</strong> thuộc Khối {currentClass.grade}. Thầy xem ảnh vở bài tập hoặc tệp sản phẩm và chấm theo <strong>Thông tư 22/2021/TT-BGDĐT</strong>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowPeriodModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Đổi sang tiết học khác để quản lý BTVN của tiết đó"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Đổi Tiết Khác</span>
+                </button>
+              </div>
+            </div>
+
+            {/* CARD NỘI DUNG CHI TIẾT BÀI TẬP VỀ NHÀ CỦA TIẾT NÀY */}
+            <div className="bg-white rounded-2xl border border-amber-200 p-5 space-y-3 shadow-2xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-amber-100 pb-3">
+                <div className="font-bold text-sm text-amber-950 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-600" />
+                  <span>{activeLesson.homework?.title || `BTVN Tiết ${activeLesson.period}: ${activeLesson.title}`}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-semibold text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Hạn nộp: {activeLesson.homework?.dueInDays || 7} ngày sau buổi học</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-medium bg-amber-50/40 p-3.5 rounded-xl border border-amber-100">
+                {activeLesson.homework?.description || `Học sinh ôn tập nội dung bài học Tiết ${activeLesson.period}, trả lời câu hỏi củng cố vào vở ghi bài và chụp ảnh nộp lên hệ thống.`}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
+                <span className="text-slate-500 font-semibold">Định dạng nộp bài chấp nhận:</span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 font-bold border border-purple-200 flex items-center gap-1">
+                  <Camera className="w-3 h-3" />
+                  <span>Ảnh chụp trang vở ghi (JPG, PNG)</span>
+                </span>
+                {activeLesson.practicalTask && (
+                  <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-200 flex items-center gap-1">
+                    <FileSpreadsheet className="w-3 h-3" />
+                    <span>Tệp thực hành (.xlsx, .docx)</span>
+                  </span>
+                )}
+                <span className="px-2.5 py-0.5 rounded-lg bg-teal-50 text-teal-700 font-bold border border-teal-200 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Chuẩn ĐĐGtx Thông Tư 22</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* THỐNG KÊ & BỘ LỌC BÀI NỘP */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                  <span>Danh Sách Học Sinh Nộp Bài · Lớp {currentClass.name}</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                    Tiết {activeLesson.period}
+                  </span>
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Theo dõi tiến độ nộp bài, xem ảnh phóng to/xoay chiều trang vở và chấm điểm, ghi lời phê sư phạm.
+                </p>
+              </div>
+
+              {/* BỘ LỌC VÀ TÌM KIẾM */}
+              <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto">
+                <div className="relative flex-1 sm:w-56">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={hwSearch}
+                    onChange={(e) => setHwSearch(e.target.value)}
+                    placeholder="Tìm theo tên / mã HS..."
+                    className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                  {[
+                    { id: 'all', label: 'Tất cả' },
+                    { id: 'submitted', label: 'Đã nộp' },
+                    { id: 'pending', label: 'Chờ chấm' },
+                    { id: 'graded', label: 'Đã chấm' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setHwFilter(f.id as any)}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        hwFilter === f.id ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* THÔNG BÁO CHẤM ĐIỂM THÀNH CÔNG */}
+            {hwNotification && (
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2 animate-slideDown">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{hwNotification}</span>
+              </div>
+            )}
+
+            {/* BẢNG DANH SÁCH BÀI TẬP VỀ NHÀ */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-[10.5px] uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-3 text-center w-12">STT</th>
+                    <th className="py-3.5 px-4">Học Sinh</th>
+                    <th className="py-3.5 px-3 text-center">Thời Gian Nộp</th>
+                    <th className="py-3.5 px-4 text-center">Tệp / Ảnh Vở Nộp</th>
+                    <th className="py-3.5 px-3 text-center">Đánh Giá TT22</th>
+                    <th className="py-3.5 px-4">Lời Phê Của Thầy Trường</th>
+                    <th className="py-3.5 px-3 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {hwList
+                    .filter((sub) => {
+                      if (hwFilter === 'submitted') return true;
+                      if (hwFilter === 'pending') return sub.status === 'submitted' || !sub.grade;
+                      if (hwFilter === 'graded') return sub.status === 'graded' && sub.grade !== undefined;
+                      return true;
+                    })
+                    .filter((sub) => {
+                      if (!hwSearch.trim()) return true;
+                      const q = hwSearch.toLowerCase();
+                      return sub.studentName.toLowerCase().includes(q) || sub.studentCode.toLowerCase().includes(q);
+                    })
+                    .map((sub, idx) => (
+                      <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-3 text-center font-mono text-slate-400 text-xs">
+                          {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-slate-900">
+                          <div className="text-sm">{sub.studentName}</div>
+                          <div className="font-mono text-[11px] text-slate-400 font-normal">{sub.studentCode} · {sub.className}</div>
+                        </td>
+                        <td className="py-3.5 px-3 text-center text-slate-500 text-[11px] whitespace-nowrap">
+                          {sub.submittedAt}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {sub.fileType === 'image' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenHwGrading(sub)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                              title="Xem ảnh chụp vở ghi bài của học sinh phóng to"
+                            >
+                              <Camera className="w-3.5 h-3.5 text-purple-600" />
+                              <span>Xem ảnh vở</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenHwGrading(sub)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                              title="Mở tệp thực hành của học sinh"
+                            >
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
+                              <span>{sub.fileName || 'Tệp thực hành'}</span>
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3 text-center">
+                          {sub.status === 'graded' && sub.grade !== undefined ? (
+                            <span className={`px-2.5 py-1 rounded-full font-black text-xs ${
+                              sub.grade >= 7
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            }`}>
+                              {sub.feedback?.includes('Đạt') || sub.grade >= 7 ? `Đạt (${sub.grade}đ)` : `${sub.grade}đ`}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                              ⏳ Chờ chấm
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-700 max-w-xs truncate text-xs">
+                          {sub.feedback ? (
+                            <span title={sub.feedback}>“{sub.feedback}”</span>
+                          ) : (
+                            <span className="text-slate-400 italic">Chưa nhận xét</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenHwGrading(sub)}
+                            className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow"
+                          >
+                            Chấm bài
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PHÂN HỆ 4: LƯỚI THEO DÕI 24 MÁY */}
       {activeSubFeature === 'grid' && (
         <div className="space-y-4">
           <Virtual3DClassroom
@@ -1760,6 +2131,269 @@ export default function ClassroomCommandCenter({
                   >
                     <Check className="w-4 h-4" />
                     <span>Lưu Kết Quả & Tặng Sao Tuyên Dương</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* MODAL XEM ẢNH VỞ & CHẤM BÀI TẬP VỀ NHÀ */}
+      {mounted && selectedHwSub && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <span>Chấm Bài Tập Về Nhà · {selectedHwSub.studentName}</span>
+                    <span className="font-mono text-xs text-slate-500 font-normal">({selectedHwSub.studentCode})</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Tiết {activeLesson.period}: {activeLesson.title} · {selectedHwSub.className}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedHwSub(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200/80 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body 2 Cột: Cột Trái Xem Ảnh Vở / Tệp, Cột Phải Form Chấm */}
+            <div className="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-5 flex-1">
+              {/* CỘT TRÁI: XEM ẢNH TRANG VỞ HOẶC TỆP */}
+              <div className="space-y-3 flex flex-col">
+                <div className="flex items-center justify-between bg-slate-100 p-2 rounded-2xl">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-purple-600" />
+                    <span>Trang vở ghi chép</span>
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setHwImageRotation((r) => (r + 90) % 360)}
+                      className="p-1.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 text-xs font-bold shadow-2xs cursor-pointer flex items-center gap-1"
+                      title="Xoay ảnh 90 độ"
+                    >
+                      <RotateCw className="w-3.5 h-3.5" />
+                      <span>Xoay</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHwImageZoom((z) => Math.min(2.5, z + 0.25))}
+                      className="p-1.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 text-xs font-bold shadow-2xs cursor-pointer"
+                      title="Phóng to ảnh"
+                    >
+                      <ZoomIn className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHwImageZoom((z) => Math.max(0.75, z - 0.25))}
+                      className="p-1.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 text-xs font-bold shadow-2xs cursor-pointer"
+                      title="Thu nhỏ ảnh"
+                    >
+                      <ZoomOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative flex-1 min-h-[300px] max-h-[420px] bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center p-2 border border-slate-200">
+                  {selectedHwSub.fileType === 'image' && selectedHwSub.fileDataUrl ? (
+                    <img
+                      src={selectedHwSub.fileDataUrl}
+                      alt="Ảnh trang vở học sinh"
+                      className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-200"
+                      style={{
+                        transform: `rotate(${hwImageRotation}deg) scale(${hwImageZoom})`,
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center p-6 text-white space-y-2">
+                      <FileSpreadsheet className="w-12 h-12 mx-auto text-blue-400" />
+                      <div className="font-bold text-sm">{selectedHwSub.fileName}</div>
+                      <div className="text-xs text-slate-400">{selectedHwSub.fileSize}</div>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          alert('Đang mở tệp thực hành của học sinh!');
+                        }}
+                        className="inline-block mt-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                      >
+                        Tải / Mở tệp trực tiếp
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {selectedHwSub.note && (
+                  <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-950 text-xs">
+                    <span className="font-bold">Ghi chú của học sinh: </span>
+                    <span>“{selectedHwSub.note}”</span>
+                  </div>
+                )}
+              </div>
+
+              {/* CỘT PHẢI: FORM CHẤM ĐIỂM & LỜI PHÊ */}
+              <div className="space-y-4 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-2">
+                      1. Phương thức đánh giá bài tập:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setHwGradingType('tt22')}
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          hwGradingType === 'tt22'
+                            ? 'bg-teal-50 border-teal-500 text-teal-800 ring-2 ring-teal-500/20'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        Đánh giá Thông tư 22 (Đạt / Chưa đạt)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHwGradingType('score')}
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          hwGradingType === 'score'
+                            ? 'bg-blue-50 border-blue-500 text-blue-800 ring-2 ring-blue-500/20'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        Thang điểm 10 (0 - 10đ)
+                      </button>
+                    </div>
+                  </div>
+
+                  {hwGradingType === 'tt22' ? (
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 mb-2">
+                        2. Kết quả Thông tư 22:
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setHwTt22Status('Đạt')}
+                          className={`py-3 px-4 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                            hwTt22Status === 'Đạt'
+                              ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30'
+                              : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>ĐẠT (Hoàn thành bài tập)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHwTt22Status('Chưa đạt')}
+                          className={`py-3 px-4 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                            hwTt22Status === 'Chưa đạt'
+                              ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-500/30'
+                              : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-800'
+                          }`}
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                          <span>CHƯA ĐẠT (Cần làm lại)</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 mb-2">
+                        2. Nhập điểm số (0 - 10đ):
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="10"
+                          value={hwScoreValue}
+                          onChange={(e) => setHwScoreValue(e.target.value)}
+                          className="w-24 px-3 py-2 rounded-xl border border-slate-300 font-black text-base text-center bg-white"
+                        />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {['10', '9.5', '9.0', '8.5', '8.0'].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setHwScoreValue(s)}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-100 hover:text-blue-800 text-slate-700 font-bold text-xs cursor-pointer"
+                            >
+                              {s}đ
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-2">
+                      3. Lời nhận xét / Phê của Thầy Đỗ Mạnh Trường:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={hwTeacherFeedback}
+                      onChange={(e) => setHwTeacherFeedback(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
+                      placeholder="Nhập lời phê chi tiết cho học sinh..."
+                    />
+                    <div className="mt-2 space-y-1.5">
+                      <span className="text-[11px] font-semibold text-slate-400">Chọn nhanh mẫu nhận xét chuẩn:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          'Vở ghi bài sạch đẹp, giải bài tập chính xác 100%!',
+                          'Trình bày rõ ràng, đủ nội dung yêu cầu SGK.',
+                          'Sơ đồ tư duy trực quan, bài làm rất xuất sắc!',
+                          'Cần rèn thêm chữ viết và chú ý công thức!',
+                        ].map((fb) => (
+                          <button
+                            key={fb}
+                            type="button"
+                            onClick={() => setHwTeacherFeedback(fb)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-600 transition-colors cursor-pointer text-left"
+                          >
+                            + {fb}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedHwSub(null)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveHwGrade}
+                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Lưu Đánh Giá BTVN</span>
                   </button>
                 </div>
               </div>
