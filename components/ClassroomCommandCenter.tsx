@@ -80,8 +80,8 @@ export default function ClassroomCommandCenter({
   const [selectedPeriod, setSelectedPeriod] = useState<number>(controlState.activePeriod || 1);
   const [inspectingMachine, setInspectingMachine] = useState<LabMachineState | null>(null);
 
-  // POPUP CHỌN TIẾT HỌC TRƯỚC KHI BẮT ĐẦU DẠY TRỰC TIẾP
-  const [showPeriodModal, setShowPeriodModal] = useState(false);
+  // POPUP CHỌN TIẾT HỌC TRƯỚC KHI BẮT ĐẦU DẠY TRỰC TIẾP (BẬT POPUP LUÔN KHI VÀO / ĐĂNG NHẬP)
+  const [showPeriodModal, setShowPeriodModal] = useState(true);
   const [periodSearch, setPeriodSearch] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -148,6 +148,9 @@ export default function ClassroomCommandCenter({
 
     setSelectedPeriod(pNum);
     selectPeriodForClassroom(pNum, lesson?.title, g, isPrac, currentClass.id, currentClass.name);
+
+    // Khi giáo viên đăng nhập / mở lớp học số: tự động bật popup chọn tiết học luôn
+    setShowPeriodModal(true);
   }, [currentClass?.id, currentClass?.grade, currentClass?.name]);
 
   // Chọn và cố định tiết học giảng dạy khi Thầy chọn từ popup
