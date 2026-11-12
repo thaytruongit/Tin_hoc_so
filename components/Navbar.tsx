@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -101,6 +102,17 @@ export default function Navbar() {
       window.removeEventListener('truong_classes_update', handleClassesChange);
     };
   }, [pathname]);
+
+  // Đóng Modal khi nhấn phím Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isClassModalOpen) {
+        setIsClassModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isClassModalOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('truong_user_role');
@@ -212,7 +224,8 @@ export default function Navbar() {
   const cleanClassName = rawClassName.startsWith('Lớp') ? rawClassName : `Lớp ${rawClassName}`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
       <div className="max-w-[1600px] mx-auto px-3 sm:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
           
@@ -435,19 +448,22 @@ export default function Navbar() {
       )}
 
       {/* ==================================================================== */}
-      {/* POPUP MODAL CHÍNH GIỮA MÀN HÌNH (CENTER MODAL) CHỌN KHỐI & LỚP       */}
+      {/* POPUP MODAL CHÍNH GIỮA MÀN HÌNH (CENTER MODAL DÙNG CREATEPORTAL)     */}
+      {/* Gắn trực tiếp vào document.body để hiển thị toàn bộ, không bị che     */}
       {/* ==================================================================== */}
-      {isClassModalOpen && (
+      </header>
+
+      {mounted && isClassModalOpen && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 transition-all"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
           onClick={() => setIsClassModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-5 sm:p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-lg space-y-3.5 my-auto max-h-[calc(100vh-2rem)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Modal */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold shadow-xs">
                   <School className="w-5 h-5" />
@@ -465,15 +481,15 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsClassModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
-                title="Đóng bảng chọn lớp"
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                title="Đóng bảng chọn lớp (Esc)"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Bố cục 2 cột: Cột trái Khối, Cột phải Lớp */}
-            <div className="grid grid-cols-12 gap-3 items-start">
+            <div className="grid grid-cols-12 gap-3 items-start overflow-y-auto">
               {/* CỘT TRÁI: KHỐI (6, 7, 8, 9) */}
               <div className="col-span-4 space-y-1.5">
                 <span className="font-extrabold text-slate-400 text-[10px] uppercase tracking-wider block">
@@ -507,7 +523,7 @@ export default function Navbar() {
                   2. Lớp giảng dạy (Khối {selectedModalGrade})
                 </span>
 
-                <div className="flex flex-col gap-1.5 max-h-[260px] overflow-y-auto pr-1">
+                <div className="flex flex-col gap-1.5 max-h-[220px] sm:max-h-[250px] overflow-y-auto pr-1">
                   {availableClasses
                     .filter((c) => c.grade === selectedModalGrade)
                     .map((cls) => {
@@ -614,7 +630,7 @@ export default function Navbar() {
             </div>
 
             {/* THÔNG BÁO ĐỒNG BỘ TOÀN HỆ THỐNG */}
-            <div className="p-3 rounded-2xl bg-teal-50/80 border border-teal-200 text-teal-900 text-xs leading-relaxed">
+            <div className="p-3 rounded-2xl bg-teal-50/80 border border-teal-200 text-teal-900 text-xs leading-relaxed shrink-0">
               <div className="font-extrabold flex items-center gap-1.5 text-teal-950">
                 <span>🎯 Đồng bộ toàn diện:</span>
                 <span className="underline font-black">{activeClassName}</span>
@@ -624,8 +640,9 @@ export default function Navbar() {
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </header>
+    </>
   );
 }
