@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Lock,
   Unlock,
@@ -57,7 +58,8 @@ import {
   createDefaultMachines,
   broadcastLesson,
   setLiveBroadcast,
-  updateMachineScore
+  updateMachineScore,
+  selectPeriodForClassroom
 } from '@/lib/classroom-control';
 import Virtual3DClassroom from './Virtual3DClassroom';
 
@@ -75,8 +77,13 @@ export default function ClassroomCommandCenter({
   const [controlState, setControlState] = useState<ClassroomControlState>(getClassroomState());
   const [broadcastGrade, setBroadcastGrade] = useState<number>(controlState.activeGrade || currentClass.grade || 7);
   const [customBroadcast, setCustomBroadcast] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState<number>(controlState.activePeriod || 6);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(controlState.activePeriod || 1);
   const [inspectingMachine, setInspectingMachine] = useState<LabMachineState | null>(null);
+
+  // POPUP CHỌN TIẾT HỌC TRƯỚC KHI BẮT ĐẦU DẠY TRỰC TIẾP
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
+  const [periodSearch, setPeriodSearch] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   // 5 Phân hệ của Chức năng Lớp học số
   const [activeSubFeature, setActiveSubFeature] = useState<'control' | 'grading' | 'grid' | 'ranking' | 'summary'>('control');
@@ -93,6 +100,7 @@ export default function ClassroomCommandCenter({
 
   // Đăng ký nhận sự kiện điều khiển thời gian thực
   useEffect(() => {
+    setMounted(true);
     const unsub = subscribeToClassroomState((newState) => {
       setControlState(newState);
       if (newState.activeGrade) setBroadcastGrade(newState.activeGrade);
@@ -101,15 +109,48 @@ export default function ClassroomCommandCenter({
     return () => unsub();
   }, []);
 
-  // Lấy dữ liệu 29 tiết học của khối đang chọn phát lệnh
-  const gradeCurriculum = useMemo(() => {
-    return CURRICULUM_DATA[broadcastGrade] || CURRICULUM_DATA[7] || [];
-  }, [broadcastGrade]);
+  // Kiểm tra popup chọn tiết học khi lớp thay đổi
+  useEffect(() => {
+    if (currentClass?.grade) {
+      setBroadcastGrade(currentClass.grade);
+    }
+    if (typeof window !== 'undefined' && currentClass?.id) {
+      const key = `truong_fixed_period_${currentClass.id}`;
+      const saved = sessionStorage.getItem(key);
+      if (!saved) {
+        setShowPeriodModal(true);
+      } else {
+        const pNum = Number(saved);
+        if (pNum) {
+          setSelectedPeriod(pNum);
+          selectPeriodForClassroom(pNum, undefined, currentClass.grade);
+        }
+      }
+    }
+  }, [currentClass?.id, currentClass?.grade]);
 
-  // Tiết học hiện tại
+  // Lấy dữ liệu 29 tiết học của khối đang chọn
+  const gradeCurriculum = useMemo(() => {
+    const g = currentClass.grade || broadcastGrade || 6;
+    return CURRICULUM_DATA[g] || CURRICULUM_DATA[6] || [];
+  }, [currentClass.grade, broadcastGrade]);
+
+  // Tiết học hiện tại đã cố định
   const activeLesson = useMemo(() => {
-    return gradeCurriculum.find((l) => l.period === selectedPeriod) || gradeCurriculum[0];
-  }, [gradeCurriculum, selectedPeriod]);
+    const pNum = controlState.activePeriod || selectedPeriod || 1;
+    return gradeCurriculum.find((l) => l.period === pNum) || gradeCurriculum[0];
+  }, [gradeCurriculum, controlState.activePeriod, selectedPeriod]);
+
+  // Chọn và cố định tiết học giảng dạy
+  const handleSelectPeriod = (periodNum: number, title: string) => {
+    setSelectedPeriod(periodNum);
+    selectPeriodForClassroom(periodNum, title, currentClass.grade);
+    if (typeof window !== 'undefined' && currentClass?.id) {
+      sessionStorage.setItem(`truong_fixed_period_${currentClass.id}`, String(periodNum));
+    }
+    setShowPeriodModal(false);
+    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+  };
 
   // Đồng bộ thông tin tiết và lớp vào trạng thái điều khiển
   const handleSyncLessonToLab = () => {
@@ -390,51 +431,65 @@ export default function ClassroomCommandCenter({
   return (
     <div className="space-y-6">
       {/* ==================================================================== */}
-      {/* 1. THANH ĐIỀU PHỐI PHÁT TRỰC TIẾP LỚP HỌC SỐ (LIVE BROADCAST)        */}
+      {/* 1. THANH CỐ ĐỊNH TIẾT HỌC GIẢNG DẠY TRỰC TIẾP (ĐỒNG BỘ 24 MÁY TRẠM)   */}
       {/* ==================================================================== */}
-      <div className={`p-5 rounded-3xl border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${
-        controlState.isLive
-          ? 'bg-rose-50/90 border-rose-300 text-rose-950'
-          : 'bg-slate-50 border-slate-300 text-slate-800'
-      }`}>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`w-3 h-3 rounded-full ${controlState.isLive ? 'bg-rose-600 animate-ping' : 'bg-slate-400'}`}></span>
-            <span className="text-xs font-black uppercase tracking-wider">
-              {controlState.isLive ? '🔴 ĐANG PHÁT TRỰC TIẾP BÀI DẠY' : '⏸️ ĐANG TẠM DỪNG (HỌC SINH THẤY BẢNG TRẮNG)'}
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-white font-bold text-xs border border-slate-200 text-blue-700">
-              {currentClass.name}
-            </span>
-            <span className="text-xs text-slate-500 font-medium">
-              Tiết {activeLesson.period}: {activeLesson.title}
-            </span>
+      <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+            <BookOpen className="w-6 h-6 text-white" />
           </div>
-          <p className="text-xs text-slate-600">
-            {controlState.isLive
-              ? `Tất cả 24 máy trạm của ${currentClass.name} đang hiển thị 3 hoạt động bài học và nộp bài thời gian thực.`
-              : `Học sinh đang dừng ở màn hình Bảng Trắng kèm thông báo của Thầy Trường để ổn định chỗ ngồi và kiểm tra thiết bị.`
-            }
-          </p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-800 font-extrabold text-xs border border-blue-200">
+                {currentClass.name} · Khối {currentClass.grade}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Tiết dạy trực tiếp: Tiết {activeLesson.period}
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium">
+                24 máy trạm đồng bộ
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              {activeLesson.title}
+            </h2>
+            <div className="text-xs text-slate-500 font-medium">
+              Chủ đề: <span className="text-blue-700 font-bold">{activeLesson.topic || 'Tin học THCS'}</span>
+              {activeLesson.practicalTask && (
+                <span className="ml-2 text-purple-700 font-bold">· Thực hành: {activeLesson.practicalTask.title}</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button
             type="button"
-            onClick={() => {
-              const nextLive = !controlState.isLive;
-              setLiveBroadcast(nextLive, currentClass.name);
-              setControlState(prev => ({ ...prev, isLive: nextLive }));
-              if (nextLive) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }}
-            className={`px-5 py-2.5 rounded-2xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 cursor-pointer ${
-              controlState.isLive
-                ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                : 'bg-rose-600 hover:bg-rose-700 text-white ring-4 ring-rose-500/20'
-            }`}
+            onClick={() => setShowPeriodModal(true)}
+            className="px-4 py-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-black text-xs border border-blue-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Đổi tiết học phân phối chương trình để dạy"
           >
-            <Radio className="w-4 h-4 text-white animate-pulse" />
-            <span>{controlState.isLive ? 'Dừng phát (Hiện Bảng Trắng)' : '🔴 Phát trực tiếp bài dạy ngay'}</span>
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>📖 Đổi Tiết Học ▾</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetAllActivities(true)}
+            className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Mở tất cả 3 hoạt động cho cả lớp làm bài"
+          >
+            <Unlock className="w-3.5 h-3.5" />
+            <span>Mở Cả 3 HĐ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetAllActivities(false)}
+            className="px-4 py-2.5 rounded-2xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Đóng / Khóa tất cả hoạt động để học sinh tập trung nghe giảng"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>Khóa HĐ</span>
           </button>
         </div>
       </div>
@@ -469,50 +524,9 @@ export default function ClassroomCommandCenter({
         })}
       </div>
 
-      {/* PHÂN HỆ 1: ĐIỀU KHIỂN THỦ CÔNG MỞ/ĐÓNG 3 HOẠT ĐỘNG TRỰC TIẾP KHI PHÁT LIVE */}
+      {/* PHÂN HỆ 1: ĐIỀU KHIỂN THỦ CÔNG MỞ/ĐÓNG 3 HOẠT ĐỘNG TRỰC TIẾP */}
       {activeSubFeature === 'control' && (
         <div className="space-y-4">
-          {/* THANH ĐIỀU KHIỂN TRẠNG THÁI VÀ NÚT THAO TÁC NHANH */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className={`w-3 h-3 rounded-full ${controlState.isLive ? 'bg-rose-600 animate-ping' : 'bg-slate-400'}`} />
-                <h3 className="font-black text-slate-900 text-sm sm:text-base tracking-tight">
-                  {controlState.isLive
-                    ? '🔴 Đang Phát Trực Tiếp · Điều Khiển Thủ Công Mở / Đóng Từng Hoạt Động'
-                    : '⏸️ Tiết Học Đang Tạm Dừng · Bật "Phát Trực Tiếp" Để Cho Học Sinh Vào Học'}
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">
-                {controlState.isLive
-                  ? `24 máy trạm của ${currentClass.name} sẽ tự động cập nhật ngay khi Thầy bấm Mở hoặc Đóng từng hoạt động.`
-                  : `Học sinh đang dừng ở màn hình Bảng Trắng. Thầy có thể cấu hình sẵn trạng thái hoạt động bên dưới.`}
-              </p>
-            </div>
-
-            {/* CẶP NÚT THAO TÁC NHANH: MỞ TẤT CẢ / ĐÓNG TẤT CẢ */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => handleSetAllActivities(true)}
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Mở tất cả 3 hoạt động cho cả lớp làm bài"
-              >
-                <Unlock className="w-3.5 h-3.5" />
-                <span>Mở Tất Cả (3 HĐ)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSetAllActivities(false)}
-                className="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Đóng / Khóa tất cả hoạt động để học sinh tập trung nghe giảng"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Đóng Tất Cả</span>
-              </button>
-            </div>
-          </div>
-
           {/* 3 THẺ HOẠT ĐỘNG: ĐẶT THỦ CÔNG MỞ / ĐÓNG CHO TỪNG HOẠT ĐỘNG */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI */}
@@ -549,8 +563,8 @@ export default function ClassroomCommandCenter({
                   <h4 className="font-black text-slate-900 text-sm">
                     1. Khám Phá Kiến Thức
                   </h4>
-                  <p className="text-xs text-indigo-700 font-bold mt-0.5">
-                    Khám phá cặp đôi · Điền khuyết kiến thức
+                  <p className="text-xs text-indigo-700 font-bold mt-0.5 truncate" title={activeLesson.worksheet?.title || 'Khám phá cặp đôi'}>
+                    {activeLesson.worksheet?.title || 'Khám phá cặp đôi · Điền khuyết kiến thức'}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                     Thời gian gợi ý: <strong>10 phút</strong>. Hai học sinh ngồi cùng máy phối hợp hoàn thành bài và chấm tự động.
@@ -621,7 +635,7 @@ export default function ClassroomCommandCenter({
                     2. Luyện Tập Trắc Nghiệm
                   </h4>
                   <p className="text-xs text-emerald-700 font-bold mt-0.5">
-                    Bộ 7 câu hỏi củng cố · Chấm tức thì
+                    Bộ 7 câu hỏi củng cố Tiết {activeLesson.period} · Chấm tức thì
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                     Thời gian gợi ý: <strong>7 phút</strong>. Học sinh làm trắc nghiệm thang điểm 10, nhận phản hồi kết quả ngay.
@@ -691,8 +705,8 @@ export default function ClassroomCommandCenter({
                   <h4 className="font-black text-slate-900 text-sm">
                     3. Thực Hành Trên Máy
                   </h4>
-                  <p className="text-xs text-purple-700 font-bold mt-0.5">
-                    Thực hành sản phẩm · Nộp Google Drive &amp; Rubric
+                  <p className="text-xs text-purple-700 font-bold mt-0.5 truncate" title={activeLesson.practicalTask?.title || 'Thực hành sản phẩm'}>
+                    {activeLesson.practicalTask?.title || 'Thực hành sản phẩm môn Tin học · Nộp Google Drive'}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                     Thời gian gợi ý: <strong>15 phút</strong>. Thao tác trên phần mềm máy tính, nộp tệp bài làm trực tiếp lên hệ thống.
@@ -738,10 +752,10 @@ export default function ClassroomCommandCenter({
             <div>
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-purple-600" />
-                <span>Chấm Bài Thực Hành Phòng Máy · {currentClass.name}</span>
+                <span>Chấm Bài Thực Hành: Tiết {activeLesson.period} · {currentClass.name}</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Chấm điểm bài thực hành Hoạt động 3 cho 24 máy trạm, ghi nhận xét và tặng sao tuyên dương học sinh.
+                Đề bài: <strong className="text-purple-700">{activeLesson.practicalTask?.title || activeLesson.title}</strong> · Chấm điểm Hoạt động 3 cho 24 máy trạm.
               </p>
             </div>
           </div>
@@ -1081,6 +1095,160 @@ export default function ClassroomCommandCenter({
             </table>
           </div>
         </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL CHỌN VÀ CỐ ĐỊNH TIẾT HỌC GIẢNG DẠY TRỰC TIẾP                 */}
+      {/* ==================================================================== */}
+      {mounted && showPeriodModal && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-xs">
+                  <BookOpen className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-white tracking-tight">
+                    CHỌN TIẾT HỌC GIẢNG DẠY TRỰC TIẾP
+                  </h3>
+                  <p className="text-xs text-blue-100 font-medium mt-0.5">
+                    {currentClass.name} (Khối {currentClass.grade}) · Cố định bài học và đồng bộ tới 24 máy trạm
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPeriodModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer font-bold"
+                title="Đóng popup"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Thanh tìm kiếm tiết học */}
+            <div className="p-4 border-b border-slate-100 bg-slate-50/70">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={periodSearch}
+                  onChange={(e) => setPeriodSearch(e.target.value)}
+                  placeholder="🔍 Tìm kiếm số tiết, tên bài học, chủ đề (ví dụ: Tiết 9, Bảng tính, Thực hành...)"
+                  className="w-full pl-4 pr-10 py-2.5 rounded-2xl border border-slate-300 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs"
+                  autoFocus
+                />
+                {periodSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setPeriodSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 px-1">
+                <span>Chương trình GDPT 2018 · Tin học Khối {currentClass.grade}</span>
+                <span className="font-bold text-blue-700">Tổng cộng {gradeCurriculum.length} tiết</span>
+              </div>
+            </div>
+
+            {/* Danh sách 29 tiết học */}
+            <div className="p-4 overflow-y-auto space-y-2 flex-1 divide-y divide-slate-100/80">
+              {gradeCurriculum
+                .filter((l) => {
+                  if (!periodSearch.trim()) return true;
+                  const q = periodSearch.toLowerCase();
+                  return (
+                    `tiết ${l.period}`.includes(q) ||
+                    l.period.toString() === q.trim() ||
+                    l.title.toLowerCase().includes(q) ||
+                    (l.topic && l.topic.toLowerCase().includes(q))
+                  );
+                })
+                .map((lesson) => {
+                  const isCurrent = (activeLesson.period === lesson.period);
+                  return (
+                    <div
+                      key={lesson.period}
+                      onClick={() => handleSelectPeriod(lesson.period, lesson.title)}
+                      className={`pt-2 first:pt-0 pb-2 flex items-center justify-between gap-3 p-3 rounded-2xl transition-all cursor-pointer border ${
+                        isCurrent
+                          ? 'bg-blue-50/70 border-blue-400 ring-2 ring-blue-400/20'
+                          : 'bg-white hover:bg-slate-50 border-slate-200/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-11 h-11 rounded-2xl shrink-0 flex flex-col items-center justify-center font-black ${
+                          isCurrent
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          <span className="text-[9px] uppercase font-bold leading-none opacity-80">Tiết</span>
+                          <span className="text-base leading-none mt-0.5">{lesson.period}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-slate-900 truncate">
+                              {lesson.title}
+                            </span>
+                            {isCurrent && (
+                              <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black shrink-0">
+                                Đang chọn
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 truncate flex items-center gap-2">
+                            <span className="text-indigo-600 font-semibold">{lesson.topic || 'Tin học THCS'}</span>
+                            {lesson.practicalTask && (
+                              <span className="text-purple-600 font-medium bg-purple-50 px-1.5 py-0.2 rounded border border-purple-100">
+                                Có thực hành
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPeriod(lesson.period, lesson.title);
+                        }}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 border border-slate-200'
+                        }`}
+                      >
+                        {isCurrent ? '✓ Đang dạy' : 'Chọn tiết này'}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Footer Modal */}
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+              <span className="text-slate-500">
+                Nhấn vào bất kỳ tiết nào để bắt đầu giảng dạy trực tiếp.
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPeriodModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition-all cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

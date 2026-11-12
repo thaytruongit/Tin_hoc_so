@@ -127,7 +127,7 @@ export function createDefaultMachines(className: string = 'Lớp 6A10'): LabMach
 
 export function getDefaultClassroomState(): ClassroomControlState {
   return {
-    isLive: false, // Mặc định CHƯA phát trực tiếp -> Học sinh hiển thị BẢNG TRẮNG thông báo
+    isLive: true, // Tiết học dạy trực tiếp kết nối 24 máy trạm
     activeGrade: 6,
     activeClassId: 'c-6a10',
     activeClassName: 'Lớp 6A10',
@@ -402,6 +402,22 @@ export function selectClassForClassroom(classId: string, className: string, grad
     activeGrade: grade,
     machines: newMachines,
     broadcastMessage: `📢 Thầy Đỗ Mạnh Trường: Đã chuyển điều phối phòng máy sang ${className} (Khối ${grade}).`,
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
+}
+
+/**
+ * Thầy chọn và cố định Tiết học giảng dạy trực tiếp:
+ * Tự động cập nhật activePeriod, lessonTitle và phát lệnh đồng bộ cho 24 máy trạm của học sinh
+ */
+export function selectPeriodForClassroom(period: number, lessonTitle?: string, grade?: number): ClassroomControlState {
+  return updateClassroomState((prev) => ({
+    ...prev,
+    isLive: true, // Tự động kích hoạt phát trực tiếp để học sinh vào học đúng tiết này
+    activePeriod: period,
+    activeGrade: grade || prev.activeGrade,
+    lessonTitle: lessonTitle || `Tiết ${period}`,
+    broadcastMessage: `📖 Thầy Đỗ Mạnh Trường: Tiết học trực tiếp hôm nay là Tiết ${period}: ${lessonTitle || `Bài học số ${period}`}.`,
     broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
   }));
 }
