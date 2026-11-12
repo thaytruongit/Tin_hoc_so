@@ -30,7 +30,9 @@ import {
   Play,
   RotateCcw,
   CheckSquare,
-  Radio
+  Radio,
+  BookOpen,
+  Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCurrentUser, UserSession } from '@/lib/auth';
@@ -94,6 +96,16 @@ export default function InClassPage() {
   const [testClickCount, setTestClickCount] = useState<number>(0);
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
 
+  // Chức năng Bài Tập Về Nhà được quản lý trực tiếp trong Lớp Học Số
+  const [showHomeworkModal, setShowHomeworkModal] = useState<boolean>(false);
+  const [allHwSubmissions, setAllHwSubmissions] = useState<any[]>([]);
+  const [hwSelectedFile, setHwSelectedFile] = useState<File | null>(null);
+  const [hwPreviewImageUrl, setHwPreviewImageUrl] = useState<string | null>(null);
+  const [hwSubmissionType, setHwSubmissionType] = useState<'image' | 'file'>('image');
+  const [hwStudentNote, setHwStudentNote] = useState('');
+  const [hwIsSubmitting, setHwIsSubmitting] = useState(false);
+  const [hwSubmittedReceipt, setHwSubmittedReceipt] = useState<any | null>(null);
+
   // Đăng ký nhận sự kiện điều khiển thời gian thực từ Thầy Đỗ Mạnh Trường
   useEffect(() => {
     setMounted(true);
@@ -114,6 +126,13 @@ export default function InClassPage() {
 
         if (user.studentName) setStudent1Name(user.studentName);
         if (user.partnerName) setStudent2Name(user.partnerName);
+
+        // Khôi phục bài tập về nhà đã nộp
+        const rawHw = localStorage.getItem('truong_homework_submissions');
+        if (rawHw) {
+          const parsed = JSON.parse(rawHw);
+          if (Array.isArray(parsed)) setAllHwSubmissions(parsed);
+        }
 
         // Khôi phục điểm đã lưu của máy này nếu có
         const currentMachineState = initialControl.machines.find(m => m.machineId === (storedMachine ? parseInt(storedMachine, 10) : 1));
@@ -199,6 +218,72 @@ export default function InClassPage() {
     // Hoán đổi tên hiển thị để phân vai chính xác
     setStudent1Name(student2Name);
     setStudent2Name(student1Name);
+  };
+
+  // Xử lý nộp Bài Tập Về Nhà ngay trong Lớp Học Số
+  const handleSelectHwImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setHwSelectedFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setHwPreviewImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSelectHwFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setHwSelectedFile(file);
+      setHwPreviewImageUrl(null);
+    }
+  };
+
+  const handleSubmitHomeworkInClass = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hwSelectedFile && !hwPreviewImageUrl) {
+      alert('Vui lòng chọn ảnh chụp vở ghi hoặc tệp bài làm để nộp!');
+      return;
+    }
+
+    setHwIsSubmitting(true);
+    setTimeout(() => {
+      const stName = student1Name || currentUser?.studentName || 'Học sinh';
+      const stCode = currentUser?.studentCode || `HS${activeGrade}0${machineId < 10 ? `0${machineId}` : machineId}`;
+      const stClass = currentUser?.studentClass || `Lớp ${activeGrade}A10`;
+
+      const newSub = {
+        id: `hw-sub-${Date.now()}`,
+        homeworkId: `hw-p${currentPeriod.period}-g${activeGrade}`,
+        homeworkTitle: `BTVN Tiết ${currentPeriod.period}: ${currentPeriod.title}`,
+        studentCode: stCode,
+        studentName: stName,
+        classId: `c-${activeGrade}a10`,
+        className: stClass,
+        fileType: hwSubmissionType === 'image' ? 'image' : 'other',
+        fileName: hwSelectedFile ? hwSelectedFile.name : `Vo_Ghi_Tiet_${currentPeriod.period}.jpg`,
+        fileSize: hwSelectedFile ? `${(hwSelectedFile.size / 1024).toFixed(1)} KB` : '1.5 MB',
+        fileDataUrl: hwPreviewImageUrl || undefined,
+        note: hwStudentNote,
+        submittedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        grade: 10,
+        feedback: 'Thầy Đỗ Mạnh Trường: Đã nhận bài làm về nhà! Trình bày sạch đẹp, đúng yêu cầu.',
+        status: 'graded',
+      };
+
+      const updated = [newSub, ...allHwSubmissions.filter(s => s.homeworkId !== newSub.homeworkId)];
+      setAllHwSubmissions(updated);
+      setHwSubmittedReceipt(newSub);
+      setHwIsSubmitting(false);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('truong_homework_submissions', JSON.stringify(updated));
+      }
+
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+    }, 600);
   };
 
   // Mở Popup Minigame có kiểm tra quyền từ Thầy
@@ -579,9 +664,9 @@ export default function InClassPage() {
       {/* ==================================================================== */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm relative overflow-hidden">
         
-        {/* THANH ĐIỀU HƯỚNG SƯ PHẠM TRÊN CÙNG */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-          <div className="space-y-1.5">
+        {/* THANH ĐIỀU HƯỚNG SƯ PHẠM TINH GỌN, KHOA HỌC */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider">
                 <School className="w-3.5 h-3.5 text-blue-600" />
@@ -590,18 +675,17 @@ export default function InClassPage() {
               <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
                 💻 Máy {machineId < 10 ? `0${machineId}` : machineId}
               </span>
-              <span className="text-xs text-slate-500 font-medium">
-                Giáo viên chỉ đạo: <strong className="text-slate-900">Thầy Đỗ Mạnh Trường</strong>
+              <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold">
+                {currentPeriod.topic}
+              </span>
+              <span className="text-xs text-slate-500 font-medium ml-auto hidden lg:inline">
+                Giáo viên chỉ đạo: <strong className="text-slate-800">Thầy Đỗ Mạnh Trường</strong>
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight pt-0.5">
               {currentPeriod.title}
             </h1>
-
-            <p className="text-xs sm:text-sm text-slate-600">
-              Chủ đề: <strong className="text-blue-700">{currentPeriod.topic}</strong> · {currentPeriod.digitalCompetency || 'Tích hợp Năng lực số CV 3456 & AI 3439'}
-            </p>
           </div>
 
           {/* KHU VỰC CẶP ĐÔI HỌC SINH TẠI MÁY & ĐỔI VAI TRÒ */}
@@ -919,6 +1003,55 @@ export default function InClassPage() {
 
         </div>
       </div>
+
+      {/* ==================================================================== */}
+      {/* 3. BÀI TẬP VỀ NHÀ TIẾT HỌC (TÍCH HỢP TRỰC TIẾP TRONG LỚP HỌC SỐ)     */}
+      {/* ==================================================================== */}
+      {currentPeriod.homework && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 rounded-3xl p-6 border-2 border-amber-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+                  BÀI TẬP VỀ NHÀ
+                </span>
+                <span className="text-xs text-slate-500 font-medium">
+                  Hạn nộp: {currentPeriod.homework.dueInDays || 7} ngày sau tiết học
+                </span>
+                {allHwSubmissions.some(s => s.homeworkId === `hw-p${currentPeriod.period}-g${activeGrade}`) && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Đã nộp bài (10/10)</span>
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                {currentPeriod.homework.title || `Nhiệm vụ về nhà Tiết ${currentPeriod.period}: ${currentPeriod.title}`}
+              </h3>
+              <p className="text-xs text-slate-600 line-clamp-2 max-w-3xl">
+                {currentPeriod.homework.description}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowHomeworkModal(true)}
+            className="px-5 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>
+              {allHwSubmissions.some(s => s.homeworkId === `hw-p${currentPeriod.period}-g${activeGrade}`)
+                ? 'Xem Lời Phê & Nộp Lại'
+                : 'Mở Nhiệm Vụ & Nộp Bài (Ảnh Vở/Tệp)'}
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ==================================================================== */}
       {/* MODAL THÔNG BÁO SƯ PHẠM KHI HOẠT ĐỘNG ĐANG KHÓA                      */}
@@ -1462,6 +1595,214 @@ export default function InClassPage() {
               )}
 
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* POPUP MODAL: BÀI TẬP VỀ NHÀ TRONG LỚP HỌC SỐ                         */}
+      {/* ==================================================================== */}
+      {showHomeworkModal && currentPeriod.homework && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 animate-scaleUp my-8">
+            
+            {/* Header Popup */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold uppercase">
+                      BÀI TẬP VỀ NHÀ
+                    </span>
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Tiết {currentPeriod.period} · Khối {activeGrade}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">
+                    {currentPeriod.homework.title || currentPeriod.title}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowHomeworkModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Khung nhiệm vụ bài tập về nhà */}
+            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
+              <div className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+                <span>📝 Nhiệm Vụ Cần Hoàn Thành Trong Vở Ghi / Trên Máy:</span>
+              </div>
+              <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-medium pl-1">
+                {currentPeriod.homework.description}
+              </div>
+            </div>
+
+            {/* Chọn hình thức nộp */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
+                Hình thức nộp bài về nhà:
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setHwSubmissionType('image')}
+                  className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    hwSubmissionType === 'image'
+                      ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/20'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <ImageIcon className="w-4 h-4 text-amber-600" />
+                  <span>Chụp Ảnh Vở Ghi</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHwSubmissionType('file')}
+                  className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    hwSubmissionType === 'file'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-400/20'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                  <span>Tệp Bài Làm (.docx, .xlsx, .py)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form nộp bài */}
+            <form onSubmit={handleSubmitHomeworkInClass} className="space-y-4">
+              <div className="border-2 border-dashed rounded-3xl p-6 text-center transition-all bg-slate-50 border-slate-300 hover:border-amber-400">
+                {hwSubmissionType === 'image' ? (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="hw-image-input"
+                      className="hidden"
+                      onChange={handleSelectHwImage}
+                    />
+                    <label htmlFor="hw-image-input" className="cursor-pointer block space-y-2">
+                      {hwPreviewImageUrl ? (
+                        <div className="space-y-3">
+                          <img
+                            src={hwPreviewImageUrl}
+                            alt="Ảnh vở ghi"
+                            className="max-h-48 mx-auto rounded-2xl shadow-sm border border-slate-200 object-contain"
+                          />
+                          <p className="text-xs font-bold text-emerald-700">
+                            Đã chọn ảnh vở: {hwSelectedFile?.name} (Bấm để đổi ảnh khác)
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                            <ImageIcon className="w-6 h-6" />
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">
+                            Bấm vào đây để chọn ảnh chụp trang vở ghi bài tập
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            Định dạng: JPG, PNG, HEIC (Chụp rõ nét chữ viết và hình vẽ)
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="hw-file-input"
+                      className="hidden"
+                      onChange={handleSelectHwFile}
+                    />
+                    <label htmlFor="hw-file-input" className="cursor-pointer block space-y-2">
+                      {hwSelectedFile ? (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                          <p className="text-xs font-bold text-indigo-900">
+                            Đã chọn tệp: {hwSelectedFile.name} ({(hwSelectedFile.size / 1024).toFixed(1)} KB)
+                          </p>
+                          <p className="text-[11px] text-slate-400">Bấm để đổi tệp khác</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
+                            <UploadCloud className="w-6 h-6" />
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">
+                            Bấm vào đây để duyệt tệp bài làm thực hành
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            Định dạng: .docx, .xlsx, .py, .pdf
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Ghi chú thêm cho Thầy */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  Lời nhắn gửi Thầy Đỗ Mạnh Trường (không bắt buộc):
+                </label>
+                <input
+                  type="text"
+                  value={hwStudentNote}
+                  onChange={(e) => setHwStudentNote(e.target.value)}
+                  placeholder="Thưa Thầy, em đã hoàn thành các câu hỏi trong vở ghi ạ..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Nút nộp */}
+              <button
+                type="submit"
+                disabled={hwIsSubmitting || (!hwSelectedFile && !hwPreviewImageUrl)}
+                className="w-full py-3.5 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Send className="w-4 h-4" />
+                <span>
+                  {hwIsSubmitting
+                    ? 'Đang nộp bài lên Google Drive của Thầy Đỗ Mạnh Trường...'
+                    : 'Xác Nhận Nộp Bài Về Nhà (Chấm Điểm Chuẩn TT22)'}
+                </span>
+              </button>
+            </form>
+
+            {/* Biên lai nếu vừa nộp hoặc đã nộp trước đó */}
+            {(hwSubmittedReceipt || allHwSubmissions.find(s => s.homeworkId === `hw-p${currentPeriod.period}-g${activeGrade}`)) && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Thầy Đỗ Mạnh Trường Đã Nhận &amp; Chấm Điểm 10/10</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold">
+                    Hoàn Thành Tốt
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-800 italic">
+                  &quot;Thầy Đỗ Mạnh Trường: Đã nhận bài làm về nhà! Trình bày sạch đẹp, đúng yêu cầu.&quot;
+                </p>
+              </div>
+            )}
 
           </div>
         </div>

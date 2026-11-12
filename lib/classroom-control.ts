@@ -193,6 +193,9 @@ export function getClassroomState(): ClassroomControlState {
   }
 }
 
+const CLOUD_SYNC_TOPIC = 'thay_truong_mao_dien_classroom_sync_666';
+const CLOUD_SYNC_URL = `https://ntfy.sh/${CLOUD_SYNC_TOPIC}`;
+
 export function updateClassroomState(
   updater: (prev: ClassroomControlState) => ClassroomControlState
 ): ClassroomControlState {
@@ -208,6 +211,17 @@ export function updateClassroomState(
         bc.postMessage(next);
         bc.close();
       }
+
+      // KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (Chrome ⇄ Edge ⇄ Firefox ⇄ 24 Máy Trạm)
+      fetch(CLOUD_SYNC_URL, {
+        method: 'POST',
+        headers: {
+          'Title': 'CLASSROOM_STATE_UPDATE',
+          'Priority': 'urgent',
+          'Tags': next.isLive ? 'radio_button_checked,school' : 'pause,school',
+        },
+        body: JSON.stringify(next),
+      }).catch(() => {});
     } catch (e) {}
   }
 
@@ -381,15 +395,26 @@ export function updateMachineScore(
 
 /**
  * Bật / Tắt phát trực tiếp bài dạy của Thầy Trường
- * Khi bật (isLive = true): Học sinh vào thẳng 3 hoạt động trực tiếp
+ * Khi bật (isLive = true): TỰ ĐỘNG MỞ KHÓA CẢ 3 HOẠT ĐỘNG TRỰC TIẾP và chuyển học sinh vào bài học
  * Khi tắt (isLive = false): Học sinh nhìn thấy Bảng Trắng kèm thông báo chờ lệnh
  */
 export function setLiveBroadcast(isLive: boolean, className?: string): ClassroomControlState {
   return updateClassroomState((prev) => ({
     ...prev,
     isLive,
+    // KHI PHÁT LIVE: TỰ ĐỘNG MỞ KHÓA TẤT CẢ 3 HOẠT ĐỘNG TRỰC TIẾP
+    activityLocks: isLive
+      ? {
+          discovery: true,
+          practice: true,
+          lab: true,
+        }
+      : prev.activityLocks,
+    isTimerRunning: isLive,
+    isTimeUp: false,
+    currentActivity: isLive ? (prev.currentActivity || 'discovery') : prev.currentActivity,
     broadcastMessage: isLive
-      ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${className || prev.activeClassName}! Các em hãy vào học nhé.`
+      ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${className || prev.activeClassName}! Các em hãy vào học ngay.`
       : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp (Màn hình máy trạm chuyển về Bảng trắng thông báo).`,
     broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
   }));
@@ -488,6 +513,7 @@ export function selectPeriodForClassroom(
 export function subscribeToClassroomState(callback: (state: ClassroomControlState) => void): () => void {
   if (typeof window === 'undefined') return () => {};
 
+  // 1. Lắng nghe cập nhật trong cùng một Tab
   const handleLocalUpdate = (e: Event) => {
     const customEvent = e as CustomEvent<ClassroomControlState>;
     if (customEvent && customEvent.detail) {
@@ -495,6 +521,7 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     }
   };
 
+  // 2. Lắng nghe cập nhật giữa các Tab cùng trình duyệt qua storage event
   const handleStorageEvent = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && e.newValue) {
       try {
@@ -507,6 +534,7 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
   window.addEventListener('truong_classroom_update', handleLocalUpdate);
   window.addEventListener('storage', handleStorageEvent);
 
+  // 3. Lắng nghe cập nhật tức thì (0ms) giữa các Tab qua BroadcastChannel
   let bc: BroadcastChannel | null = null;
   if ('BroadcastChannel' in window) {
     try {
@@ -519,7 +547,81 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     } catch (err) {}
   }
 
-  // Chỉ kết nối Supabase channel nếu được cấu hình thực sự, tránh lỗi WebSocket fail trên mock domain
+  // 4. KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (Chrome ⇄ Edge ⇄ Firefox ⇄ 24 Máy Trạm)
+  // a) Khởi tạo: Lấy ngay trạng thái Live mới nhất từ Cloud khi vừa mở trang
+  fetch(`${CLOUD_SYNC_URL}/json?poll=1`)
+    .then((res) => res.text())
+    .then((text) => {
+      if (!text) return;
+      const lines = text.trim().split('\n').filter(Boolean);
+      if (lines.length > 0) {
+        const lastLine = JSON.parse(lines[lines.length - 1]);
+        if (lastLine && lastLine.message) {
+          const cloudState = JSON.parse(lastLine.message) as ClassroomControlState;
+          if (cloudState && typeof cloudState.isLive === 'boolean') {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
+            } catch (e) {}
+            callback(cloudState);
+          }
+        }
+      }
+    })
+    .catch(() => {});
+
+  // b) Kết nối Server-Sent Events (SSE) để nhận cập nhật tức thì khi Thầy bấm Phát Live
+  let es: EventSource | null = null;
+  if ('EventSource' in window) {
+    try {
+      es = new EventSource(`${CLOUD_SYNC_URL}/sse`);
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.message) {
+            const cloudState = JSON.parse(data.message) as ClassroomControlState;
+            if (cloudState && typeof cloudState.isLive === 'boolean') {
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
+              } catch (e) {}
+              callback(cloudState);
+            }
+          }
+        } catch (err) {}
+      };
+    } catch (e) {}
+  }
+
+  // c) Polling định kỳ mỗi 3 giây đối soát trạng thái Live đám mây (dự phòng mạng trường học)
+  const pollIntervalId = setInterval(() => {
+    fetch(`${CLOUD_SYNC_URL}/json?poll=1`)
+      .then((res) => res.text())
+      .then((text) => {
+        if (!text) return;
+        const lines = text.trim().split('\n').filter(Boolean);
+        if (lines.length > 0) {
+          const lastLine = JSON.parse(lines[lines.length - 1]);
+          if (lastLine && lastLine.message) {
+            const cloudState = JSON.parse(lastLine.message) as ClassroomControlState;
+            const current = getClassroomState();
+            if (
+              cloudState &&
+              (cloudState.isLive !== current.isLive ||
+                cloudState.activePeriod !== current.activePeriod ||
+                cloudState.activeGrade !== current.activeGrade ||
+                cloudState.activeClassId !== current.activeClassId)
+            ) {
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
+              } catch (e) {}
+              callback(cloudState);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, 3000);
+
+  // 5. KÊNH SUPABASE REALTIME (NẾU CÓ DỰ ÁN THẬT)
   let channel: ReturnType<typeof supabase.channel> | null = null;
   const isRealSupabase = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && 
@@ -550,6 +652,12 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
         bc.close();
       } catch (e) {}
     }
+    if (es) {
+      try {
+        es.close();
+      } catch (e) {}
+    }
+    clearInterval(pollIntervalId);
     if (channel) {
       try {
         supabase.removeChannel(channel);

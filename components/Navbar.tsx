@@ -142,16 +142,12 @@ export default function Navbar() {
   );
 
   // 1. MENU HỌC SINH (CHỈ GỒM CÁC CHỨC NĂNG THẦY TRƯỜNG CHỈ ĐỊNH)
+  // Bài Tập Về Nhà đã tích hợp trực tiếp vào trong Lớp Học Số
   const studentMenus: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Lớp Học Số',
       href: '/in-class',
       icon: Laptop,
-    },
-    {
-      title: 'Bài Tập Về Nhà',
-      href: '/homework',
-      icon: BookOpen,
     },
     {
       title: 'Tự Học (Video)',
@@ -184,7 +180,8 @@ export default function Navbar() {
     });
   }
 
-  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666) - 5 CHỨC NĂNG CỐT LÕI (ĐÃ RÚT GỌN BỎ TỪ QUẢN LÝ)
+  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666) - 4 CHỨC NĂNG CỐT LÕI
+  // Bài Tập Về Nhà được quản lý trực tiếp bên trong phân hệ Lớp Học Số
   const TEACHER_MENUS: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Lớp Học Số',
@@ -200,11 +197,6 @@ export default function Navbar() {
       title: 'Bài Kiểm Tra',
       href: '/teacher?tab=exams',
       icon: FileCheck2,
-    },
-    {
-      title: 'Bài Tập Về Nhà',
-      href: '/teacher?tab=in-class&sub=homework',
-      icon: BookOpen,
     },
     {
       title: 'Bảng Điểm Học Kỳ',

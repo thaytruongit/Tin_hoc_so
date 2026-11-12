@@ -54,11 +54,10 @@ export default function CurriculumPeriodModal({
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
-          {/* Mục tiêu & Năng lực số */}
+          {/* Mục tiêu bài học */}
           <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-1">
-            <span className="font-bold text-indigo-900 uppercase text-[11px]">🎯 Mục tiêu cần đạt &amp; Năng lực số / AI:</span>
-            <p className="text-slate-700 leading-relaxed">{period.contentDesc}</p>
-            <p className="font-semibold text-indigo-700 text-[11px] pt-1">Định hướng: {period.digitalCompetency}</p>
+            <span className="font-bold text-indigo-900 uppercase text-[11px]">🎯 Mục tiêu bài học:</span>
+            <p className="text-slate-700 leading-relaxed font-medium">{period.contentDesc || 'Nắm vững kiến thức trọng tâm và thực hành thành thạo trên máy tính.'}</p>
           </div>
 
           {/* 1. Phiếu học tập điện tử (Khám phá cặp đôi) */}

@@ -246,7 +246,7 @@ export default function SelfStudyPage() {
               <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Năng lực số / AI:</strong> {currentPeriod.digitalCompetency || 'Ứng dụng công nghệ giải quyết bài toán thực tế'}
+                  <strong>Chủ đề học tập:</strong> {currentPeriod.topic}
                 </span>
               </div>
               <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 flex items-start gap-2">
