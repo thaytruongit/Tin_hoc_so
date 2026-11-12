@@ -686,21 +686,21 @@ function TeacherDashboardContent() {
   return (
     <>
       {/* ==================================================================== */}
-      {/* POPUP CHỌN KHỐI LỚP LUÔN XUẤT HIỆN BÊN TRÁI (VỊ TRÍ VÀNG Ở ẢNH 2)     */}
+      {/* POPUP CHỌN KHỐI LỚP LUÔN XUẤT HIỆN BÊN TRÁI (BỐ TRÍ 2 CỘT NHỎ GỌN)   */}
       {/* ==================================================================== */}
       {isLeftPopupOpen ? (
-        <div className="fixed left-2 sm:left-4 top-20 sm:top-24 z-40 w-72 sm:w-80 bg-white/98 backdrop-blur-md rounded-3xl border-2 border-teal-600/90 shadow-2xl p-4 sm:p-5 space-y-3.5 animate-slideRight transition-all max-h-[calc(100vh-110px)] overflow-y-auto no-scrollbar">
+        <div className="fixed left-2 sm:left-4 top-20 sm:top-24 z-40 w-80 sm:w-[345px] bg-white/98 backdrop-blur-md rounded-3xl border-2 border-teal-600/90 shadow-2xl p-3.5 space-y-2.5 animate-slideRight transition-all max-h-[calc(100vh-110px)] overflow-y-auto no-scrollbar">
           {/* Header Popup */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#2d7d6f] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                <School className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-xl bg-[#2d7d6f] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <School className="w-3.5 h-3.5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
+                <h3 className="font-extrabold text-xs text-slate-900 leading-tight">
                   Chọn Khối &amp; Lớp
                 </h3>
-                <span className="text-[10px] font-bold text-teal-700 flex items-center gap-1">
+                <span className="text-[9.5px] font-bold text-teal-700 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Đang dạy: {currentClass.name}
                 </span>
@@ -711,99 +711,100 @@ function TeacherDashboardContent() {
             <button
               type="button"
               onClick={() => setIsLeftPopupOpen(false)}
-              className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
               title="Thu nhỏ thanh chọn lớp sang mép trái"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Hàng 1: Khối */}
-          <div className="space-y-1.5">
-            <span className="font-extrabold text-slate-700 text-xs uppercase tracking-wider block">
-              1. Khối Lớp:
-            </span>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[6, 7, 8, 9].map((g) => {
-                const isActive = selectedGradeFilter === g;
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => handleSelectGrade(g)}
-                    className={`py-1.5 rounded-xl text-xs font-black transition-all ${
-                      isActive
-                        ? 'bg-[#2d7d6f] text-white shadow-xs ring-1 ring-[#207264]'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-                    }`}
-                  >
-                    Khối {g}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Hàng 2: Lớp của Khối đó */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="font-extrabold text-slate-700 text-xs uppercase tracking-wider block">
-                2. Lớp Giảng Dạy:
+          {/* CHIA ĐÔI CỘT: BÊN TRÁI KHỐI, BÊN PHẢI LỚP (BỐ TRÍ NHỎ GỌN) */}
+          <div className="grid grid-cols-12 gap-2">
+            {/* CỘT TRÁI: KHỐI (Khối 6, Khối 7, Khối 8, Khối 9) */}
+            <div className="col-span-4 space-y-1">
+              <span className="font-extrabold text-slate-700 text-[10.5px] uppercase tracking-wider block">
+                1. Khối:
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setNewClassGrade(selectedGradeFilter);
-                  setShowAddClassModal(true);
-                }}
-                className="text-[10px] text-teal-700 hover:text-teal-900 font-bold flex items-center gap-0.5"
-              >
-                <PlusCircle className="w-3 h-3" />
-                <span>+ Thêm lớp</span>
-              </button>
+              <div className="flex flex-col gap-1">
+                {[6, 7, 8, 9].map((g) => {
+                  const isActive = selectedGradeFilter === g;
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => handleSelectGrade(g)}
+                      className={`py-1.5 px-1.5 rounded-xl text-xs font-black transition-all text-center flex items-center justify-center ${
+                        isActive
+                          ? 'bg-[#2d7d6f] text-white shadow-xs ring-1 ring-[#207264]'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}
+                    >
+                      Khối {g}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5">
-              {displayClasses.map((cls) => {
-                const isSelected = selectedClassId === cls.id;
-                return (
-                  <button
-                    key={cls.id}
-                    type="button"
-                    onClick={() => handleSelectClass(cls)}
-                    className={`p-2.5 rounded-2xl text-left transition-all ${
-                      isSelected
-                        ? 'border-2 border-[#2d7d6f] bg-teal-50/80 text-[#1e584e] font-black shadow-xs ring-2 ring-teal-500/20'
-                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 font-bold'
-                    }`}
-                  >
-                    <div className="text-xs font-black">{cls.name}</div>
-                    <div className="text-[10px] font-medium text-slate-500 mt-0.5 flex items-center justify-between">
-                      <span>{cls.studentCount} HS</span>
-                      {isSelected && <span className="text-[9px] font-bold text-teal-700">● Đang chọn</span>}
-                    </div>
-                  </button>
-                );
-              })}
+            {/* CỘT PHẢI: LỚP GIẢNG DẠY CỦA KHỐI ĐÓ */}
+            <div className="col-span-8 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-slate-700 text-[10.5px] uppercase tracking-wider block">
+                  2. Lớp Giảng Dạy:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewClassGrade(selectedGradeFilter);
+                    setShowAddClassModal(true);
+                  }}
+                  className="text-[9.5px] text-teal-700 hover:text-teal-900 font-bold flex items-center gap-0.5"
+                >
+                  <PlusCircle className="w-2.5 h-2.5" />
+                  <span>+ Thêm</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1">
+                {displayClasses.map((cls) => {
+                  const isSelected = selectedClassId === cls.id;
+                  return (
+                    <button
+                      key={cls.id}
+                      type="button"
+                      onClick={() => handleSelectClass(cls)}
+                      className={`p-1.5 rounded-xl text-left transition-all ${
+                        isSelected
+                          ? 'border-2 border-[#2d7d6f] bg-teal-50/90 text-[#1e584e] font-black shadow-xs ring-1 ring-teal-500/20'
+                          : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 font-bold'
+                      }`}
+                    >
+                      <div className="text-[11px] font-black truncate">{cls.name}</div>
+                      <div className="text-[9px] font-medium text-slate-500 mt-0.5 flex items-center justify-between">
+                        <span>{cls.studentCount} HS</span>
+                        {isSelected && <span className="text-[8px] font-bold text-teal-700">● Chọn</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Trạng thái lớp làm việc duy nhất */}
-          <div className="p-3 rounded-2xl bg-teal-50/80 border border-teal-200 text-[11px] text-teal-950 font-medium space-y-1.5">
-            <div className="font-bold flex items-center gap-1.5">
-              <span>🎯 Lớp làm việc duy nhất:</span>
-              <span className="font-black text-xs text-teal-800">{currentClass.name}</span>
+          {/* Trạng thái lớp làm việc duy nhất (Bố trí nhỏ gọn, bỏ chức năng xuất Excel) */}
+          <div className="p-2.5 rounded-2xl bg-teal-50/80 border border-teal-200 text-[10.5px] text-teal-950 font-medium space-y-1">
+            <div className="font-bold flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <span>🎯 Lớp làm việc:</span>
+                <span className="font-black text-xs text-teal-900">{currentClass.name}</span>
+              </span>
+              <span className="text-[9.5px] px-1.5 py-0.2 rounded-md bg-teal-100/90 text-teal-800 font-mono font-bold">
+                {classStudents.length} HS
+              </span>
             </div>
-            <div className="text-[10px] text-teal-700 leading-relaxed">
-              Sĩ số: <strong>{classStudents.length} học sinh</strong> · 24 máy trạm, bài tập và bảng điểm đang đồng bộ
+            <div className="text-[9.5px] text-teal-700 leading-snug">
+              24 máy trạm, bài tập &amp; bảng điểm đang đồng bộ
             </div>
-            <button
-              onClick={() => exportStudentsToExcel(classStudents, `Danh_Sach_${currentClass.name}_THCS_Mao_Dien.xls`)}
-              className="w-full mt-1 py-1.5 rounded-xl bg-white hover:bg-teal-100 text-teal-800 border border-teal-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-teal-700" />
-              <span>Xuất Excel lớp này</span>
-            </button>
           </div>
         </div>
       ) : (
