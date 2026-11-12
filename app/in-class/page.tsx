@@ -101,7 +101,8 @@ export default function InClassPage() {
   const [allHwSubmissions, setAllHwSubmissions] = useState<any[]>([]);
   const [hwSelectedFile, setHwSelectedFile] = useState<File | null>(null);
   const [hwPreviewImageUrl, setHwPreviewImageUrl] = useState<string | null>(null);
-  const [hwSubmissionType, setHwSubmissionType] = useState<'image' | 'file'>('image');
+  const [hwSubmissionType, setHwSubmissionType] = useState<'text' | 'image' | 'file'>('text');
+  const [hwTypedAnswer, setHwTypedAnswer] = useState<string>('');
   const [hwStudentNote, setHwStudentNote] = useState('');
   const [hwIsSubmitting, setHwIsSubmitting] = useState(false);
   const [hwSubmittedReceipt, setHwSubmittedReceipt] = useState<any | null>(null);
@@ -243,9 +244,21 @@ export default function InClassPage() {
 
   const handleSubmitHomeworkInClass = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hwSelectedFile && !hwPreviewImageUrl) {
-      alert('Vui lòng chọn ảnh chụp vở ghi hoặc tệp bài làm để nộp!');
-      return;
+    if (hwSubmissionType === 'text') {
+      if (!hwTypedAnswer.trim()) {
+        alert('Vui lòng nhập câu trả lời bài tập về nhà!');
+        return;
+      }
+    } else if (hwSubmissionType === 'image') {
+      if (!hwSelectedFile && !hwPreviewImageUrl) {
+        alert('Vui lòng chọn ảnh chụp vở ghi bài làm để nộp!');
+        return;
+      }
+    } else {
+      if (!hwSelectedFile) {
+        alert('Vui lòng chọn tệp bài làm thực hành để nộp!');
+        return;
+      }
     }
 
     setHwIsSubmitting(true);
@@ -253,6 +266,22 @@ export default function InClassPage() {
       const stName = student1Name || currentUser?.studentName || 'Học sinh';
       const stCode = currentUser?.studentCode || `HS${activeGrade}0${machineId < 10 ? `0${machineId}` : machineId}`;
       const stClass = currentUser?.studentClass || `Lớp ${activeGrade}A10`;
+
+      let fileNameStr = `BTVN_Tiet_${currentPeriod.period}.txt`;
+      let fileSizeStr = `${hwTypedAnswer.length} ký tự`;
+      let noteStr = hwStudentNote;
+
+      if (hwSubmissionType === 'text') {
+        fileNameStr = `Bai_Lam_Truc_Tiep_Tiet_${currentPeriod.period}.txt`;
+        fileSizeStr = `${hwTypedAnswer.length} ký tự`;
+        noteStr = `[BÀI LÀM TRỰC TIẾP TRÊN TRÌNH DUYỆT]:\n${hwTypedAnswer}${hwStudentNote ? `\n\n[Lời nhắn]: ${hwStudentNote}` : ''}`;
+      } else if (hwSubmissionType === 'image') {
+        fileNameStr = hwSelectedFile ? hwSelectedFile.name : `Vo_Ghi_Tiet_${currentPeriod.period}.jpg`;
+        fileSizeStr = hwSelectedFile ? `${(hwSelectedFile.size / 1024).toFixed(1)} KB` : '1.5 MB';
+      } else {
+        fileNameStr = hwSelectedFile ? hwSelectedFile.name : `ThucHanh_Tiet_${currentPeriod.period}.xlsx`;
+        fileSizeStr = hwSelectedFile ? `${(hwSelectedFile.size / 1024).toFixed(1)} KB` : '50 KB';
+      }
 
       const newSub = {
         id: `hw-sub-${Date.now()}`,
@@ -263,13 +292,15 @@ export default function InClassPage() {
         classId: `c-${activeGrade}a10`,
         className: stClass,
         fileType: hwSubmissionType === 'image' ? 'image' : 'other',
-        fileName: hwSelectedFile ? hwSelectedFile.name : `Vo_Ghi_Tiet_${currentPeriod.period}.jpg`,
-        fileSize: hwSelectedFile ? `${(hwSelectedFile.size / 1024).toFixed(1)} KB` : '1.5 MB',
+        fileName: fileNameStr,
+        fileSize: fileSizeStr,
         fileDataUrl: hwPreviewImageUrl || undefined,
-        note: hwStudentNote,
+        note: noteStr,
         submittedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
         grade: 10,
-        feedback: 'Thầy Đỗ Mạnh Trường: Đã nhận bài làm về nhà! Trình bày sạch đẹp, đúng yêu cầu.',
+        feedback: hwSubmissionType === 'text'
+          ? 'Thầy Đỗ Mạnh Trường: Đã nhận bài làm trực tuyến! Em trả lời rất tốt, câu từ rành mạch.'
+          : 'Thầy Đỗ Mạnh Trường: Đã nhận bài làm về nhà! Trình bày sạch đẹp, đúng yêu cầu.',
         status: 'graded',
       };
 
@@ -1652,110 +1683,163 @@ export default function InClassPage() {
               <label className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
                 Hình thức nộp bài về nhà:
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => setHwSubmissionType('image')}
-                  className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                    hwSubmissionType === 'image'
-                      ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/20'
+                  onClick={() => setHwSubmissionType('text')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    hwSubmissionType === 'text'
+                      ? 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-400/30'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <ImageIcon className="w-4 h-4 text-amber-600" />
-                  <span>Chụp Ảnh Vở Ghi</span>
+                  <span>✍️ Nhập Chữ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHwSubmissionType('image')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    hwSubmissionType === 'image'
+                      ? 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-400/30'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Ảnh Vở</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setHwSubmissionType('file')}
-                  className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                  className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     hwSubmissionType === 'file'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-400/20'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-400/30'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <FileText className="w-4 h-4 text-indigo-600" />
-                  <span>Tệp Bài Làm (.docx, .xlsx, .py)</span>
+                  <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Tệp File</span>
                 </button>
               </div>
             </div>
 
             {/* Form nộp bài */}
             <form onSubmit={handleSubmitHomeworkInClass} className="space-y-4">
-              <div className="border-2 border-dashed rounded-3xl p-6 text-center transition-all bg-slate-50 border-slate-300 hover:border-amber-400">
-                {hwSubmissionType === 'image' ? (
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      id="hw-image-input"
-                      className="hidden"
-                      onChange={handleSelectHwImage}
-                    />
-                    <label htmlFor="hw-image-input" className="cursor-pointer block space-y-2">
-                      {hwPreviewImageUrl ? (
-                        <div className="space-y-3">
-                          <img
-                            src={hwPreviewImageUrl}
-                            alt="Ảnh vở ghi"
-                            className="max-h-48 mx-auto rounded-2xl shadow-sm border border-slate-200 object-contain"
-                          />
-                          <p className="text-xs font-bold text-emerald-700">
-                            Đã chọn ảnh vở: {hwSelectedFile?.name} (Bấm để đổi ảnh khác)
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
-                            <ImageIcon className="w-6 h-6" />
-                          </div>
-                          <p className="text-xs font-bold text-slate-800">
-                            Bấm vào đây để chọn ảnh chụp trang vở ghi bài tập
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            Định dạng: JPG, PNG, HEIC (Chụp rõ nét chữ viết và hình vẽ)
-                          </p>
-                        </div>
-                      )}
-                    </label>
+              {hwSubmissionType === 'text' ? (
+                /* HÌNH THỨC 1: SOẠN THẢO TRỰC TIẾP */
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-800">✍️ Gõ câu trả lời trực tiếp:</span>
+                    <span className="text-[11px] text-slate-500">{hwTypedAnswer.length} ký tự</span>
                   </div>
-                ) : (
-                  <div>
-                    <input
-                      type="file"
-                      id="hw-file-input"
-                      className="hidden"
-                      onChange={handleSelectHwFile}
-                    />
-                    <label htmlFor="hw-file-input" className="cursor-pointer block space-y-2">
-                      {hwSelectedFile ? (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
-                            <CheckCircle2 className="w-6 h-6" />
-                          </div>
-                          <p className="text-xs font-bold text-indigo-900">
-                            Đã chọn tệp: {hwSelectedFile.name} ({(hwSelectedFile.size / 1024).toFixed(1)} KB)
-                          </p>
-                          <p className="text-[11px] text-slate-400">Bấm để đổi tệp khác</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
-                            <UploadCloud className="w-6 h-6" />
-                          </div>
-                          <p className="text-xs font-bold text-slate-800">
-                            Bấm vào đây để duyệt tệp bài làm thực hành
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            Định dạng: .docx, .xlsx, .py, .pdf
-                          </p>
-                        </div>
-                      )}
-                    </label>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setHwTypedAnswer(prev => prev ? `${prev}\n\n[Câu 1]: ` : '[Câu 1]: ')}
+                      className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-bold cursor-pointer"
+                    >
+                      + Câu 1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHwTypedAnswer(prev => prev ? `${prev}\n\n[Câu 2]: ` : '[Câu 2]: ')}
+                      className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-bold cursor-pointer"
+                    >
+                      + Câu 2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHwTypedAnswer(prev => prev ? `${prev}\n\n[Vận dụng]: ` : '[Vận dụng]: ')}
+                      className="px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-[10px] font-bold cursor-pointer"
+                    >
+                      + Vận dụng
+                    </button>
                   </div>
-                )}
-              </div>
+                  <textarea
+                    rows={6}
+                    value={hwTypedAnswer}
+                    onChange={(e) => setHwTypedAnswer(e.target.value)}
+                    placeholder="Gõ trực tiếp lời giải / câu trả lời bài tập về nhà của em vào đây..."
+                    className="w-full p-3 rounded-2xl border border-slate-300 focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-200 text-xs text-slate-800 bg-slate-50/50"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <div className="border-2 border-dashed rounded-3xl p-6 text-center transition-all bg-slate-50 border-slate-300 hover:border-amber-400">
+                  {hwSubmissionType === 'image' ? (
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="hw-image-input"
+                        className="hidden"
+                        onChange={handleSelectHwImage}
+                      />
+                      <label htmlFor="hw-image-input" className="cursor-pointer block space-y-2">
+                        {hwPreviewImageUrl ? (
+                          <div className="space-y-3">
+                            <img
+                              src={hwPreviewImageUrl}
+                              alt="Ảnh vở ghi"
+                              className="max-h-48 mx-auto rounded-2xl shadow-sm border border-slate-200 object-contain"
+                            />
+                            <p className="text-xs font-bold text-emerald-700">
+                              Đã chọn ảnh vở: {hwSelectedFile?.name} (Bấm để đổi ảnh khác)
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                              <ImageIcon className="w-6 h-6" />
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">
+                              Bấm vào đây để chọn ảnh chụp trang vở ghi bài tập
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              Định dạng: JPG, PNG, HEIC (Chụp rõ nét chữ viết và hình vẽ)
+                            </p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        id="hw-file-input"
+                        className="hidden"
+                        onChange={handleSelectHwFile}
+                      />
+                      <label htmlFor="hw-file-input" className="cursor-pointer block space-y-2">
+                        {hwSelectedFile ? (
+                          <div className="space-y-2">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
+                              <CheckCircle2 className="w-6 h-6" />
+                            </div>
+                            <p className="text-xs font-bold text-indigo-900">
+                              Đã chọn tệp: {hwSelectedFile.name} ({(hwSelectedFile.size / 1024).toFixed(1)} KB)
+                            </p>
+                            <p className="text-[11px] text-slate-400">Bấm để đổi tệp khác</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto">
+                              <UploadCloud className="w-6 h-6" />
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">
+                              Bấm vào đây để duyệt tệp bài làm thực hành
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              Định dạng: .docx, .xlsx, .py, .pdf
+                            </p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Ghi chú thêm cho Thầy */}
               <div>
@@ -1767,14 +1851,14 @@ export default function InClassPage() {
                   value={hwStudentNote}
                   onChange={(e) => setHwStudentNote(e.target.value)}
                   placeholder="Thưa Thầy, em đã hoàn thành các câu hỏi trong vở ghi ạ..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                 />
               </div>
 
               {/* Nút nộp */}
               <button
                 type="submit"
-                disabled={hwIsSubmitting || (!hwSelectedFile && !hwPreviewImageUrl)}
+                disabled={hwIsSubmitting || (hwSubmissionType === 'text' ? !hwTypedAnswer.trim() : !hwSelectedFile && !hwPreviewImageUrl)}
                 className="w-full py-3.5 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Send className="w-4 h-4" />

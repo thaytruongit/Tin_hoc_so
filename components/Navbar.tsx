@@ -34,10 +34,13 @@ import { ClassItem } from '@/lib/types';
 import {
   getClassroomState,
   selectClassForClassroom,
+  selectPeriodForClassroom,
+  setLiveBroadcast,
   subscribeToClassroomState,
   getSavedClasses,
   saveClasses
 } from '@/lib/classroom-control';
+import { CURRICULUM_DATA } from '@/lib/curriculum-data';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -48,12 +51,17 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentTabQuery, setCurrentTabQuery] = useState<string>('');
 
-  // TRẠNG THÁI LỚP HỌC ĐANG LÀM VIỆC CỦA THẦY TRƯỜNG & POPUP CHỌN LỚP
+  // TRẠNG THÁI LỚP HỌC ĐANG LÀM VIỆC CỦA THẦY TRƯỜNG & POPUP CHỌN LỚP 2 BƯỚC
   const [activeClassName, setActiveClassName] = useState<string>('Lớp 6A10');
   const [activeClassId, setActiveClassId] = useState<string>('c-6a10');
   const [activeGrade, setActiveGrade] = useState<number>(6);
+  const [activePeriod, setActivePeriod] = useState<number>(1);
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<'class' | 'period'>('class');
   const [selectedModalGrade, setSelectedModalGrade] = useState<number>(6);
+  const [selectedPeriodModal, setSelectedPeriodModal] = useState<number>(1);
+  const [autoLiveOnConfirm, setAutoLiveOnConfirm] = useState<boolean>(true);
+  const [periodFilterText, setPeriodFilterText] = useState<string>('');
   const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
   const [showAddClassInline, setShowAddClassInline] = useState(false);
   const [newClassNameInput, setNewClassNameInput] = useState('');
@@ -73,7 +81,20 @@ export default function Navbar() {
       setActiveGrade(clsState.activeGrade);
       setSelectedModalGrade(clsState.activeGrade);
     }
+    if (clsState.activePeriod) {
+      setActivePeriod(clsState.activePeriod);
+      setSelectedPeriodModal(clsState.activePeriod);
+    }
     setAvailableClasses(getSavedClasses());
+
+    // Tự động mở Popup chọn Lớp trước, rồi chọn Tiết học khi Thầy giáo vào trang quản trị
+    if (currentUser.role === 'teacher' && pathname.startsWith('/teacher')) {
+      const isAlreadyFlowDone = sessionStorage.getItem('truong_initial_flow_completed');
+      if (!isAlreadyFlowDone) {
+        setModalStep('class');
+        setIsClassModalOpen(true);
+      }
+    }
 
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
@@ -89,6 +110,10 @@ export default function Navbar() {
       if (st.activeGrade) {
         setActiveGrade(st.activeGrade);
         setSelectedModalGrade(st.activeGrade);
+      }
+      if (st.activePeriod) {
+        setActivePeriod(st.activePeriod);
+        setSelectedPeriodModal(st.activePeriod);
       }
     });
 
@@ -142,12 +167,19 @@ export default function Navbar() {
   );
 
   // 1. MENU HỌC SINH (CHỈ GỒM CÁC CHỨC NĂNG THẦY TRƯỜNG CHỈ ĐỊNH)
-  // Bài Tập Về Nhà đã tích hợp trực tiếp vào trong Lớp Học Số
+  // Bài Tập Về Nhà được bố trí riêng độc lập để học sinh có thể làm bất cứ lúc nào
   const studentMenus: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Lớp Học Số',
       href: '/in-class',
       icon: Laptop,
+    },
+    {
+      title: 'Bài Tập Về Nhà',
+      href: '/homework',
+      icon: BookOpen,
+      badge: 'Cần làm',
+      badgeClass: 'bg-amber-100 text-amber-800',
     },
     {
       title: 'Tự Học (Video)',
@@ -457,7 +489,7 @@ export default function Navbar() {
       )}
 
       {/* ==================================================================== */}
-      {/* POPUP MODAL CHÍNH GIỮA MÀN HÌNH (CENTER MODAL DÙNG CREATEPORTAL)     */}
+      {/* POPUP MODAL QUY TRÌNH 2 BƯỚC: CHỌN CỐ ĐỊNH LỚP TRƯỚC -> CHỌN TIẾT HỌC */}
       {/* Gắn trực tiếp vào document.body để hiển thị toàn bộ, không bị che     */}
       {/* ==================================================================== */}
       </header>
@@ -468,23 +500,32 @@ export default function Navbar() {
           onClick={() => setIsClassModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-lg space-y-3.5 my-auto max-h-[calc(100vh-2rem)] flex flex-col"
+            className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-2xl space-y-4 my-auto max-h-[calc(100vh-2rem)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header Modal */}
+            {/* Header Modal & Stepper 2 Bước */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
                   <School className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 text-base sm:text-lg leading-tight">
-                    Chọn Khối &amp; Lớp Giảng Dạy
+                    {modalStep === 'class' ? 'Bước 1: Chọn Cố Định Lớp Giảng Dạy' : 'Bước 2: Chọn Tiết Học Giảng Dạy Trực Tiếp'}
                   </h3>
-                  <p className="text-xs text-teal-700 font-bold flex items-center gap-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Đang làm việc: <span className="underline font-black">{activeClassName}</span>
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs">
+                    <span className={`px-2 py-0.5 rounded-full font-bold ${
+                      modalStep === 'class' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800'
+                    }`}>
+                      1. Chọn Lớp
+                    </span>
+                    <span className="text-slate-300">➔</span>
+                    <span className={`px-2 py-0.5 rounded-full font-bold ${
+                      modalStep === 'period' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      2. Chọn Tiết Dạy
+                    </span>
+                  </div>
                 </div>
               </div>
               <button
@@ -497,156 +538,280 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Bố cục 2 cột: Cột trái Khối, Cột phải Lớp */}
-            <div className="grid grid-cols-12 gap-3 items-start overflow-y-auto">
-              {/* CỘT TRÁI: KHỐI (6, 7, 8, 9) */}
-              <div className="col-span-4 space-y-1.5">
-                <span className="font-extrabold text-slate-400 text-[10px] uppercase tracking-wider block">
-                  1. Khối lớp
-                </span>
-                <div className="flex flex-col gap-1.5">
-                  {[6, 7, 8, 9].map((g) => {
-                    const isGradeActive = selectedModalGrade === g;
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => setSelectedModalGrade(g)}
-                        className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all text-center flex items-center justify-between cursor-pointer ${
-                          isGradeActive
-                            ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-700'
-                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}
-                      >
-                        <span>Khối {g}</span>
-                        {isGradeActive && <Check className="w-3.5 h-3.5 text-white" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* CỘT PHẢI: DANH SÁCH LỚP CỦA KHỐI ĐÓ (XẾP THEO HÀNG DỌC) */}
-              <div className="col-span-8 space-y-1.5">
-                <span className="font-extrabold text-slate-400 text-[10px] uppercase tracking-wider block">
-                  2. Lớp giảng dạy (Khối {selectedModalGrade})
-                </span>
-
-                <div className="flex flex-col gap-1.5 max-h-[220px] sm:max-h-[250px] overflow-y-auto pr-1">
-                  {availableClasses
-                    .filter((c) => c.grade === selectedModalGrade)
-                    .map((cls) => {
-                      const isSelected = activeClassId === cls.id;
+            {/* BƯỚC 1: CHỌN CỐ ĐỊNH LỚP HỌC */}
+            {modalStep === 'class' && (
+              <div className="grid grid-cols-12 gap-3 items-start overflow-y-auto">
+                {/* CỘT TRÁI: KHỐI (6, 7, 8, 9) */}
+                <div className="col-span-4 space-y-1.5">
+                  <span className="font-extrabold text-slate-400 text-[10px] uppercase tracking-wider block">
+                    1. Khối lớp
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    {[6, 7, 8, 9].map((g) => {
+                      const isGradeActive = selectedModalGrade === g;
                       return (
                         <button
-                          key={cls.id}
+                          key={g}
                           type="button"
-                          onClick={() => {
-                            selectClassForClassroom(cls.id, cls.name, cls.grade);
-                            setActiveClassId(cls.id);
-                            setActiveClassName(cls.name);
-                            setActiveGrade(cls.grade);
-                            setIsClassModalOpen(false);
-                          }}
-                          className={`p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                            isSelected
-                              ? 'border-2 border-teal-600 bg-teal-50/90 text-teal-950 font-black shadow-xs ring-1 ring-teal-500'
-                              : 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold'
+                          onClick={() => setSelectedModalGrade(g)}
+                          className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all text-center flex items-center justify-between cursor-pointer ${
+                            isGradeActive
+                              ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-700'
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs sm:text-sm">{cls.name}</span>
-                            {isSelected && (
-                              <span className="px-1.5 py-0.5 rounded-md bg-teal-600 text-white text-[9px] font-bold">
-                                ✓ Đang chọn
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] text-slate-500 font-semibold shrink-0">
-                            {cls.studentCount} HS
-                          </span>
+                          <span>Khối {g}</span>
+                          {isGradeActive && <Check className="w-3.5 h-3.5 text-white" />}
                         </button>
                       );
                     })}
+                  </div>
+                </div>
 
-                  {/* NÚT THÊM LỚP Ở CUỐI CÙNG DANH SÁCH LỚP */}
-                  {!showAddClassInline ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowAddClassInline(true)}
-                      className="w-full py-2 px-3 rounded-xl border border-dashed border-teal-300 hover:border-teal-500 bg-teal-50/40 text-teal-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all mt-1 cursor-pointer"
-                    >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      <span>+ Thêm lớp mới (Khối {selectedModalGrade})</span>
-                    </button>
-                  ) : (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!newClassNameInput.trim()) return;
-                        const formatted = newClassNameInput.trim().startsWith('Lớp')
-                          ? newClassNameInput.trim()
-                          : `Lớp ${newClassNameInput.trim()}`;
-                        const code = formatted.replace('Lớp ', '').replace(/\s+/g, '');
-                        const newCls: ClassItem = {
-                          id: `c-custom-${Date.now()}`,
-                          grade: selectedModalGrade as any,
-                          name: formatted,
-                          classCode: code,
-                          studentCount: 0,
-                        };
-                        const updated = [...availableClasses, newCls];
-                        setAvailableClasses(updated);
-                        saveClasses(updated);
-                        selectClassForClassroom(newCls.id, newCls.name, newCls.grade);
-                        setActiveClassId(newCls.id);
-                        setActiveClassName(newCls.name);
-                        setActiveGrade(newCls.grade);
-                        setNewClassNameInput('');
-                        setShowAddClassInline(false);
-                        setIsClassModalOpen(false);
-                      }}
-                      className="p-2.5 bg-slate-50 border border-teal-200 rounded-xl space-y-2 mt-1"
-                    >
-                      <div className="text-[11px] font-bold text-slate-700">Tên lớp mới (Khối {selectedModalGrade}):</div>
-                      <input
-                        type="text"
-                        placeholder={`vd: ${selectedModalGrade}A14`}
-                        value={newClassNameInput}
-                        onChange={(e) => setNewClassNameInput(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-hidden focus:border-teal-600 bg-white"
-                        autoFocus
-                      />
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="submit"
-                          className="px-3 py-1 rounded-lg bg-teal-600 text-white font-bold text-xs hover:bg-teal-700 cursor-pointer"
-                        >
-                          Tạo &amp; Chọn ngay
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowAddClassInline(false)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 cursor-pointer"
-                        >
-                          Hủy
-                        </button>
-                      </div>
-                    </form>
-                  )}
+                {/* CỘT PHẢI: DANH SÁCH LỚP CỦA KHỐI ĐÓ */}
+                <div className="col-span-8 space-y-1.5">
+                  <span className="font-extrabold text-slate-400 text-[10px] uppercase tracking-wider block">
+                    2. Chọn lớp học cố định (Khối {selectedModalGrade})
+                  </span>
+
+                  <div className="flex flex-col gap-1.5 max-h-[220px] sm:max-h-[250px] overflow-y-auto pr-1">
+                    {availableClasses
+                      .filter((c) => c.grade === selectedModalGrade)
+                      .map((cls) => {
+                        const isSelected = activeClassId === cls.id;
+                        return (
+                          <button
+                            key={cls.id}
+                            type="button"
+                            onClick={() => {
+                              selectClassForClassroom(cls.id, cls.name, cls.grade);
+                              setActiveClassId(cls.id);
+                              setActiveClassName(cls.name);
+                              setActiveGrade(cls.grade);
+                              // Tự động chuyển sang Bước 2 chọn Tiết học
+                              setModalStep('period');
+                            }}
+                            className={`p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                              isSelected
+                                ? 'border-2 border-teal-600 bg-teal-50/90 text-teal-950 font-black shadow-xs ring-1 ring-teal-500'
+                                : 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs sm:text-sm">{cls.name}</span>
+                              {isSelected && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-teal-600 text-white text-[9px] font-bold">
+                                  ✓ Đang chọn
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-slate-500 font-semibold shrink-0">
+                                {cls.studentCount} HS
+                              </span>
+                              <span className="text-xs text-teal-600 font-black">Chọn ➔</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+
+                    {/* NÚT THÊM LỚP Ở CUỐI CÙNG DANH SÁCH LỚP */}
+                    {!showAddClassInline ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddClassInline(true)}
+                        className="w-full py-2 px-3 rounded-xl border border-dashed border-teal-300 hover:border-teal-500 bg-teal-50/40 text-teal-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all mt-1 cursor-pointer"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                        <span>+ Thêm lớp mới (Khối {selectedModalGrade})</span>
+                      </button>
+                    ) : (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!newClassNameInput.trim()) return;
+                          const formatted = newClassNameInput.trim().startsWith('Lớp')
+                            ? newClassNameInput.trim()
+                            : `Lớp ${newClassNameInput.trim()}`;
+                          const code = formatted.replace('Lớp ', '').replace(/\s+/g, '');
+                          const newCls: ClassItem = {
+                            id: `c-custom-${Date.now()}`,
+                            grade: selectedModalGrade as any,
+                            name: formatted,
+                            classCode: code,
+                            studentCount: 0,
+                          };
+                          const updated = [...availableClasses, newCls];
+                          setAvailableClasses(updated);
+                          saveClasses(updated);
+                          selectClassForClassroom(newCls.id, newCls.name, newCls.grade);
+                          setActiveClassId(newCls.id);
+                          setActiveClassName(newCls.name);
+                          setActiveGrade(newCls.grade);
+                          setNewClassNameInput('');
+                          setShowAddClassInline(false);
+                          setModalStep('period');
+                        }}
+                        className="p-2.5 bg-slate-50 border border-teal-200 rounded-xl space-y-2 mt-1"
+                      >
+                        <div className="text-[11px] font-bold text-slate-700">Tên lớp mới (Khối {selectedModalGrade}):</div>
+                        <input
+                          type="text"
+                          placeholder={`vd: ${selectedModalGrade}A14`}
+                          value={newClassNameInput}
+                          onChange={(e) => setNewClassNameInput(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-hidden focus:border-teal-600 bg-white"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="submit"
+                            className="px-3 py-1 rounded-lg bg-teal-600 text-white font-bold text-xs hover:bg-teal-700 cursor-pointer"
+                          >
+                            Tạo &amp; Chọn ngay
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddClassInline(false)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 cursor-pointer"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* BƯỚC 2: CHỌN TIẾT HỌC DẢNG DẠY */}
+            {modalStep === 'period' && (
+              <div className="space-y-3 overflow-y-auto">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setModalStep('class')}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      ← Đổi lớp ({activeClassName})
+                    </button>
+                    <span className="text-xs font-bold text-teal-800">
+                      Lớp: <strong className="underline">{activeClassName}</strong> (Khối {selectedModalGrade})
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Tìm tên bài học hoặc số tiết..."
+                    value={periodFilterText}
+                    onChange={(e) => setPeriodFilterText(e.target.value)}
+                    className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-teal-600 w-48 sm:w-56"
+                  />
+                </div>
+
+                {/* Danh sách 29 Tiết */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
+                  {(CURRICULUM_DATA[selectedModalGrade] || CURRICULUM_DATA[6] || [])
+                    .filter((p) =>
+                      !periodFilterText.trim() ||
+                      p.title.toLowerCase().includes(periodFilterText.toLowerCase()) ||
+                      p.period.toString() === periodFilterText.trim()
+                    )
+                    .map((p) => {
+                      const isSelected = selectedPeriodModal === p.period;
+                      const isPrac = Boolean(p.practicalTask);
+                      return (
+                        <button
+                          key={p.period}
+                          type="button"
+                          onClick={() => setSelectedPeriodModal(p.period)}
+                          className={`p-2.5 rounded-xl text-left transition-all border flex items-start justify-between gap-2 cursor-pointer ${
+                            isSelected
+                              ? 'border-2 border-teal-600 bg-teal-50 text-teal-950 font-black shadow-xs ring-1 ring-teal-500'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-black text-teal-700 shrink-0">
+                                Tiết {p.period}
+                              </span>
+                              <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-bold ${
+                                isPrac ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {isPrac ? '💻 Thực hành' : '📖 Lý thuyết'}
+                              </span>
+                            </div>
+                            <div className="text-xs font-bold text-slate-800 line-clamp-1 truncate">
+                              {p.title}
+                            </div>
+                          </div>
+                          {isSelected && <Check className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />}
+                        </button>
+                      );
+                    })}
+                </div>
+
+                {/* Tùy chọn Bật Live và Nút Xác nhận */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={autoLiveOnConfirm}
+                      onChange={(e) => setAutoLiveOnConfirm(e.target.checked)}
+                      className="w-4 h-4 accent-teal-600 rounded"
+                    />
+                    <span>Phát trực tiếp bài dạy ngay (Mở khóa 3 hoạt động trực tiếp)</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const curr = CURRICULUM_DATA[selectedModalGrade] || CURRICULUM_DATA[6] || [];
+                      const lesson = curr.find((l) => l.period === selectedPeriodModal) || curr[0];
+                      const isPrac = Boolean(lesson?.practicalTask);
+
+                      selectPeriodForClassroom(
+                        selectedPeriodModal,
+                        lesson?.title,
+                        selectedModalGrade,
+                        isPrac,
+                        activeClassId,
+                        activeClassName
+                      );
+                      setActivePeriod(selectedPeriodModal);
+
+                      if (autoLiveOnConfirm) {
+                        setLiveBroadcast(true, activeClassName);
+                      }
+
+                      if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('truong_initial_flow_completed', 'true');
+                        sessionStorage.setItem(`truong_fixed_period_${activeClassId}`, String(selectedPeriodModal));
+                      }
+
+                      setIsClassModalOpen(false);
+                      router.push('/teacher?tab=in-class', { scroll: false });
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>🚀 Xác Nhận &amp; Bắt Đầu Tiết Dạy</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* THÔNG BÁO ĐỒNG BỘ TOÀN HỆ THỐNG */}
-            <div className="p-3 rounded-2xl bg-teal-50/80 border border-teal-200 text-teal-900 text-xs leading-relaxed shrink-0">
+            <div className="p-2.5 rounded-xl bg-teal-50/80 border border-teal-200 text-teal-900 text-xs shrink-0 flex items-center justify-between gap-2">
               <div className="font-extrabold flex items-center gap-1.5 text-teal-950">
-                <span>🎯 Đồng bộ toàn diện:</span>
+                <span>🎯 Lớp đang chọn:</span>
                 <span className="underline font-black">{activeClassName}</span>
+                <span className="text-[11px] text-teal-700">· Tiết {selectedPeriodModal}</span>
               </div>
-              <p className="text-[11px] text-teal-800 mt-1">
-                Khi Thầy chọn lớp tại đây, tất cả 5 phân hệ (Lớp học số 24 máy trạm, Quản lý lớp &amp; học sinh, Bài kiểm tra, Bài tập về nhà, Bảng điểm học kỳ) sẽ tự động làm việc trên đúng lớp này.
-              </p>
+              <span className="text-[10px] text-teal-700 font-semibold hidden sm:inline">
+                24 máy trạm đồng bộ 100%
+              </span>
             </div>
           </div>
         </div>,

@@ -193,8 +193,8 @@ export function getClassroomState(): ClassroomControlState {
   }
 }
 
-const CLOUD_SYNC_TOPIC = 'thay_truong_mao_dien_classroom_sync_666';
-const CLOUD_SYNC_URL = `https://ntfy.sh/${CLOUD_SYNC_TOPIC}`;
+// KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT & XUYÊN THIẾT BỊ (ĐẢM BẢO 100% HOẠT ĐỘNG TẠI VN)
+const CLOUD_SYNC_ENDPOINT = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1ce1faf851114';
 
 export function updateClassroomState(
   updater: (prev: ClassroomControlState) => ClassroomControlState
@@ -212,15 +212,17 @@ export function updateClassroomState(
         bc.close();
       }
 
-      // KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (Chrome ⇄ Edge ⇄ Firefox ⇄ 24 Máy Trạm)
-      fetch(CLOUD_SYNC_URL, {
-        method: 'POST',
-        headers: {
-          'Title': 'CLASSROOM_STATE_UPDATE',
-          'Priority': 'urgent',
-          'Tags': next.isLive ? 'radio_button_checked,school' : 'pause,school',
-        },
-        body: JSON.stringify(next),
+      // ĐẨY LÊN ĐÁM MÂY REST API XUYÊN MỌI TRÌNH DUYỆT (CHROME ⇄ EDGE ⇄ 24 MÁY TRẠM)
+      fetch(CLOUD_SYNC_ENDPOINT, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'THCS_MAO_DIEN_CLASSROOM_SYNC_THAY_TRUONG_IT',
+          data: {
+            ...next,
+            updatedAt: Date.now(),
+          },
+        }),
       }).catch(() => {});
     } catch (e) {}
   }
@@ -547,79 +549,61 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     } catch (err) {}
   }
 
-  // 4. KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (Chrome ⇄ Edge ⇄ Firefox ⇄ 24 Máy Trạm)
-  // a) Khởi tạo: Lấy ngay trạng thái Live mới nhất từ Cloud khi vừa mở trang
-  fetch(`${CLOUD_SYNC_URL}/json?poll=1`)
-    .then((res) => res.text())
-    .then((text) => {
-      if (!text) return;
-      const lines = text.trim().split('\n').filter(Boolean);
-      if (lines.length > 0) {
-        const lastLine = JSON.parse(lines[lines.length - 1]);
-        if (lastLine && lastLine.message) {
-          const cloudState = JSON.parse(lastLine.message) as ClassroomControlState;
-          if (cloudState && typeof cloudState.isLive === 'boolean') {
+  // 4. KÊNH ĐỒNG BỘ ĐÁM MÂY XUYÊN TRÌNH DUYỆT (CHROME ⇄ EDGE ⇄ CỐC CỐC ⇄ 24 MÁY TRẠM)
+  // a) Khởi tạo: Lấy ngay trạng thái Live mới nhất từ Cloud khi vừa mở trang (200-300ms)
+  let lastSyncedTimestamp = 0;
+
+  const syncFromCloud = () => {
+    // Thêm _t timestamp để chống cache trình duyệt hoàn toàn (Bypass HTTP cache)
+    fetch(`${CLOUD_SYNC_ENDPOINT}?_t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then((result) => {
+        if (result && result.data) {
+          const cloud = result.data;
+          const current = getClassroomState();
+          
+          // Kiểm tra nếu có dữ liệu mới từ máy Thầy hoặc trạng thái live/tiết học thay đổi
+          const isStateChanged = 
+            cloud.isLive !== current.isLive ||
+            cloud.activePeriod !== current.activePeriod ||
+            cloud.activeGrade !== current.activeGrade ||
+            cloud.activeClassId !== current.activeClassId ||
+            (cloud.activityLocks && JSON.stringify(cloud.activityLocks) !== JSON.stringify(current.activityLocks)) ||
+            (cloud.updatedAt && cloud.updatedAt > lastSyncedTimestamp);
+
+          if (isStateChanged) {
+            lastSyncedTimestamp = cloud.updatedAt || Date.now();
+            const cloudLocks = cloud.activityLocks || (cloud.isLive ? { discovery: true, practice: true, lab: true } : current.activityLocks);
+            const mergedState: ClassroomControlState = {
+              ...current,
+              isLive: Boolean(cloud.isLive),
+              activeGrade: cloud.activeGrade || current.activeGrade,
+              activeClassId: cloud.activeClassId || current.activeClassId,
+              activeClassName: cloud.activeClassName || current.activeClassName,
+              activePeriod: cloud.activePeriod || current.activePeriod,
+              lessonTitle: cloud.lessonTitle || current.lessonTitle,
+              activityLocks: cloudLocks,
+              broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
+              broadcastTime: cloud.broadcastTime || current.broadcastTime,
+            };
             try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
             } catch (e) {}
-            callback(cloudState);
-          }
-        }
-      }
-    })
-    .catch(() => {});
-
-  // b) Kết nối Server-Sent Events (SSE) để nhận cập nhật tức thì khi Thầy bấm Phát Live
-  let es: EventSource | null = null;
-  if ('EventSource' in window) {
-    try {
-      es = new EventSource(`${CLOUD_SYNC_URL}/sse`);
-      es.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.message) {
-            const cloudState = JSON.parse(data.message) as ClassroomControlState;
-            if (cloudState && typeof cloudState.isLive === 'boolean') {
-              try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
-              } catch (e) {}
-              callback(cloudState);
-            }
-          }
-        } catch (err) {}
-      };
-    } catch (e) {}
-  }
-
-  // c) Polling định kỳ mỗi 3 giây đối soát trạng thái Live đám mây (dự phòng mạng trường học)
-  const pollIntervalId = setInterval(() => {
-    fetch(`${CLOUD_SYNC_URL}/json?poll=1`)
-      .then((res) => res.text())
-      .then((text) => {
-        if (!text) return;
-        const lines = text.trim().split('\n').filter(Boolean);
-        if (lines.length > 0) {
-          const lastLine = JSON.parse(lines[lines.length - 1]);
-          if (lastLine && lastLine.message) {
-            const cloudState = JSON.parse(lastLine.message) as ClassroomControlState;
-            const current = getClassroomState();
-            if (
-              cloudState &&
-              (cloudState.isLive !== current.isLive ||
-                cloudState.activePeriod !== current.activePeriod ||
-                cloudState.activeGrade !== current.activeGrade ||
-                cloudState.activeClassId !== current.activeClassId)
-            ) {
-              try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
-              } catch (e) {}
-              callback(cloudState);
-            }
+            callback(mergedState);
           }
         }
       })
       .catch(() => {});
-  }, 3000);
+  };
+
+  // Kích hoạt đồng bộ ngay lập tức khi load trang
+  syncFromCloud();
+
+  // b) Polling định kỳ mỗi 1.2 giây để cập nhật trạng thái thời gian thực giữa các trình duyệt
+  const pollIntervalId = setInterval(syncFromCloud, 1200);
 
   // 5. KÊNH SUPABASE REALTIME (NẾU CÓ DỰ ÁN THẬT)
   let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -650,11 +634,6 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
     if (bc) {
       try {
         bc.close();
-      } catch (e) {}
-    }
-    if (es) {
-      try {
-        es.close();
       } catch (e) {}
     }
     clearInterval(pollIntervalId);

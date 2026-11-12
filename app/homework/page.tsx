@@ -32,8 +32,9 @@ export default function HomeworkPage() {
   const [selectedGrade, setSelectedGrade] = useState<number>(7);
   const [selectedPeriodNum, setSelectedPeriodNum] = useState<number>(6);
 
-  // Trạng thái nộp bài
-  const [submissionType, setSubmissionType] = useState<'image' | 'file'>('image');
+  // Trạng thái nộp bài (Hỗ trợ nhập trực tiếp trên trình duyệt, chụp ảnh vở, hoặc tải tệp)
+  const [submissionType, setSubmissionType] = useState<'text' | 'image' | 'file'>('text');
+  const [typedAnswer, setTypedAnswer] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [studentNote, setStudentNote] = useState<string>('');
@@ -106,9 +107,21 @@ export default function HomeworkPage() {
 
   const handleSubmitHomework = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile && !previewImageUrl) {
-      alert('Vui lòng chọn ảnh chụp vở ghi hoặc tệp bài làm để nộp!');
-      return;
+    if (submissionType === 'text') {
+      if (!typedAnswer.trim()) {
+        alert('Vui lòng nhập nội dung câu trả lời bài tập về nhà trước khi nộp!');
+        return;
+      }
+    } else if (submissionType === 'image') {
+      if (!previewImageUrl && !selectedFile) {
+        alert('Vui lòng chụp ảnh hoặc tải ảnh chụp vở bài tập lên!');
+        return;
+      }
+    } else {
+      if (!selectedFile) {
+        alert('Vui lòng chọn tệp bài làm (.docx, .xlsx, .py, .pdf) để nộp!');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -117,6 +130,22 @@ export default function HomeworkPage() {
       const stName = currentUser?.studentName || 'Học sinh';
       const stCode = currentUser?.studentCode || `HS${selectedGrade}01`;
       const stClass = currentUser?.studentClass || `Lớp ${selectedGrade}A11`;
+
+      let fileNameStr = `BTVN_Tiet_${currentLesson.period}.txt`;
+      let fileSizeStr = `${(typedAnswer.length / 1024).toFixed(1)} KB`;
+      let finalNote = studentNote;
+
+      if (submissionType === 'text') {
+        fileNameStr = `Bai_Lam_Truc_Tiep_Tiet_${currentLesson.period}.txt`;
+        fileSizeStr = `${typedAnswer.length} ký tự`;
+        finalNote = `[BÀI LÀM TRỰC TIẾP TRÊN TRÌNH DUYỆT]:\n${typedAnswer}${studentNote ? `\n\n[Lời nhắn học sinh]: ${studentNote}` : ''}`;
+      } else if (submissionType === 'image') {
+        fileNameStr = selectedFile ? selectedFile.name : `Anh_chup_vo_Tiet_${currentLesson.period}.jpg`;
+        fileSizeStr = selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : '1.2 MB';
+      } else {
+        fileNameStr = selectedFile ? selectedFile.name : `Tep_ThucHanh_Tiet_${currentLesson.period}.xlsx`;
+        fileSizeStr = selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : '45 KB';
+      }
 
       const newSub: HomeworkSubmission = {
         id: `hw-sub-${Date.now()}`,
@@ -127,13 +156,15 @@ export default function HomeworkPage() {
         classId: `c-${selectedGrade}a11`,
         className: stClass,
         fileType: submissionType === 'image' ? 'image' : 'other',
-        fileName: selectedFile ? selectedFile.name : `Anh_chup_vo_Tiet_${currentLesson.period}.jpg`,
-        fileSize: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : '1.2 MB',
+        fileName: fileNameStr,
+        fileSize: fileSizeStr,
         fileDataUrl: previewImageUrl || undefined,
-        note: studentNote,
+        note: finalNote,
         submittedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
         grade: 10,
-        feedback: 'Thầy Đỗ Mạnh Trường đã nhận bài: Trình bày bài làm trong vở sạch đẹp, đầy đủ các mục yêu cầu!',
+        feedback: submissionType === 'text'
+          ? 'Thầy Đỗ Mạnh Trường: Đã nhận bài làm trực tuyến! Em trả lời đầy đủ, lập luận rõ ràng, đạt điểm 10!'
+          : 'Thầy Đỗ Mạnh Trường đã nhận bài: Trình bày bài làm trong vở sạch đẹp, đầy đủ các mục yêu cầu!',
         status: 'graded',
       };
 
@@ -195,6 +226,94 @@ export default function HomeworkPage() {
           <div>✓ Hỗ trợ tệp văn bản .docx, bảng tính .xlsx, mã .py.</div>
         </div>
       </div>
+
+      {/* ==================================================================== */}
+      {/* 1. BANNER THÔNG BÁO BÀI TẬP VỀ NHÀ CẦN LÀM (KHÔNG BỊ ẢNH HƯỞNG BỞI LIVE) */}
+      {/* ==================================================================== */}
+      {(() => {
+        const pendingLessons = periodsOfGrade.filter(
+          (p) => !allSubmissions.some((s) => s.homeworkId === `hw-p${p.period}-g${selectedGrade}`)
+        );
+        const completedCount = periodsOfGrade.length - pendingLessons.length;
+
+        return (
+          <div className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-sm sm:text-base uppercase tracking-tight">
+                      Thông Báo Bài Tập Về Nhà Cần Hoàn Thành
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white text-amber-900 font-extrabold text-[11px]">
+                      Khối {selectedGrade}
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-100 mt-0.5">
+                    Thầy Đỗ Mạnh Trường giao bài tập định kỳ · Em có thể làm bài độc lập bất cứ lúc nào ở nhà hoặc trên lớp.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 bg-white/15 px-3 py-1.5 rounded-2xl backdrop-blur-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <span className="text-xs font-bold">
+                  Tiến độ: <strong className="text-white">{completedCount}/{periodsOfGrade.length} bài</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* DANH SÁCH CÁC BÀI TẬP CẦN NỘP GẦN NHẤT */}
+            {pendingLessons.length > 0 ? (
+              <div className="pt-2 border-t border-white/20">
+                <div className="text-xs font-bold text-amber-100 mb-2 flex items-center gap-1.5">
+                  <span>⚡ Các bài tập cần làm ngay:</span>
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-normal">
+                    (Bấm vào thẻ bài tập để mở và nộp ngay)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                  {pendingLessons.slice(0, 8).map((p) => (
+                    <button
+                      key={p.period}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPeriodNum(p.period);
+                        setSelectedFile(null);
+                        setPreviewImageUrl(null);
+                        setSubmittedReceipt(null);
+                      }}
+                      className={`px-3 py-2 rounded-2xl text-left shrink-0 transition-all cursor-pointer border ${
+                        selectedPeriodNum === p.period
+                          ? 'bg-white text-amber-900 border-white shadow-md font-black scale-102'
+                          : 'bg-white/15 hover:bg-white/25 text-white border-white/20 text-xs font-semibold'
+                      }`}
+                    >
+                      <div className="text-[10px] uppercase font-bold opacity-90">Tiết {p.period}</div>
+                      <div className="text-xs font-bold line-clamp-1 max-w-[170px] truncate">
+                        {p.homework?.title || p.title}
+                      </div>
+                    </button>
+                  ))}
+                  {pendingLessons.length > 8 && (
+                    <span className="text-xs text-amber-100 font-semibold px-2 shrink-0">
+                      +{pendingLessons.length - 8} bài khác bên dưới...
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="pt-2 border-t border-white/20 flex items-center gap-2 text-xs font-bold text-emerald-100">
+                <Check className="w-4 h-4 text-emerald-300" />
+                <span>🎉 Chúc mừng em! Em đã hoàn thành 100% tất cả các bài tập về nhà môn Tin học!</span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* CHỌN KHỐI VÀ TIẾT HỌC */}
       <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-3">
@@ -335,13 +454,22 @@ export default function HomeworkPage() {
               <span>Nộp Sản Phẩm Bài Làm</span>
             </h3>
 
-            {/* TAB CHUYỂN ĐỔI: ẢNH VỞ ⇄ TỆP ĐIỆN TỬ */}
-            <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+            {/* TAB CHUYỂN ĐỔI 3 HÌNH THỨC NỘP BÀI TẬP VỀ NHÀ */}
+            <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 flex-wrap gap-1">
+              <button
+                type="button"
+                onClick={() => setSubmissionType('text')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  submissionType === 'text' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>✍️ Nhập Câu Trả Lời</span>
+              </button>
               <button
                 type="button"
                 onClick={() => { setSubmissionType('image'); setSelectedFile(null); setPreviewImageUrl(null); }}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                  submissionType === 'image' ? 'bg-white text-amber-800 shadow-2xs' : 'text-slate-600'
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  submissionType === 'image' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -350,8 +478,8 @@ export default function HomeworkPage() {
               <button
                 type="button"
                 onClick={() => { setSubmissionType('file'); setSelectedFile(null); setPreviewImageUrl(null); }}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                  submissionType === 'file' ? 'bg-white text-blue-800 shadow-2xs' : 'text-slate-600'
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  submissionType === 'file' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -362,8 +490,57 @@ export default function HomeworkPage() {
 
           <form onSubmit={handleSubmitHomework} className="space-y-4">
             
-            {submissionType === 'image' ? (
-              /* VÙNG CHỤP / TẢI ẢNH CHỤP VỞ */
+            {/* HÌNH THỨC 1: NHẬP CÂU TRẢ LỜI TRỰC TIẾP TRÊN TRÌNH DUYỆT */}
+            {submissionType === 'text' && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>✍️ Soạn thảo bài làm trực tiếp:</span>
+                  </span>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <span>Độ dài: <strong className="text-amber-800">{typedAnswer.length}</strong> ký tự</span>
+                  </div>
+                </div>
+
+                {/* Các nút chèn nhanh gợi ý cấu trúc */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] text-slate-500 font-semibold">Chèn nhanh:</span>
+                  <button
+                    type="button"
+                    onClick={() => setTypedAnswer(prev => prev ? `${prev}\n\n[Câu 1]: ` : '[Câu 1]: ')}
+                    className="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold cursor-pointer"
+                  >
+                    + Câu 1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTypedAnswer(prev => prev ? `${prev}\n\n[Câu 2]: ` : '[Câu 2]: ')}
+                    className="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold cursor-pointer"
+                  >
+                    + Câu 2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTypedAnswer(prev => prev ? `${prev}\n\n[Vận dụng]: ` : '[Vận dụng]: ')}
+                    className="px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-[11px] font-bold cursor-pointer"
+                  >
+                    + Vận dụng thực tế
+                  </button>
+                </div>
+
+                <textarea
+                  rows={8}
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  placeholder={`Gõ trực tiếp câu trả lời bài tập về nhà Tiết ${currentLesson.period} vào đây...\nVí dụ:\n[Câu 1]: Em hãy nêu khái niệm...\nTrả lời: ...\n\n[Câu 2]: Vận dụng vào thực tế học tập...`}
+                  className="w-full p-3.5 rounded-2xl border border-slate-300 focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-sans bg-slate-50/50"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {/* HÌNH THỨC 2: CHỤP ẢNH VỞ */}
+            {submissionType === 'image' && (
               <div className="space-y-3">
                 <input
                   ref={imageInputRef}
@@ -390,7 +567,7 @@ export default function HomeworkPage() {
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="text-blue-600 hover:text-blue-800 underline font-semibold"
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer"
                       >
                         Chụp / Chọn lại ảnh khác
                       </button>
@@ -413,8 +590,10 @@ export default function HomeworkPage() {
                   </div>
                 )}
               </div>
-            ) : (
-              /* VÙNG NỘP TỆP FILE */
+            )}
+
+            {/* HÌNH THỨC 3: NỘP TỆP FILE */}
+            {submissionType === 'file' && (
               <div className="space-y-3">
                 <input
                   ref={fileInputRef}
@@ -454,19 +633,19 @@ export default function HomeworkPage() {
                 rows={2}
                 value={studentNote}
                 onChange={(e) => setStudentNote(e.target.value)}
-                placeholder="Ví dụ: Thưa Thầy, câu số 3 phần bài tập em đã làm theo 2 cách trong vở ạ..."
-                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 focus:outline-none focus:border-amber-500"
+                placeholder="Ví dụ: Thưa Thầy, phần vận dụng em liên hệ thực tế môn Toán và Khoa học tự nhiên ạ..."
+                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 focus:outline-hidden focus:border-amber-500"
               />
             </div>
 
             {/* NÚT BẤM NỘP BÀI */}
             <button
               type="submit"
-              disabled={isSubmitting || (!selectedFile && !previewImageUrl)}
-              className="w-full py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2"
+              disabled={isSubmitting || (submissionType === 'text' ? !typedAnswer.trim() : !selectedFile && !previewImageUrl)}
+              className="w-full py-3.5 rounded-2xl bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              <span>{isSubmitting ? 'Đang gửi bài tới Thầy Trường...' : `Nộp Bài Tập Về Nhà Tiết ${currentLesson.period}`}</span>
+              <span>{isSubmitting ? 'Đang gửi bài tới Thầy Trường...' : `Xác Nhận Nộp Bài Về Nhà Tiết ${currentLesson.period}`}</span>
             </button>
           </form>
 
