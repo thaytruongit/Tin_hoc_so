@@ -203,7 +203,7 @@ export default function HomePage() {
 
       localStorage.setItem('truong_user_role', 'teacher');
       localStorage.setItem('truong_teacher_name', 'Thầy Đỗ Mạnh Trường');
-      sessionStorage.setItem('truong_login_show_period_modal', 'true');
+      sessionStorage.removeItem('truong_initial_flow_completed');
       sessionStorage.removeItem('truong_period_modal_dismissed');
       router.push('/teacher?tab=in-class');
     }, 250);

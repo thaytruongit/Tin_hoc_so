@@ -156,23 +156,6 @@ export default function ClassroomCommandCenter({
     return Boolean(activeLesson?.practicalTask);
   }, [activeLesson]);
 
-  // BẬT POPUP CHỌN TIẾT HỌC ĐÚNG 1 LẦN DUY NHẤT KHI GIÁO VIÊN ĐĂNG NHẬP (TRÁNH TRÙNG LẶP)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const needShowOnLogin = sessionStorage.getItem('truong_login_show_period_modal');
-      const alreadyDismissed = sessionStorage.getItem('truong_period_modal_dismissed');
-
-      if (needShowOnLogin === 'true') {
-        sessionStorage.removeItem('truong_login_show_period_modal');
-        sessionStorage.setItem('truong_period_modal_dismissed', 'true');
-        setShowPeriodModal(true);
-      } else if (!controlState.activePeriod && alreadyDismissed !== 'true') {
-        sessionStorage.setItem('truong_period_modal_dismissed', 'true');
-        setShowPeriodModal(true);
-      }
-    }
-  }, [controlState.activePeriod]);
-
   // ĐỒNG BỘ DỮ LIỆU KHI LỚP HỌC ĐỔI (TUYỆT ĐỐI KHÔNG TỰ ĐỘNG BẬT LẠI POPUP TRÁNH TRÙNG LẶP)
   useEffect(() => {
     if (!currentClass?.id) return;

@@ -130,11 +130,19 @@ export default function Navbar() {
     };
   }, [pathname]);
 
+  // Đóng Modal chọn lớp an toàn và ghi nhận hoàn thành luồng mở ban đầu
+  const closeClassModal = () => {
+    setIsClassModalOpen(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('truong_initial_flow_completed', 'true');
+    }
+  };
+
   // Đóng Modal khi nhấn phím Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isClassModalOpen) {
-        setIsClassModalOpen(false);
+        closeClassModal();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -155,6 +163,7 @@ export default function Navbar() {
     localStorage.removeItem('truong_partner_name');
     localStorage.removeItem('truong_pair_names');
     if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('truong_initial_flow_completed');
       sessionStorage.removeItem('truong_login_show_period_modal');
       sessionStorage.removeItem('truong_period_modal_dismissed');
     }
@@ -290,6 +299,7 @@ export default function Navbar() {
                 onClick={() => {
                   setSelectedModalGrade(activeGrade || 6);
                   setShowAddClassInline(false);
+                  setModalStep('class');
                   setIsClassModalOpen(true);
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-teal-50 hover:bg-teal-100/90 border-2 border-teal-600 text-teal-950 font-bold text-xs sm:text-sm shadow-xs hover:shadow transition-all group shrink-0 cursor-pointer"
@@ -435,6 +445,7 @@ export default function Navbar() {
                 setMobileMenuOpen(false);
                 setSelectedModalGrade(activeGrade || 6);
                 setShowAddClassInline(false);
+                setModalStep('class');
                 setIsClassModalOpen(true);
               }}
               className="w-full flex items-center justify-between p-3 rounded-2xl bg-teal-50 border-2 border-teal-600 text-teal-950 font-bold text-sm shadow-xs cursor-pointer"
@@ -501,7 +512,7 @@ export default function Navbar() {
       {mounted && isClassModalOpen && typeof document !== 'undefined' && createPortal(
         <div 
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
-          onClick={() => setIsClassModalOpen(false)}
+          onClick={closeClassModal}
         >
           <div 
             className="bg-white rounded-3xl border-2 border-teal-600 shadow-2xl p-4 sm:p-6 w-full max-w-2xl space-y-4 my-auto max-h-[calc(100vh-2rem)] flex flex-col"
@@ -534,7 +545,7 @@ export default function Navbar() {
               </div>
               <button
                 type="button"
-                onClick={() => setIsClassModalOpen(false)}
+                onClick={closeClassModal}
                 className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                 title="Đóng bảng chọn lớp (Esc)"
               >
