@@ -109,31 +109,11 @@ export default function ClassroomCommandCenter({
     return () => unsub();
   }, []);
 
-  // Kiểm tra popup chọn tiết học khi lớp thay đổi
-  useEffect(() => {
-    if (currentClass?.grade) {
-      setBroadcastGrade(currentClass.grade);
-    }
-    if (typeof window !== 'undefined' && currentClass?.id) {
-      const key = `truong_fixed_period_${currentClass.id}`;
-      const saved = sessionStorage.getItem(key);
-      if (!saved) {
-        setShowPeriodModal(true);
-      } else {
-        const pNum = Number(saved);
-        if (pNum) {
-          setSelectedPeriod(pNum);
-          selectPeriodForClassroom(pNum, undefined, currentClass.grade);
-        }
-      }
-    }
-  }, [currentClass?.id, currentClass?.grade]);
-
   // Lấy dữ liệu 29 tiết học của khối đang chọn
   const gradeCurriculum = useMemo(() => {
-    const g = currentClass.grade || broadcastGrade || 6;
+    const g = currentClass?.grade || broadcastGrade || 6;
     return CURRICULUM_DATA[g] || CURRICULUM_DATA[6] || [];
-  }, [currentClass.grade, broadcastGrade]);
+  }, [currentClass?.grade, broadcastGrade]);
 
   // Tiết học hiện tại đã cố định
   const activeLesson = useMemo(() => {
@@ -141,15 +121,87 @@ export default function ClassroomCommandCenter({
     return gradeCurriculum.find((l) => l.period === pNum) || gradeCurriculum[0];
   }, [gradeCurriculum, controlState.activePeriod, selectedPeriod]);
 
-  // Chọn và cố định tiết học giảng dạy
+  // Phân biệt: Tiết này có bài tập thực hành trên máy hay là bài lý thuyết thuần túy
+  const isPracticalLesson = useMemo(() => {
+    return Boolean(activeLesson?.practicalTask);
+  }, [activeLesson]);
+
+  // TỰ ĐỘNG CHỌN TIẾT HỌC MẶC ĐỊNH VÀ NẠP TOÀN BỘ DỮ LIỆU ĐỒNG BỘ KHI GIÁO VIÊN ĐĂNG NHẬP / MỞ TRANG
+  useEffect(() => {
+    if (!currentClass?.id) return;
+    const g = currentClass.grade || 6;
+    setBroadcastGrade(g);
+
+    // Lấy tiết học đã lưu theo lớp, nếu chưa có thì tự động chọn Tiết 1
+    const key = `truong_fixed_period_${currentClass.id}`;
+    let pNum = 1;
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(key);
+      if (saved && Number(saved)) {
+        pNum = Number(saved);
+      }
+    }
+
+    const curr = CURRICULUM_DATA[g] || CURRICULUM_DATA[6] || [];
+    const lesson = curr.find((l) => l.period === pNum) || curr[0];
+    const isPrac = Boolean(lesson?.practicalTask);
+
+    setSelectedPeriod(pNum);
+    selectPeriodForClassroom(pNum, lesson?.title, g, isPrac, currentClass.id, currentClass.name);
+  }, [currentClass?.id, currentClass?.grade, currentClass?.name]);
+
+  // Chọn và cố định tiết học giảng dạy khi Thầy chọn từ popup
   const handleSelectPeriod = (periodNum: number, title: string) => {
     setSelectedPeriod(periodNum);
-    selectPeriodForClassroom(periodNum, title, currentClass.grade);
+    const curr = gradeCurriculum;
+    const lesson = curr.find((l) => l.period === periodNum) || curr[0];
+    const isPrac = Boolean(lesson?.practicalTask);
+
+    selectPeriodForClassroom(periodNum, title, currentClass.grade, isPrac, currentClass.id, currentClass.name);
     if (typeof window !== 'undefined' && currentClass?.id) {
       sessionStorage.setItem(`truong_fixed_period_${currentClass.id}`, String(periodNum));
     }
     setShowPeriodModal(false);
     confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+  };
+
+  // State và hàm mở Modal Chấm Bài Thực Hành Trực Tiếp Online
+  const [onlineGradingMachine, setOnlineGradingMachine] = useState<LabMachineState | null>(null);
+  const [onlineScoreH3, setOnlineScoreH3] = useState<number>(9.5);
+  const [onlineComment, setOnlineComment] = useState<string>('Thao tác chuẩn xác, bảng tính đẹp!');
+  const [rubricScores, setRubricScores] = useState<{ c1: number; c2: number; c3: number }>({ c1: 3.0, c2: 3.5, c3: 3.0 });
+
+  const handleOpenOnlineGrading = (m: LabMachineState) => {
+    setOnlineGradingMachine(m);
+    const score = m.scoreH3 ?? 9.5;
+    setOnlineScoreH3(score);
+    setOnlineComment(m.comment || 'Thao tác chuẩn xác, bảng tính đẹp và đúng công thức!');
+    const c1 = Number((score * 0.3).toFixed(1));
+    const c2 = Number((score * 0.4).toFixed(1));
+    const c3 = Number(Math.max(0, score - c1 - c2).toFixed(1));
+    setRubricScores({ c1: Math.min(3.0, c1), c2: Math.min(4.0, c2), c3: Math.min(3.0, c3) });
+  };
+
+  const handleSaveOnlineGrade = () => {
+    if (!onlineGradingMachine) return;
+    const finalScore = onlineScoreH3;
+    updateMachineScore(onlineGradingMachine.machineId, 'lab', finalScore);
+    updateClassroomState((prev) => ({
+      ...prev,
+      machines: prev.machines.map((m) =>
+        m.machineId === onlineGradingMachine.machineId
+          ? {
+              ...m,
+              scoreH3: finalScore,
+              comment: onlineComment,
+              starsEarned: m.starsEarned + 1,
+              totalScore: Number((((m.scoreH1 ?? 8.5) * 0.3) + ((m.scoreH2 ?? 8.0) * 0.3) + (finalScore * 0.4)).toFixed(1)),
+            }
+          : m
+      ),
+    }));
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    setOnlineGradingMachine(null);
   };
 
   // Đồng bộ thông tin tiết và lớp vào trạng thái điều khiển
@@ -163,24 +215,30 @@ export default function ClassroomCommandCenter({
     confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
   };
 
-  // Bật/tắt khóa thủ công từng hoạt động (kèm thời gian ấn định)
+  // Bật/tắt khóa thủ công từng hoạt động (kèm kiểm tra tiết thực hành)
   const handleToggleActivity = (act: ClassroomActivityKey) => {
+    if (act === 'lab' && !isPracticalLesson) {
+      alert('Tiết học hiện tại là bài lý thuyết thuần túy. Hoạt động thực hành trên máy không áp dụng cho tiết này!');
+      return;
+    }
     const nextState = toggleActivityLock(act);
     setControlState(nextState);
   };
 
-  // Mở hoặc Đóng tất cả 3 hoạt động cùng lúc theo lệnh của Thầy
+  // Mở hoặc Đóng tất cả hoạt động theo lệnh của Thầy (phân biệt tiết thực hành)
   const handleSetAllActivities = (isOpen: boolean) => {
     const nextState = updateClassroomState((prev) => ({
       ...prev,
       activityLocks: {
         discovery: isOpen,
         practice: isOpen,
-        lab: isOpen,
+        lab: isPracticalLesson ? isOpen : false,
       },
       broadcastMessage: isOpen
-        ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ TẤT CẢ 3 HOẠT ĐỘNG cho cả lớp làm bài!`
-        : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM ĐÓNG TẤT CẢ 3 HOẠT ĐỘNG.`,
+        ? isPracticalLesson
+          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ TẤT CẢ 3 HOẠT ĐỘNG cho cả lớp làm bài!`
+          : `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ HĐ1 & HĐ2 cho cả lớp làm bài! (Tiết lý thuyết)`
+        : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM ĐÓNG CÁC HOẠT ĐỘNG.`,
       broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     }));
     setControlState(nextState);
@@ -435,8 +493,10 @@ export default function ClassroomCommandCenter({
       {/* ==================================================================== */}
       <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-            <BookOpen className="w-6 h-6 text-white" />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold shadow-xs shrink-0 ${
+            isPracticalLesson ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'
+          }`}>
+            {isPracticalLesson ? <Laptop className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -447,6 +507,15 @@ export default function ClassroomCommandCenter({
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Tiết dạy trực tiếp: Tiết {activeLesson.period}
               </span>
+              {isPracticalLesson ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-xs border border-purple-300 flex items-center gap-1">
+                  💻 Tiết Thực Hành Phòng Máy
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 flex items-center gap-1">
+                  📖 Tiết Lý Thuyết (Không có HĐ Thực hành)
+                </span>
+              )}
               <span className="text-[11px] text-slate-500 font-medium">
                 24 máy trạm đồng bộ
               </span>
@@ -477,10 +546,10 @@ export default function ClassroomCommandCenter({
             type="button"
             onClick={() => handleSetAllActivities(true)}
             className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Mở tất cả 3 hoạt động cho cả lớp làm bài"
+            title={isPracticalLesson ? 'Mở tất cả 3 hoạt động cho cả lớp làm bài' : 'Mở HĐ1 và HĐ2 (Tiết lý thuyết)'}
           >
             <Unlock className="w-3.5 h-3.5" />
-            <span>Mở Cả 3 HĐ</span>
+            <span>{isPracticalLesson ? 'Mở Cả 3 HĐ' : 'Mở HĐ1 & HĐ2'}</span>
           </button>
           <button
             type="button"
@@ -671,23 +740,31 @@ export default function ClassroomCommandCenter({
               </div>
             </div>
 
-            {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY */}
+            {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY (CHỈ MỞ CHO TIẾT THỰC HÀNH) */}
             <div className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between space-y-4 shadow-xs ${
-              controlState.activityLocks.lab
+              !isPracticalLesson
+                ? 'bg-slate-50/80 border-slate-200 opacity-70'
+                : controlState.activityLocks.lab
                 ? 'bg-emerald-50/40 border-emerald-500/80 ring-2 ring-emerald-500/20'
                 : 'bg-white border-slate-200'
             }`}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <div className={`w-10 h-10 rounded-2xl text-white flex items-center justify-center font-bold shadow-xs ${
+                    !isPracticalLesson ? 'bg-slate-400' : 'bg-purple-600'
+                  }`}>
                     <Laptop className="w-5 h-5" />
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1 ${
-                    controlState.activityLocks.lab
+                    !isPracticalLesson
+                      ? 'bg-slate-200 text-slate-700 border border-slate-300'
+                      : controlState.activityLocks.lab
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                       : 'bg-rose-100 text-rose-800 border border-rose-300'
                   }`}>
-                    {controlState.activityLocks.lab ? (
+                    {!isPracticalLesson ? (
+                      <span>Không áp dụng</span>
+                    ) : controlState.activityLocks.lab ? (
                       <>
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span>Đang Mở</span>
@@ -705,11 +782,17 @@ export default function ClassroomCommandCenter({
                   <h4 className="font-black text-slate-900 text-sm">
                     3. Thực Hành Trên Máy
                   </h4>
-                  <p className="text-xs text-purple-700 font-bold mt-0.5 truncate" title={activeLesson.practicalTask?.title || 'Thực hành sản phẩm'}>
-                    {activeLesson.practicalTask?.title || 'Thực hành sản phẩm môn Tin học · Nộp Google Drive'}
+                  <p className="text-xs font-bold mt-0.5 truncate" title={isPracticalLesson ? activeLesson.practicalTask?.title : 'Tiết lý thuyết thuần túy'}>
+                    {!isPracticalLesson ? (
+                      <span className="text-amber-800 font-semibold">Tiết lý thuyết · Không có thực hành</span>
+                    ) : (
+                      <span className="text-purple-700">{activeLesson.practicalTask?.title || 'Thực hành sản phẩm môn Tin học'}</span>
+                    )}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                    Thời gian gợi ý: <strong>15 phút</strong>. Thao tác trên phần mềm máy tính, nộp tệp bài làm trực tiếp lên hệ thống.
+                    {!isPracticalLesson
+                      ? 'Tiết học này là bài lý thuyết thuần túy. Học sinh tập trung làm Phiếu khám phá (HĐ1) và Trắc nghiệm (HĐ2). Hoạt động thực hành chỉ mở ở các tiết thực hành.'
+                      : 'Thời gian gợi ý: 15 phút. Thao tác trên phần mềm máy tính, nộp tệp bài làm trực tiếp lên hệ thống.'}
                   </p>
                 </div>
               </div>
@@ -717,14 +800,22 @@ export default function ClassroomCommandCenter({
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <button
                   type="button"
+                  disabled={!isPracticalLesson}
                   onClick={() => handleToggleActivity('lab')}
-                  className={`w-full py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
-                    controlState.activityLocks.lab
-                      ? 'bg-rose-600 hover:bg-rose-700 text-white hover:shadow'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow'
+                  className={`w-full py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 shadow-xs ${
+                    !isPracticalLesson
+                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      : controlState.activityLocks.lab
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white hover:shadow cursor-pointer'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow cursor-pointer'
                   }`}
                 >
-                  {controlState.activityLocks.lab ? (
+                  {!isPracticalLesson ? (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>🔒 Tiết Lý Thuyết Không Có HĐ Thực Hành</span>
+                    </>
+                  ) : controlState.activityLocks.lab ? (
                     <>
                       <Lock className="w-4 h-4" />
                       <span>Đóng / Khóa Hoạt Động 3</span>
@@ -737,7 +828,11 @@ export default function ClassroomCommandCenter({
                   )}
                 </button>
                 <div className="text-[10.5px] text-center text-slate-400 font-medium">
-                  {controlState.activityLocks.lab ? 'Học sinh đang được làm bài này' : 'Học sinh bị khóa không vào được'}
+                  {!isPracticalLesson
+                    ? 'Chỉ mở ở các tiết có bài tập thực hành'
+                    : controlState.activityLocks.lab
+                    ? 'Học sinh đang được làm bài này'
+                    : 'Học sinh bị khóa không vào được'}
                 </div>
               </div>
             </div>
@@ -750,15 +845,55 @@ export default function ClassroomCommandCenter({
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-purple-600" />
-                <span>Chấm Bài Thực Hành: Tiết {activeLesson.period} · {currentClass.name}</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Đề bài: <strong className="text-purple-700">{activeLesson.practicalTask?.title || activeLesson.title}</strong> · Chấm điểm Hoạt động 3 cho 24 máy trạm.
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-purple-600" />
+                  <span>Chấm Bài Thực Hành: Tiết {activeLesson.period} · {currentClass.name}</span>
+                </h3>
+                {isPracticalLesson ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs font-bold border border-purple-300">
+                    💻 Tiết Thực Hành Phòng Máy
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                    📖 Tiết Lý Thuyết
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {isPracticalLesson
+                  ? `Đề bài: ${activeLesson.practicalTask?.title || activeLesson.title} · Thầy nhấn "Mở Online Để Chấm" để xem trực tiếp tệp học sinh nộp và chấm điểm theo Rubric.`
+                  : `Tiết ${activeLesson.period} là bài học lý thuyết thuần túy, không có hoạt động thực hành phòng máy.`}
               </p>
             </div>
           </div>
+
+          {/* NẾU LÀ TIẾT LÝ THUYẾT: THÔNG BÁO RÕ RÀNG VÀ GỢI Ý CHUYỂN TIẾT THỰC HÀNH */}
+          {!isPracticalLesson && (
+            <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-3">
+              <div className="flex items-center gap-2 font-black text-sm">
+                <BookOpen className="w-5 h-5 text-amber-700" />
+                <span>Tiết {activeLesson.period}: {activeLesson.title} là TIẾT LÝ THUYẾT</span>
+              </div>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Tiết học này không có bài tập thực hành trên máy. Học sinh tập trung hoàn thành Phiếu khám phá (HĐ1) và Trắc nghiệm (HĐ2).
+                Để xem và chấm bài thực hành, Thầy có thể chọn các tiết thực hành của Khối {currentClass.grade}:
+              </p>
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                {gradeCurriculum.filter(l => Boolean(l.practicalTask)).slice(0, 6).map(l => (
+                  <button
+                    key={l.period}
+                    type="button"
+                    onClick={() => handleSelectPeriod(l.period, l.title)}
+                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Tiết {l.period}: {l.title}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-amber-700" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* FORM CHẤM ĐIỂM KHI CHỌN MÁY */}
           {gradingMachineId && (
@@ -769,7 +904,7 @@ export default function ClassroomCommandCenter({
                 </span>
                 <button
                   onClick={() => setGradingMachineId(null)}
-                  className="text-xs text-slate-500 hover:text-slate-700 font-bold"
+                  className="text-xs text-slate-500 hover:text-slate-700 font-bold cursor-pointer"
                 >
                   Đóng form
                 </button>
@@ -808,7 +943,7 @@ export default function ClassroomCommandCenter({
                     setGradingMachineId(null);
                     confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
                   }}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition-all"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                 >
                   Lưu Kết Quả Chấm
                 </button>
@@ -816,61 +951,83 @@ export default function ClassroomCommandCenter({
             </div>
           )}
 
-          {/* BẢNG DANH SÁCH MÁY THỰC HÀNH */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-3 text-center">Vị trí</th>
-                  <th className="py-3 px-4">Học sinh tại máy</th>
-                  <th className="py-3 px-3 text-center">Tệp nộp Drive</th>
-                  <th className="py-3 px-3 text-center">Điểm HĐ3</th>
-                  <th className="py-3 px-3 text-center">Sao thưởng</th>
-                  <th className="py-3 px-3 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {controlState.machines.map((m) => (
-                  <tr key={m.machineId} className="hover:bg-slate-50">
-                    <td className="py-3 px-3 text-center font-bold text-blue-700">{m.machineName}</td>
-                    <td className="py-3 px-4 font-semibold text-slate-800">
-                      {m.student1Name} {m.student2Name ? `& ${m.student2Name}` : ''}
-                    </td>
-                    <td className="py-3 px-3 text-center text-slate-500 font-mono text-[11px]">
-                      {m.practicalFileName || 'Đang thực hành...'}
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-purple-700">
-                      {m.scoreH3 !== undefined ? `${m.scoreH3}/10đ` : '—'}
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-amber-500">
-                      ⭐ {m.starsEarned}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAwardStar(m.machineId)}
-                          className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-200"
-                        >
-                          +1 ⭐
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setGradingMachineId(m.machineId);
-                            setTempMachineScore(String(m.scoreH3 || 9.5));
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px]"
-                        >
-                          Chấm điểm
-                        </button>
-                      </div>
-                    </td>
+          {/* BẢNG DANH SÁCH MÁY THỰC HÀNH KÈM NÚT MỞ ONLINE ĐỂ CHẤM */}
+          {isPracticalLesson && (
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3.5 px-3 text-center w-16">Vị trí</th>
+                    <th className="py-3.5 px-4">Học sinh tại máy</th>
+                    <th className="py-3.5 px-4 text-center">Tệp nộp bài Google Drive</th>
+                    <th className="py-3.5 px-3 text-center">Điểm HĐ3</th>
+                    <th className="py-3.5 px-3 text-center">Sao thưởng</th>
+                    <th className="py-3.5 px-4 text-center">Chấm bài trực tiếp online</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {controlState.machines.map((m) => (
+                    <tr key={m.machineId} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-3 text-center font-bold text-blue-700 font-mono bg-blue-50/30">{m.machineName}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800">
+                        <div className="font-bold text-slate-900">{m.student1Name}</div>
+                        {m.student2Name && <div className="text-[11px] text-slate-500 font-medium">{m.student2Name}</div>}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {m.practicalFileName ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="font-mono text-[11px] font-bold text-slate-800 flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              {m.practicalFileName}
+                            </span>
+                            <a
+                              href={m.practicalFileUrl || 'https://drive.google.com'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-0.5"
+                              title="Mở tệp này trực tiếp trên Google Drive / Sheets online"
+                            >
+                              <span>Mở link online</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">Đang thực hành...</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-bold text-purple-700 text-sm">
+                        {m.scoreH3 !== undefined ? `${m.scoreH3}đ` : '—'}
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-bold text-amber-500">
+                        ⭐ {m.starsEarned}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenOnlineGrading(m)}
+                            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:shadow"
+                            title="Mở trực tiếp tệp bài làm online để xem và chấm điểm"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Mở Online Để Chấm</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAwardStar(m.machineId)}
+                            className="px-2.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200 cursor-pointer"
+                            title="Tặng sao tuyên dương"
+                          >
+                            +1 ⭐
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -1078,14 +1235,32 @@ export default function ClassroomCommandCenter({
                           {rank}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] truncate max-w-[180px]">
+                      <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] truncate max-w-[210px]">
                         {m.practicalFileName ? (
-                          <span className="text-emerald-700 font-bold flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" />
-                            <span className="truncate">{m.practicalFileName}</span>
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenOnlineGrading(m)}
+                              className="text-emerald-700 font-bold hover:underline flex items-center gap-1 cursor-pointer truncate"
+                              title="Bấm để mở trực tiếp tệp online để xem và chấm điểm"
+                            >
+                              <Check className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{m.practicalFileName}</span>
+                            </button>
+                            <a
+                              href={m.practicalFileUrl || 'https://drive.google.com'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 shrink-0"
+                              title="Mở Google Drive"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
                         ) : (
-                          <span className="text-slate-400 italic">Chưa nộp</span>
+                          <span className="text-slate-400 italic">
+                            {!isPracticalLesson ? 'Tiết lý thuyết' : 'Chưa nộp'}
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -1205,9 +1380,13 @@ export default function ClassroomCommandCenter({
                           </div>
                           <div className="text-[11px] text-slate-500 mt-0.5 truncate flex items-center gap-2">
                             <span className="text-indigo-600 font-semibold">{lesson.topic || 'Tin học THCS'}</span>
-                            {lesson.practicalTask && (
-                              <span className="text-purple-600 font-medium bg-purple-50 px-1.5 py-0.2 rounded border border-purple-100">
-                                Có thực hành
+                            {lesson.practicalTask ? (
+                              <span className="text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 text-[10px] flex items-center gap-1">
+                                💻 Tiết thực hành
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 font-medium bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 text-[10px] flex items-center gap-1">
+                                📖 Tiết lý thuyết
                               </span>
                             )}
                           </div>
@@ -1245,6 +1424,342 @@ export default function ClassroomCommandCenter({
               >
                 Đóng
               </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL MỞ TRỰC TIẾP TỆP ONLINE ĐỂ CHẤM BÀI THỰC HÀNH                  */}
+      {/* ==================================================================== */}
+      {mounted && onlineGradingMachine && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="px-6 py-4 bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-900 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-xs shrink-0 font-bold text-amber-300">
+                  <Laptop className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-white/20 text-white font-extrabold text-[11px] uppercase">
+                      {onlineGradingMachine.machineName}
+                    </span>
+                    <h3 className="font-black text-base text-white truncate">
+                      {onlineGradingMachine.practicalFileName || `BTH_${currentClass.name}_${onlineGradingMachine.machineName}.xlsx`}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-purple-100 font-medium truncate mt-0.5">
+                    Học sinh: <strong className="text-white">{onlineGradingMachine.student1Name}</strong> {onlineGradingMachine.student2Name ? `& ${onlineGradingMachine.student2Name}` : ''} · {currentClass.name} (Khối {currentClass.grade})
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={onlineGradingMachine.practicalFileUrl || 'https://drive.google.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center gap-1.5 transition-all border border-white/20"
+                  title="Mở trong Google Drive tab mới"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Google Drive Tab Mới</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setOnlineGradingMachine(null)}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
+                  title="Đóng modal"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Body 2 Cột: Bên trái là Document Viewer Online, Bên phải là Bảng chấm điểm Rubric */}
+            <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
+              {/* CỘT TRÁI: ONLINE VIEWER (7 CỘT) */}
+              <div className="lg:col-span-7 p-5 bg-slate-50 flex flex-col space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <span>Xem Trực Tiếp Tệp Bài Làm Online (Google Sheets / Excel)</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                    ✓ Đã nộp thành công
+                  </span>
+                </div>
+
+                {/* Thanh menu giả lập bảng tính online */}
+                <div className="bg-white rounded-xl border border-slate-200 p-2 space-y-1.5 shadow-2xs">
+                  <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium px-1 border-b border-slate-100 pb-1">
+                    <span className="font-bold text-emerald-700">Tệp</span>
+                    <span>Chỉnh sửa</span>
+                    <span>Xem</span>
+                    <span>Chèn</span>
+                    <span>Định dạng</span>
+                    <span>Dữ liệu</span>
+                    <span className="text-slate-400">· Tự động lưu trên Drive</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 text-xs font-mono">
+                    <span className="font-bold text-blue-700 px-1">fx</span>
+                    <span className="text-slate-600 truncate">=AVERAGE(D3:F3) * 0.4 + SUM(C3:D3) * 0.3</span>
+                  </div>
+                </div>
+
+                {/* Bảng tính nội dung dữ liệu học sinh đã làm */}
+                <div className="overflow-x-auto rounded-xl border border-slate-300 bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 text-[11px]">
+                        <th className="py-2 px-2 text-center w-8 bg-slate-200/60"></th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">A</th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">B</th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">C</th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">D</th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">E</th>
+                        <th className="py-2 px-3 text-center border-l border-slate-200">F</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-sans text-[11.5px]">
+                      <tr className="bg-emerald-50/60 font-bold text-emerald-950">
+                        <td className="py-2 px-2 text-center bg-slate-100 text-slate-400 font-mono text-[10px]">1</td>
+                        <td className="py-2 px-3 border-l border-slate-200">STT</td>
+                        <td className="py-2 px-3 border-l border-slate-200">Họ và tên thành viên</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center">Nhiệm vụ 1</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center">Nhiệm vụ 2</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center">Nhiệm vụ 3</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center text-blue-700">Tổng điểm</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-2 text-center bg-slate-100 text-slate-400 font-mono text-[10px]">2</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-mono">01</td>
+                        <td className="py-2 px-3 border-l border-slate-200 font-bold text-slate-900">{onlineGradingMachine.student1Name}</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">9.0</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">9.5</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">10.0</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-black text-blue-700 bg-blue-50/30">9.5</td>
+                      </tr>
+                      {onlineGradingMachine.student2Name && (
+                        <tr>
+                          <td className="py-2 px-2 text-center bg-slate-100 text-slate-400 font-mono text-[10px]">3</td>
+                          <td className="py-2 px-3 border-l border-slate-200 text-center font-mono">02</td>
+                          <td className="py-2 px-3 border-l border-slate-200 font-bold text-slate-900">{onlineGradingMachine.student2Name}</td>
+                          <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">8.5</td>
+                          <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">9.0</td>
+                          <td className="py-2 px-3 border-l border-slate-200 text-center font-bold text-emerald-700">9.5</td>
+                          <td className="py-2 px-3 border-l border-slate-200 text-center font-black text-blue-700 bg-blue-50/30">9.0</td>
+                        </tr>
+                      )}
+                      <tr className="bg-slate-50">
+                        <td className="py-2 px-2 text-center bg-slate-100 text-slate-400 font-mono text-[10px]">4</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-mono">03</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-slate-700">Kết quả sản phẩm nhóm</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center font-medium" colSpan={4}>
+                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px]">Đã hoàn thành đúng yêu cầu bài học</span>
+                        </td>
+                      </tr>
+                      <tr className="bg-amber-50/50 font-bold">
+                        <td className="py-2 px-2 text-center bg-slate-100 text-slate-400 font-mono text-[10px]">5</td>
+                        <td className="py-2 px-3 border-l border-slate-200" colSpan={2}>ĐÁNH GIÁ CHUNG CẢ MÁY:</td>
+                        <td className="py-2 px-3 border-l border-slate-200 text-center text-amber-800" colSpan={4}>
+                          Thao tác mượt mà · Đúng công thức · Đã lưu Drive
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="text-[11px] text-slate-500 bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span>Đường dẫn tệp online:</span>
+                    <span className="font-mono text-blue-700 truncate max-w-[280px]">
+                      {onlineGradingMachine.practicalFileUrl || 'https://drive.google.com/...'}
+                    </span>
+                  </div>
+                  <div className="text-slate-400">
+                    Tệp đồng bộ qua Google Apps Script Web App THCS Mão Điền.
+                  </div>
+                </div>
+              </div>
+
+              {/* CỘT PHẢI: BẢNG CHẤM ĐIỂM & RUBRIC (5 CỘT) */}
+              <div className="lg:col-span-5 p-5 bg-white flex flex-col justify-between space-y-5">
+                <div className="space-y-4">
+                  <div className="border-b border-slate-100 pb-3">
+                    <span className="text-[11px] font-black uppercase text-purple-700 tracking-wider">
+                      Rubric Chấm Điểm Sư Phạm (Thang 10đ)
+                    </span>
+                    <h4 className="font-black text-slate-900 text-sm mt-1">
+                      {activeLesson.practicalTask?.title || 'Bài tập thực hành phòng máy'}
+                    </h4>
+                  </div>
+
+                  {/* 3 TIÊU CHÍ RUBRIC */}
+                  <div className="space-y-3">
+                    {/* Tiêu chí 1 */}
+                    <div className="p-3 rounded-xl bg-purple-50/60 border border-purple-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800">1. Kỹ năng thao tác & Nhập liệu (Max 3.0đ):</span>
+                        <span className="font-black text-purple-800">{rubricScores.c1}đ</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[2.0, 2.5, 3.0].map((score) => (
+                          <button
+                            key={score}
+                            type="button"
+                            onClick={() => {
+                              const newC1 = score;
+                              setRubricScores(r => ({ ...r, c1: newC1 }));
+                              setOnlineScoreH3(Number((newC1 + rubricScores.c2 + rubricScores.c3).toFixed(1)));
+                            }}
+                            className={`flex-1 py-1 rounded-lg text-xs font-bold border transition-all ${
+                              rubricScores.c1 === score
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-2xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-purple-100/50'
+                            }`}
+                          >
+                            {score}đ
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tiêu chí 2 */}
+                    <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800">2. Công thức & Yêu cầu kỹ thuật (Max 4.0đ):</span>
+                        <span className="font-black text-indigo-800">{rubricScores.c2}đ</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[3.0, 3.5, 4.0].map((score) => (
+                          <button
+                            key={score}
+                            type="button"
+                            onClick={() => {
+                              const newC2 = score;
+                              setRubricScores(r => ({ ...r, c2: newC2 }));
+                              setOnlineScoreH3(Number((rubricScores.c1 + newC2 + rubricScores.c3).toFixed(1)));
+                            }}
+                            className={`flex-1 py-1 rounded-lg text-xs font-bold border transition-all ${
+                              rubricScores.c2 === score
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-indigo-100/50'
+                            }`}
+                          >
+                            {score}đ
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tiêu chí 3 */}
+                    <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800">3. Trình bày & Lưu tệp đúng tên (Max 3.0đ):</span>
+                        <span className="font-black text-blue-800">{rubricScores.c3}đ</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[2.0, 2.5, 3.0].map((score) => (
+                          <button
+                            key={score}
+                            type="button"
+                            onClick={() => {
+                              const newC3 = score;
+                              setRubricScores(r => ({ ...r, c3: newC3 }));
+                              setOnlineScoreH3(Number((rubricScores.c1 + rubricScores.c2 + newC3).toFixed(1)));
+                            }}
+                            className={`flex-1 py-1 rounded-lg text-xs font-bold border transition-all ${
+                              rubricScores.c3 === score
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-blue-100/50'
+                            }`}
+                          >
+                            {score}đ
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ĐIỂM TỔNG KẾT & LỜI PHÊ */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 border border-amber-300">
+                      <div>
+                        <span className="text-xs font-black text-amber-900 block">ĐIỂM THỰC HÀNH (HĐ3):</span>
+                        <span className="text-[11px] text-amber-700">Hệ số 40% điểm tổng kết tiết dạy</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="10"
+                          value={onlineScoreH3}
+                          onChange={(e) => setOnlineScoreH3(Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
+                          className="w-20 px-2 py-1.5 rounded-xl border border-amber-400 bg-white font-black text-lg text-center text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        />
+                        <span className="font-bold text-amber-900 text-sm">/10</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Lời phê / Nhận xét của Thầy Đỗ Mạnh Trường:
+                      </label>
+                      <input
+                        type="text"
+                        value={onlineComment}
+                        onChange={(e) => setOnlineComment(e.target.value)}
+                        placeholder="Nhập lời phê..."
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+                      />
+                      <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                        {[
+                          'Thao tác chuẩn xác!',
+                          'Đúng hàm & bảng tính đẹp!',
+                          'Cần chú ý định dạng căn lề.',
+                          'Xuất sắc, tinh thần nhóm rất tốt!'
+                        ].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setOnlineComment(preset)}
+                            className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 font-medium border border-slate-200 cursor-pointer"
+                          >
+                            + {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NÚT LƯU KẾT QUẢ CHẤM */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOnlineGradingMachine(null)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveOnlineGrade}
+                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Lưu Kết Quả & Tặng Sao Tuyên Dương</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>,

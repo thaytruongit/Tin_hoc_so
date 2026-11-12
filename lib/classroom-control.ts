@@ -38,6 +38,7 @@ export interface LabMachineState {
   scoreH2?: number; // Điểm Hoạt động 2: Luyện tập 7 câu (/10)
   scoreH3?: number; // Điểm Hoạt động 3: Thực hành (/10)
   totalScore?: number; // Điểm trung bình / tổng kết tiết dạy (/10)
+  comment?: string; // Lời phê / nhận xét của Thầy Đỗ Mạnh Trường
   practicalFileName?: string;
   practicalFileUrl?: string;
 }
@@ -116,7 +117,7 @@ export function createMachinesForClass(classId: string = 'c-6a10', className: st
       scoreH3: h3,
       totalScore: tot,
       practicalFileName: s1 ? `BTH_${className.replace(/\s+/g, '')}_May${num < 10 ? '0' : ''}${num}.xlsx` : undefined,
-      practicalFileUrl: s1 ? `H:\\My Drive\\Giảng dạy\\NOP_BAI_THUC_HANH\\${className}\\BTH_May${num < 10 ? '0' : ''}${num}.xlsx` : undefined,
+      practicalFileUrl: s1 ? `https://docs.google.com/spreadsheets/d/sample-truongit-${className.replace(/\s+/g, '')}-May${num < 10 ? '0' : ''}${num}/edit` : undefined,
     };
   });
 }
@@ -409,17 +410,74 @@ export function selectClassForClassroom(classId: string, className: string, grad
 /**
  * Thầy chọn và cố định Tiết học giảng dạy trực tiếp:
  * Tự động cập nhật activePeriod, lessonTitle và phát lệnh đồng bộ cho 24 máy trạm của học sinh
+ * Tự động đồng bộ phân biệt tiết thực hành hay lý thuyết
  */
-export function selectPeriodForClassroom(period: number, lessonTitle?: string, grade?: number): ClassroomControlState {
-  return updateClassroomState((prev) => ({
-    ...prev,
-    isLive: true, // Tự động kích hoạt phát trực tiếp để học sinh vào học đúng tiết này
-    activePeriod: period,
-    activeGrade: grade || prev.activeGrade,
-    lessonTitle: lessonTitle || `Tiết ${period}`,
-    broadcastMessage: `📖 Thầy Đỗ Mạnh Trường: Tiết học trực tiếp hôm nay là Tiết ${period}: ${lessonTitle || `Bài học số ${period}`}.`,
-    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-  }));
+export function selectPeriodForClassroom(
+  period: number,
+  lessonTitle?: string,
+  grade?: number,
+  isPractical?: boolean,
+  classId?: string,
+  className?: string
+): ClassroomControlState {
+  return updateClassroomState((prev) => {
+    const actGrade = grade || prev.activeGrade || 6;
+    const actClassId = classId || prev.activeClassId || 'c-6a10';
+    const actClassName = className || prev.activeClassName || 'Lớp 6A10';
+
+    // Đảm bảo 24 máy trạm luôn có danh sách học sinh của lớp đang làm việc
+    let machines = prev.machines;
+    if (!machines || machines.length === 0 || prev.activeClassId !== actClassId) {
+      machines = createMachinesForClass(actClassId, actClassName);
+    }
+
+    // Cập nhật trạng thái thực hành theo tính chất tiết học
+    const updatedMachines = machines.map((m, idx) => {
+      const num = m.machineId;
+      const cleanName = actClassName.replace(/\s+/g, '');
+      const h1 = m.scoreH1 ?? Number((8.0 + (idx % 3) * 0.8).toFixed(1));
+      const h2 = m.scoreH2 ?? Number((7.5 + ((idx * 2) % 4) * 0.7).toFixed(1));
+
+      if (isPractical === false) {
+        // Tiết lý thuyết: không có nộp bài thực hành, điểm tổng kết là trung bình H1 & H2
+        return {
+          ...m,
+          scoreH1: h1,
+          scoreH2: h2,
+          scoreH3: undefined,
+          practicalFileName: undefined,
+          practicalFileUrl: undefined,
+          totalScore: Number(((h1 + h2) / 2).toFixed(1)),
+        };
+      } else if (isPractical === true) {
+        // Tiết thực hành: có tệp thực hành và link online để Thầy chấm trực tiếp
+        const h3 = m.scoreH3 ?? Number((8.5 + (idx % 2) * 1.5).toFixed(1));
+        return {
+          ...m,
+          scoreH1: h1,
+          scoreH2: h2,
+          scoreH3: h3,
+          practicalFileName: `BTH_Tiet${period}_${cleanName}_May${num < 10 ? '0' : ''}${num}.xlsx`,
+          practicalFileUrl: `https://docs.google.com/spreadsheets/d/sample-truongit-${cleanName}-tiet${period}-may${num}/edit`,
+          totalScore: Number((h1 * 0.3 + h2 * 0.3 + h3 * 0.4).toFixed(1)),
+        };
+      }
+      return m;
+    });
+
+    return {
+      ...prev,
+      isLive: true, // Tự động kích hoạt phát trực tiếp để học sinh vào học đúng tiết này
+      activePeriod: period,
+      activeGrade: actGrade,
+      activeClassId: actClassId,
+      activeClassName: actClassName,
+      lessonTitle: lessonTitle || `Tiết ${period}`,
+      machines: updatedMachines,
+      broadcastMessage: `📖 Thầy Đỗ Mạnh Trường: Tiết học trực tiếp hôm nay là Tiết ${period}: ${lessonTitle || `Bài học số ${period}`}.`,
+      broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    };
+  });
 }
 
 export function subscribeToClassroomState(callback: (state: ClassroomControlState) => void): () => void {

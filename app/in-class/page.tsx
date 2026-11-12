@@ -180,6 +180,10 @@ export default function InClassPage() {
       }
       setActivePopup('practice');
     } else if (act === 'lab') {
+      if (!currentPeriod.practicalTask) {
+        setLockedNoticeMessage('Tiết học hôm nay là bài học lý thuyết thuần túy. Hoạt động thực hành trên phần mềm không áp dụng cho tiết này. Các em hãy tập trung hoàn thành Hoạt động 1 và Hoạt động 2 nhé!');
+        return;
+      }
       if (!controlState.activityLocks.lab) {
         setLockedNoticeMessage('Hoạt động 3: Thực hành trên máy hiện đang tạm khóa. Em hãy chờ hiệu lệnh bắt đầu thực hành từ Thầy Đỗ Mạnh Trường!');
         return;
@@ -779,19 +783,27 @@ export default function InClassPage() {
             </button>
           </div>
 
-          {/* CARD 3: THỰC HÀNH TRÊN MÁY & NỘP GOOGLE DRIVE */}
-          <div className={`rounded-3xl p-6 border-2 transition-all flex flex-col justify-between space-y-5 bg-white ${
-            controlState.activityLocks.lab
-              ? 'border-amber-300 shadow-md hover:border-amber-500 hover:shadow-lg'
+          {/* CARD 3: THỰC HÀNH TRÊN MÁY & NỘP GOOGLE DRIVE (CHỈ MỞ CHO TIẾT THỰC HÀNH) */}
+          <div className={`rounded-3xl p-6 border-2 transition-all flex flex-col justify-between space-y-5 ${
+            !currentPeriod.practicalTask
+              ? 'border-slate-200 bg-slate-50/80 opacity-70'
+              : controlState.activityLocks.lab
+              ? 'border-amber-300 shadow-md hover:border-amber-500 hover:shadow-lg bg-white'
               : 'border-slate-200 bg-slate-50/70 opacity-80'
           }`}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-black">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
+                  !currentPeriod.practicalTask ? 'bg-slate-200 text-slate-500' : 'bg-amber-100 text-amber-700'
+                }`}>
                   <Laptop className="w-6 h-6" />
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {controlState.activityLocks.lab ? (
+                  {!currentPeriod.practicalTask ? (
+                    <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-[11px] font-bold">
+                      📖 Tiết Lý Thuyết
+                    </span>
+                  ) : controlState.activityLocks.lab ? (
                     <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1">
                       <Unlock className="w-3 h-3" /> Đã Mở
                     </span>
@@ -800,26 +812,32 @@ export default function InClassPage() {
                       <Lock className="w-3 h-3" /> Tạm Khóa
                     </span>
                   )}
-                  <span className="text-[11px] px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold">
-                    ⏱️ 15 phút
-                  </span>
+                  {currentPeriod.practicalTask && (
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold">
+                      ⏱️ 15 phút
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div>
                 <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider">Hoạt Động 3</span>
                 <h3 className="text-base font-extrabold text-slate-900 mt-0.5 line-clamp-1">
-                  Thực Hành Máy & Nộp Bài Drive
+                  {!currentPeriod.practicalTask ? 'Thực Hành Máy (Không áp dụng)' : 'Thực Hành Máy & Nộp Bài Drive'}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Tải file dữ liệu mẫu, thực hành thao tác trên máy và nộp file thẳng vào Google Drive của Thầy Đỗ Mạnh Trường.
+                  {!currentPeriod.practicalTask
+                    ? 'Tiết học này là bài học lý thuyết. Các em tập trung phối hợp làm Phiếu khám phá (HĐ1) và Trắc nghiệm (HĐ2).'
+                    : (currentPeriod.practicalTask.title || 'Tải file dữ liệu mẫu, thực hành thao tác trên máy và nộp file thẳng vào Google Drive của Thầy Đỗ Mạnh Trường.')}
                 </p>
               </div>
 
               {/* Trạng thái điểm */}
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600">Biên lai nộp bài:</span>
-                {scoreH3 !== null ? (
+                <span className="text-xs font-semibold text-slate-600">Trạng thái:</span>
+                {!currentPeriod.practicalTask ? (
+                  <span className="text-xs font-bold text-slate-400">Không có bài thực hành</span>
+                ) : scoreH3 !== null ? (
                   <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Đã Nộp (10/10)</span>
@@ -832,16 +850,25 @@ export default function InClassPage() {
 
             <button
               type="button"
+              disabled={!currentPeriod.practicalTask}
               onClick={() => handleOpenActivity('lab')}
               className={`w-full py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all ${
-                controlState.activityLocks.lab
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                !currentPeriod.practicalTask
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : controlState.activityLocks.lab
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20 cursor-pointer'
+                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer'
               }`}
             >
               <UploadCloud className="w-4 h-4" />
-              <span>{scoreH3 !== null ? 'Xem Biên Lai / Nộp Lại' : 'Mở Trạm Thực Hành (HĐ 3)'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>
+                {!currentPeriod.practicalTask
+                  ? '🔒 Tiết Lý Thuyết Không Có Thực Hành'
+                  : scoreH3 !== null
+                  ? 'Xem Biên Lai / Nộp Lại'
+                  : 'Mở Trạm Thực Hành (HĐ 3)'}
+              </span>
+              {currentPeriod.practicalTask && <ArrowRight className="w-4 h-4" />}
             </button>
           </div>
 

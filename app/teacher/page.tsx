@@ -120,10 +120,25 @@ function TeacherDashboardContent() {
       setActiveTab('homework');
     } else if (tabParam === 'gradebook') {
       setActiveTab('gradebook');
-    } else if (tabParam === 'in-class' || tabParam === 'orchestration') {
+    } else {
       setActiveTab('in-class');
     }
   }, [searchParams]);
+
+  // LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ THANH NAVBAR
+  useEffect(() => {
+    const handleTabSwitch = (e: any) => {
+      if (e.detail) {
+        if (e.detail === 'in-class') setActiveTab('in-class');
+        else if (e.detail === 'class-roster') setActiveTab('class-roster');
+        else if (e.detail === 'exams') setActiveTab('exams');
+        else if (e.detail === 'homework') setActiveTab('homework');
+        else if (e.detail === 'gradebook') setActiveTab('gradebook');
+      }
+    };
+    window.addEventListener('truong_tab_switch', handleTabSwitch);
+    return () => window.removeEventListener('truong_tab_switch', handleTabSwitch);
+  }, []);
 
   // HÀM CHUYỂN TAB ĐỒNG THỜI CẬP NHẬT URL
   const switchTab = (tab: TeacherTab) => {

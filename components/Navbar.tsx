@@ -186,7 +186,7 @@ export default function Navbar() {
   const TEACHER_MENUS: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
       title: 'Lớp Học Số',
-      href: '/teacher',
+      href: '/teacher?tab=in-class',
       icon: Monitor,
     },
     {
@@ -289,7 +289,7 @@ export default function Navbar() {
             {activeMenus.map((item) => {
               const Icon = item.icon;
               const isTeacherLinkActive = user.role === 'teacher' && pathname === '/teacher' && (
-                (item.href === '/teacher' && (!currentTabQuery || currentTabQuery === 'in-class')) ||
+                (item.href.includes('tab=in-class') && (!currentTabQuery || currentTabQuery === 'in-class')) ||
                 (item.href.includes('tab=') && item.href.includes(`tab=${currentTabQuery}`))
               );
               const isActive = isTeacherLinkActive || (user.role !== 'teacher' && (
@@ -300,6 +300,13 @@ export default function Navbar() {
                 <Link
                   key={item.title}
                   href={item.href}
+                  onClick={() => {
+                    if (user.role === 'teacher' && item.href.includes('tab=')) {
+                      const tab = item.href.split('tab=')[1];
+                      setCurrentTabQuery(tab);
+                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tab }));
+                    }
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-xs'
@@ -426,7 +433,14 @@ export default function Navbar() {
                 <Link
                   key={item.title}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (user.role === 'teacher' && item.href.includes('tab=')) {
+                      const tab = item.href.split('tab=')[1];
+                      setCurrentTabQuery(tab);
+                      window.dispatchEvent(new CustomEvent('truong_tab_switch', { detail: tab }));
+                    }
+                  }}
                   className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                     isActive
                       ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
