@@ -128,6 +128,23 @@ export default function ClassroomCommandCenter({
     setControlState(nextState);
   };
 
+  // Mở hoặc Đóng tất cả 3 hoạt động cùng lúc theo lệnh của Thầy
+  const handleSetAllActivities = (isOpen: boolean) => {
+    const nextState = updateClassroomState((prev) => ({
+      ...prev,
+      activityLocks: {
+        discovery: isOpen,
+        practice: isOpen,
+        lab: isOpen,
+      },
+      broadcastMessage: isOpen
+        ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ TẤT CẢ 3 HOẠT ĐỘNG cho cả lớp làm bài!`
+        : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM ĐÓNG TẤT CẢ 3 HOẠT ĐỘNG.`,
+      broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    }));
+    setControlState(nextState);
+  };
+
   // Đếm ngược thời gian ấn định của hoạt động hiện tại
   useEffect(() => {
     if (!controlState.isTimerRunning) return;
@@ -452,237 +469,263 @@ export default function ClassroomCommandCenter({
         })}
       </div>
 
-      {/* PHÂN HỆ 1: ĐIỀU KHIỂN 3 HOẠT ĐỘNG TRỰC TIẾP */}
+      {/* PHÂN HỆ 1: ĐIỀU KHIỂN THỦ CÔNG MỞ/ĐÓNG 3 HOẠT ĐỘNG TRỰC TIẾP KHI PHÁT LIVE */}
       {activeSubFeature === 'control' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* KHỐI 1: BỘ 3 CÔNG TẮC KHÓA/MỞ THỦ CÔNG KÈM THỜI GIAN ẤN ĐỊNH */}
-          <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-indigo-600" />
-                <span>3 Hoạt Động Trực Tiếp (Ấn Định Giờ)</span>
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
-                Chấm Tự Động Khi Hết Giờ
-              </span>
+        <div className="space-y-4">
+          {/* THANH ĐIỀU KHIỂN TRẠNG THÁI VÀ NÚT THAO TÁC NHANH */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${controlState.isLive ? 'bg-rose-600 animate-ping' : 'bg-slate-400'}`} />
+                <h3 className="font-black text-slate-900 text-sm sm:text-base tracking-tight">
+                  {controlState.isLive
+                    ? '🔴 Đang Phát Trực Tiếp · Điều Khiển Thủ Công Mở / Đóng Từng Hoạt Động'
+                    : '⏸️ Tiết Học Đang Tạm Dừng · Bật "Phát Trực Tiếp" Để Cho Học Sinh Vào Học'}
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                {controlState.isLive
+                  ? `24 máy trạm của ${currentClass.name} sẽ tự động cập nhật ngay khi Thầy bấm Mở hoặc Đóng từng hoạt động.`
+                  : `Học sinh đang dừng ở màn hình Bảng Trắng. Thầy có thể cấu hình sẵn trạng thái hoạt động bên dưới.`}
+              </p>
             </div>
 
-            <div className="space-y-3">
-              {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI (10 phút) */}
-              <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.discovery
-                ? 'bg-indigo-50/60 border-indigo-200 text-indigo-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-                }`}>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <Users className="w-4 h-4 text-indigo-600" />
-                    <span>1. Khám phá cặp đôi</span>
+            {/* CẶP NÚT THAO TÁC NHANH: MỞ TẤT CẢ / ĐÓNG TẤT CẢ */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleSetAllActivities(true)}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Mở tất cả 3 hoạt động cho cả lớp làm bài"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>Mở Tất Cả (3 HĐ)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetAllActivities(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Đóng / Khóa tất cả hoạt động để học sinh tập trung nghe giảng"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Đóng Tất Cả</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3 THẺ HOẠT ĐỘNG: ĐẶT THỦ CÔNG MỞ / ĐÓNG CHO TỪNG HOẠT ĐỘNG */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* HOẠT ĐỘNG 1: KHÁM PHÁ CẶP ĐÔI */}
+            <div className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between space-y-4 shadow-xs ${
+              controlState.activityLocks.discovery
+                ? 'bg-emerald-50/40 border-emerald-500/80 ring-2 ring-emerald-500/20'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <Users className="w-5 h-5" />
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    Thời gian: <strong>10 phút</strong> · Điền khuyết & tự động chấm
-                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                    controlState.activityLocks.discovery
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                  }`}>
+                    {controlState.activityLocks.discovery ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Đang Mở</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3" />
+                        <span>Đang Đóng</span>
+                      </>
+                    )}
+                  </span>
                 </div>
 
+                <div>
+                  <h4 className="font-black text-slate-900 text-sm">
+                    1. Khám Phá Kiến Thức
+                  </h4>
+                  <p className="text-xs text-indigo-700 font-bold mt-0.5">
+                    Khám phá cặp đôi · Điền khuyết kiến thức
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                    Thời gian gợi ý: <strong>10 phút</strong>. Hai học sinh ngồi cùng máy phối hợp hoàn thành bài và chấm tự động.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-2">
                 <button
                   type="button"
                   onClick={() => handleToggleActivity('discovery')}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.discovery
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                    }`}
+                  className={`w-full py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
+                    controlState.activityLocks.discovery
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white hover:shadow'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow'
+                  }`}
                 >
                   {controlState.activityLocks.discovery ? (
                     <>
-                      <Unlock className="w-3.5 h-3.5" />
-                      <span>Đang Mở</span>
+                      <Lock className="w-4 h-4" />
+                      <span>Đóng / Khóa Hoạt Động 1</span>
                     </>
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Đang Khóa</span>
+                      <Unlock className="w-4 h-4" />
+                      <span>Mở Hoạt Động 1 Cho Cả Lớp</span>
                     </>
                   )}
                 </button>
+                <div className="text-[10.5px] text-center text-slate-400 font-medium">
+                  {controlState.activityLocks.discovery ? 'Học sinh đang được làm bài này' : 'Học sinh bị khóa không vào được'}
+                </div>
               </div>
+            </div>
 
-              {/* HOẠT ĐỘNG 2: LUYỆN TẬP 7 CÂU (7 phút) */}
-              <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.practice
-                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-                }`}>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>2. Luyện tập (7 câu)</span>
+            {/* HOẠT ĐỘNG 2: LUYỆN TẬP 7 CÂU */}
+            <div className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between space-y-4 shadow-xs ${
+              controlState.activityLocks.practice
+                ? 'bg-emerald-50/40 border-emerald-500/80 ring-2 ring-emerald-500/20'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <Sparkles className="w-5 h-5" />
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    Thời gian: <strong>7 phút</strong> · Trắc nghiệm thang 10 tức thì
-                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                    controlState.activityLocks.practice
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                  }`}>
+                    {controlState.activityLocks.practice ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Đang Mở</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3" />
+                        <span>Đang Đóng</span>
+                      </>
+                    )}
+                  </span>
                 </div>
 
+                <div>
+                  <h4 className="font-black text-slate-900 text-sm">
+                    2. Luyện Tập Trắc Nghiệm
+                  </h4>
+                  <p className="text-xs text-emerald-700 font-bold mt-0.5">
+                    Bộ 7 câu hỏi củng cố · Chấm tức thì
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                    Thời gian gợi ý: <strong>7 phút</strong>. Học sinh làm trắc nghiệm thang điểm 10, nhận phản hồi kết quả ngay.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-2">
                 <button
                   type="button"
                   onClick={() => handleToggleActivity('practice')}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.practice
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                    }`}
+                  className={`w-full py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
+                    controlState.activityLocks.practice
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white hover:shadow'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow'
+                  }`}
                 >
                   {controlState.activityLocks.practice ? (
                     <>
-                      <Unlock className="w-3.5 h-3.5" />
-                      <span>Đang Mở</span>
+                      <Lock className="w-4 h-4" />
+                      <span>Đóng / Khóa Hoạt Động 2</span>
                     </>
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Đang Khóa</span>
+                      <Unlock className="w-4 h-4" />
+                      <span>Mở Hoạt Động 2 Cho Cả Lớp</span>
                     </>
                   )}
                 </button>
+                <div className="text-[10.5px] text-center text-slate-400 font-medium">
+                  {controlState.activityLocks.practice ? 'Học sinh đang được làm bài này' : 'Học sinh bị khóa không vào được'}
+                </div>
               </div>
+            </div>
 
-              {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY (15 phút) */}
-              <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${controlState.activityLocks.lab
-                ? 'bg-purple-50/60 border-purple-200 text-purple-950'
-                : 'bg-slate-50 border-slate-200 text-slate-500'
-                }`}>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <Laptop className="w-4 h-4 text-purple-600" />
-                    <span>3. Thực hành trên máy</span>
+            {/* HOẠT ĐỘNG 3: THỰC HÀNH TRÊN MÁY */}
+            <div className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between space-y-4 shadow-xs ${
+              controlState.activityLocks.lab
+                ? 'bg-emerald-50/40 border-emerald-500/80 ring-2 ring-emerald-500/20'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <Laptop className="w-5 h-5" />
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    Thời gian: <strong>15 phút</strong> · Nộp Google Drive + Rubric
-                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                    controlState.activityLocks.lab
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                  }`}>
+                    {controlState.activityLocks.lab ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Đang Mở</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3" />
+                        <span>Đang Đóng</span>
+                      </>
+                    )}
+                  </span>
                 </div>
 
+                <div>
+                  <h4 className="font-black text-slate-900 text-sm">
+                    3. Thực Hành Trên Máy
+                  </h4>
+                  <p className="text-xs text-purple-700 font-bold mt-0.5">
+                    Thực hành sản phẩm · Nộp Google Drive &amp; Rubric
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                    Thời gian gợi ý: <strong>15 phút</strong>. Thao tác trên phần mềm máy tính, nộp tệp bài làm trực tiếp lên hệ thống.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-2">
                 <button
                   type="button"
                   onClick={() => handleToggleActivity('lab')}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shrink-0 ${controlState.activityLocks.lab
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                    }`}
+                  className={`w-full py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
+                    controlState.activityLocks.lab
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white hover:shadow'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow'
+                  }`}
                 >
                   {controlState.activityLocks.lab ? (
                     <>
-                      <Unlock className="w-3.5 h-3.5" />
-                      <span>Đang Mở</span>
+                      <Lock className="w-4 h-4" />
+                      <span>Đóng / Khóa Hoạt Động 3</span>
                     </>
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Đang Khóa</span>
+                      <Unlock className="w-4 h-4" />
+                      <span>Mở Hoạt Động 3 Cho Cả Lớp</span>
                     </>
                   )}
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* KHỐI 2: ĐIỀU PHỐI TIẾT DẠY & PHÁT LỆNH TOÀN PHÒNG */}
-          <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-blue-600" />
-                <span>Điều Phối Bài Dạy Toàn Phòng</span>
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">
-                Khối {broadcastGrade} · Tiết {selectedPeriod}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {/* Bộ chọn Khối của Thầy */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  1. Chọn Khối Giảng Dạy:
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[6, 7, 8, 9].map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => {
-                        setBroadcastGrade(g);
-                        setSelectedPeriod(1);
-                      }}
-                      className={`py-1.5 rounded-xl text-xs font-bold transition-all border ${broadcastGrade === g
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                    >
-                      Khối {g}
-                    </button>
-                  ))}
+                <div className="text-[10.5px] text-center text-slate-400 font-medium">
+                  {controlState.activityLocks.lab ? 'Học sinh đang được làm bài này' : 'Học sinh bị khóa không vào được'}
                 </div>
               </div>
-
-              {/* Bộ chọn Tiết trong 29 tiết */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  2. Chọn Tiết Phân Phối Chương Trình:
-                </label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-                  className="w-full p-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 bg-white"
-                >
-                  {gradeCurriculum.map((l) => (
-                    <option key={l.period} value={l.period}>
-                      Tiết {l.period}: {l.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
-                <div className="truncate">Chủ đề: <strong className="text-blue-700">{activeLesson.topic || 'Tin học cơ bản'}</strong></div>
-                <div className="truncate">Thực hành: <strong className="text-slate-800">{activeLesson.practicalTask?.title || 'Bài tập thực hành tại lớp'}</strong></div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSyncLessonToLab}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Phát Lệnh Tiết Này Cho 24 Máy Trạm</span>
-            </button>
-          </div>
-
-          {/* KHỐI 3: PHÁT THÔNG BÁO TỨC THÌ TỚI HỌC SINH */}
-          <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <Radio className="w-4 h-4 text-emerald-600" />
-                <span>Phát Thông Báo Tức Thì</span>
-              </span>
-              <span className="text-[10px] text-slate-400">Hiển thị tức thì trên màn hình học sinh</span>
-            </div>
-
-            <form onSubmit={handleSendBroadcast} className="space-y-3">
-              <textarea
-                rows={3}
-                value={customBroadcast}
-                onChange={(e) => setCustomBroadcast(e.target.value)}
-                placeholder="Nhập lời nhắc Thầy muốn gửi tới 24 máy (ví dụ: Các nhóm còn 3 phút để lưu tệp sản phẩm!)..."
-                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 text-slate-800 resize-none"
-              />
-              <button
-                type="submit"
-                disabled={!customBroadcast.trim()}
-                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Gửi Thông Báo Tới Toàn Lớp</span>
-              </button>
-            </form>
-
-            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 truncate">
-              Tin gần nhất: <span className="font-bold text-slate-800">{controlState.broadcastMessage}</span>
             </div>
           </div>
         </div>

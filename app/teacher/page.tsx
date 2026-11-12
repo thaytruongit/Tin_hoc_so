@@ -1080,7 +1080,7 @@ function TeacherDashboardContent() {
               <div>
                 <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-amber-600" />
-                  <span>Quản Lý &amp; Giao Bài Tập Về Nhà · {currentClass.name}</span>
+                  <span>Giao &amp; Chấm Bài Tập Về Nhà · {currentClass.name}</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Giao bài tập củng cố, xem ảnh chụp trang vở của học sinh phóng to và chấm bài theo chuẩn <strong>Thông tư 22/2021/TT-BGDĐT</strong>

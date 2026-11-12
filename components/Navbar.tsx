@@ -182,20 +182,20 @@ export default function Navbar() {
     });
   }
 
-  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666) - 5 CHỨC NĂNG CỐT LÕI
+  // 2. MENU GIÁO VIÊN (THẦY ĐỖ MẠNH TRƯỜNG · MÃ 666) - 5 CHỨC NĂNG CỐT LÕI (ĐÃ RÚT GỌN BỎ TỪ QUẢN LÝ)
   const TEACHER_MENUS: { title: string; href: string; icon: any; badge?: string; badgeClass?: string }[] = [
     {
-      title: 'Quản Lý Lớp Học Số',
+      title: 'Lớp Học Số',
       href: '/teacher',
       icon: Monitor,
     },
     {
-      title: 'Quản Lý Lớp & Học Sinh',
+      title: 'Lớp & Học Sinh',
       href: '/teacher?tab=class-roster',
       icon: Users,
     },
     {
-      title: 'Quản Lý Bài Kiểm Tra',
+      title: 'Bài Kiểm Tra',
       href: '/teacher?tab=exams',
       icon: FileCheck2,
     },
