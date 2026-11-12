@@ -206,6 +206,44 @@ export default function InClassPage() {
   const currentQuestions = currentPeriod.reinforcement.questions;
   const activeMachine = controlState.machines.find(m => m.machineId === machineId);
 
+  // ĐỒNG BỘ THỜI GIAN ẤN ĐỊNH VỚI MÁY GIÁO VIÊN
+  const [studentRemainingSeconds, setStudentRemainingSeconds] = useState<number>(0);
+
+  useEffect(() => {
+    if (!controlState.isTimerRunning || !controlState.timerEndTimestamp) {
+      setStudentRemainingSeconds(0);
+      return;
+    }
+
+    const calcRemaining = () => {
+      const now = Date.now();
+      const end = controlState.timerEndTimestamp || 0;
+      const rem = Math.max(0, Math.floor((end - now) / 1000));
+      setStudentRemainingSeconds(rem);
+
+      // Khi hết giờ: Tự động chốt bài làm trắc nghiệm nếu đang mở
+      if (rem <= 0 && activePopup === 'practice' && !quizSubmitted) {
+        const correct = currentQuestions.filter(q => quizAnswers[q.id] === q.correctIndex).length;
+        const finalScore = Math.round((correct / currentQuestions.length) * 10 * 10) / 10;
+        setQuizCorrectCount(correct);
+        setQuizScore(finalScore);
+        setQuizSubmitted(true);
+        setScoreH2(finalScore);
+        updateMachineScore(machineId, 'practice', finalScore);
+      }
+    };
+
+    calcRemaining();
+    const interval = setInterval(calcRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [controlState.isTimerRunning, controlState.timerEndTimestamp, activePopup, quizSubmitted, quizAnswers, currentQuestions, machineId]);
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(Math.max(0, seconds) / 60);
+    const s = Math.max(0, seconds) % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   // Đổi vai trò giữa 2 bạn tại máy
   const handleSwapRoles = () => {
     const nextRole = currentRoleTurn === 'tech' ? 'scribe' : 'tech';
@@ -682,8 +720,66 @@ export default function InClassPage() {
   const currentQ = currentQuestions[currentQuestionIndex] || currentQuestions[0];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
+      {/* ==================================================================== */}
+      {/* THANH ĐỒNG HỒ ẤN ĐỊNH THỜI GIAN ĐỒNG BỘ TỪ BÀN ĐIỀU KHIỂN CỦA THẦY TRƯỜNG */}
+      {/* ==================================================================== */}
+      {controlState.isTimerRunning && studentRemainingSeconds > 0 && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-2 border-indigo-500/70 shadow-xl text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-slideDown">
+          <div className="flex items-center gap-3.5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold shadow-md shrink-0 ${
+              studentRemainingSeconds <= 60
+                ? 'bg-rose-600 animate-pulse text-white ring-4 ring-rose-500/30'
+                : studentRemainingSeconds <= 180
+                ? 'bg-amber-600 text-white'
+                : 'bg-indigo-600 text-white'
+            }`}>
+              <Clock className="w-6 h-6 animate-spin" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>⏱️ THỜI GIAN ẤN ĐỊNH TỪ THẦY TRƯỜNG</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-900/90 text-indigo-200 text-[11px] font-bold border border-indigo-700">
+                  {controlState.currentActivity === 'discovery'
+                    ? 'HĐ1: Khám Phá Kiến Thức'
+                    : controlState.currentActivity === 'practice'
+                    ? 'HĐ2: Luyện Tập Trắc Nghiệm'
+                    : 'HĐ3: Thực Hành Phòng Máy'}
+                </span>
+                <span className="text-xs text-slate-400 font-medium">
+                  {controlState.activeClassName} · Tiết {currentPeriod.period}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                {studentRemainingSeconds <= 60 ? (
+                  <span className="text-rose-300 font-bold animate-pulse">
+                    ⚠️ Sắp hết thời gian ấn định! Các em nhanh chóng hoàn thành bài để máy tự động chốt điểm.
+                  </span>
+                ) : (
+                  <span>Đồng hồ đếm ngược được kích hoạt đồng bộ từ bàn điều khiển của Thầy. Hết giờ máy sẽ tự động thu bài.</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+            <div className={`px-5 py-2 rounded-2xl font-mono text-2xl sm:text-3xl font-black tracking-wider shadow-inner border flex items-center gap-2 ${
+              studentRemainingSeconds <= 60
+                ? 'bg-rose-950/90 text-rose-300 border-rose-500 animate-pulse ring-2 ring-rose-500/40'
+                : studentRemainingSeconds <= 180
+                ? 'bg-amber-950/90 text-amber-300 border-amber-500'
+                : 'bg-indigo-950/90 text-teal-300 border-indigo-500'
+            }`}>
+              <span>{formatTimer(studentRemainingSeconds)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ==================================================================== */}
       {/* 1. KHÔNG GIAN HỌC TẬP THỰC HÀNH: BẢNG ĐIỀU PHỐI TỪ THẦY TRƯỜNG       */}
       {/* ==================================================================== */}
@@ -1190,6 +1286,16 @@ export default function InClassPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                {controlState.isTimerRunning && studentRemainingSeconds > 0 && (
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs sm:text-sm font-black border ${
+                    studentRemainingSeconds <= 60
+                      ? 'bg-rose-100 text-rose-700 border-rose-300 animate-pulse'
+                      : 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                  }`}>
+                    <Clock className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+                    <span>{formatTimer(studentRemainingSeconds)}</span>
+                  </div>
+                )}
                 {student2Name && (
                   <button
                     type="button"
@@ -1250,14 +1356,26 @@ export default function InClassPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setActivePopup('none')}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-white"
-                title="Đóng Minigame"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {controlState.isTimerRunning && studentRemainingSeconds > 0 && (
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs sm:text-sm font-black border ${
+                    studentRemainingSeconds <= 60
+                      ? 'bg-rose-100 text-rose-700 border-rose-300 animate-pulse'
+                      : 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                  }`}>
+                    <Clock className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+                    <span>{formatTimer(studentRemainingSeconds)}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActivePopup('none')}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-white"
+                  title="Đóng Minigame"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Thân Minigame 2 */}
@@ -1479,14 +1597,26 @@ export default function InClassPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setActivePopup('none')}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-white"
-                title="Đóng Trạm Thực Hành"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {controlState.isTimerRunning && studentRemainingSeconds > 0 && (
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs sm:text-sm font-black border ${
+                    studentRemainingSeconds <= 60
+                      ? 'bg-rose-100 text-rose-700 border-rose-300 animate-pulse'
+                      : 'bg-amber-100 text-amber-900 border-amber-300'
+                  }`}>
+                    <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+                    <span>{formatTimer(studentRemainingSeconds)}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActivePopup('none')}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-white"
+                  title="Đóng Trạm Thực Hành"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Thân Trạm Thực Hành */}

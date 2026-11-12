@@ -62,6 +62,8 @@ export interface ClassroomControlState {
   };
   currentActivity: ClassroomActivityKey;
   timerRemainingSeconds: number;
+  timerDurationSeconds?: number; // Tổng thời lượng lần chạy timer hiện tại (giây)
+  timerEndTimestamp?: number;    // Mốc thời gian kết thúc (Date.now() + ms) để đồng bộ thời gian tuyệt đối giữa Thầy và 24 máy học sinh
   isTimerRunning: boolean;
   isTimeUp: boolean;
   spotlightMachineId?: number | null;
@@ -225,7 +227,13 @@ export function updateClassroomState(
           activeClassName: next.activeClassName,
           lessonTitle: next.lessonTitle,
           activityLocks: next.activityLocks,
+          activityDurations: next.activityDurations,
           currentActivity: next.currentActivity,
+          timerRemainingSeconds: next.timerRemainingSeconds,
+          timerDurationSeconds: next.timerDurationSeconds,
+          timerEndTimestamp: next.timerEndTimestamp,
+          isTimerRunning: next.isTimerRunning,
+          isTimeUp: next.isTimeUp,
           broadcastMessage: next.broadcastMessage,
           broadcastTime: next.broadcastTime,
           updatedAt: Date.now(),
@@ -260,11 +268,54 @@ export function updateClassroomState(
   return next;
 }
 
+/**
+ * Ấn định thời gian (phút) cho từng hoạt động theo điều phối của Giáo viên
+ */
+export function setActivityDuration(activity: ClassroomActivityKey, minutes: number): ClassroomControlState {
+  const safeMinutes = Math.max(1, Math.min(120, Math.round(minutes)));
+  return updateClassroomState((prev) => ({
+    ...prev,
+    activityDurations: {
+      ...prev.activityDurations,
+      [activity]: safeMinutes,
+    },
+    broadcastMessage: `⏱️ Thầy Đỗ Mạnh Trường: Đã ấn định thời gian cho ${
+      activity === 'discovery' ? 'Hoạt động 1 (Khám phá)' : activity === 'practice' ? 'Hoạt động 2 (Luyện tập)' : 'Hoạt động 3 (Thực hành)'
+    } là ${safeMinutes} phút.`,
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
+}
+
+/**
+ * Tự động thoát Lớp học số thì tự động KHÓA TOÀN BỘ các hoạt động
+ * Chuyển toàn bộ 24 máy học sinh về màn hình Bảng Trắng và dừng đếm giờ an toàn
+ */
+export function exitClassroomAndLockAll(): ClassroomControlState {
+  return updateClassroomState((prev) => ({
+    ...prev,
+    isLive: false,
+    activityLocks: {
+      discovery: false,
+      practice: false,
+      lab: false,
+    },
+    isTimerRunning: false,
+    isTimeUp: false,
+    timerRemainingSeconds: 0,
+    timerDurationSeconds: 0,
+    timerEndTimestamp: 0,
+    broadcastMessage: '🛑 Thầy Đỗ Mạnh Trường đã kết thúc tiết học và thoát lớp học số. Toàn bộ hoạt động đã được khóa lại.',
+    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  }));
+}
+
 export function toggleActivityLock(activity: ClassroomActivityKey): ClassroomControlState {
   return updateClassroomState((prev) => {
     const currentStatus = prev.activityLocks[activity];
     const newStatus = !currentStatus;
     const durMinutes = prev.activityDurations[activity] || 10;
+    const durSeconds = durMinutes * 60;
+    const endTimestamp = newStatus ? Date.now() + durSeconds * 1000 : 0;
     const willBeAnyUnlocked = newStatus || Object.entries(prev.activityLocks).some(([k, v]) => k !== activity && v);
 
     return {
@@ -272,7 +323,9 @@ export function toggleActivityLock(activity: ClassroomActivityKey): ClassroomCon
       isLive: willBeAnyUnlocked ? true : prev.isLive, // Mở hoạt động thì tự động bật phát trực tiếp
       activePeriod: prev.activePeriod && prev.activePeriod > 0 ? prev.activePeriod : 1,
       currentActivity: activity,
-      timerRemainingSeconds: durMinutes * 60,
+      timerRemainingSeconds: newStatus ? durSeconds : prev.timerRemainingSeconds,
+      timerDurationSeconds: newStatus ? durSeconds : prev.timerDurationSeconds,
+      timerEndTimestamp: endTimestamp,
       isTimerRunning: newStatus,
       isTimeUp: false,
       activityLocks: {
@@ -280,8 +333,8 @@ export function toggleActivityLock(activity: ClassroomActivityKey): ClassroomCon
         [activity]: newStatus,
       },
       broadcastMessage: newStatus
-        ? `▶️ Thầy đã MỞ ${activity === 'discovery' ? 'Hoạt động 1: Khám phá cặp đôi' : activity === 'practice' ? 'Hoạt động 2: Luyện tập (7 câu)' : 'Hoạt động 3: Thực hành trên máy'} (Thời gian ấn định: ${durMinutes} phút).`
-        : `⏸️ Thầy đã TẠM KHÓA ${activity === 'discovery' ? 'Hoạt động 1: Khám phá cặp đôi' : activity === 'practice' ? 'Hoạt động 2: Luyện tập (7 câu)' : 'Hoạt động 3: Thực hành trên máy'}.`,
+        ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ ${activity === 'discovery' ? 'Hoạt động 1 (Khám phá)' : activity === 'practice' ? 'Hoạt động 2 (Luyện tập)' : 'Hoạt động 3 (Thực hành)'}! Thời gian ấn định: ${durMinutes} phút. Đồng hồ đã kích hoạt chạy trên 24 máy trạm!`
+        : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM KHÓA ${activity === 'discovery' ? 'Hoạt động 1' : activity === 'practice' ? 'Hoạt động 2' : 'Hoạt động 3'}.`,
       broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     };
   });
@@ -417,25 +470,35 @@ export function updateMachineScore(
  * Khi tắt (isLive = false): Học sinh nhìn thấy Bảng Trắng kèm thông báo chờ lệnh
  */
 export function setLiveBroadcast(isLive: boolean, className?: string): ClassroomControlState {
-  return updateClassroomState((prev) => ({
-    ...prev,
-    isLive,
-    // KHI PHÁT LIVE: TỰ ĐỘNG MỞ KHÓA TẤT CẢ 3 HOẠT ĐỘNG TRỰC TIẾP
-    activityLocks: isLive
-      ? {
-          discovery: true,
-          practice: true,
-          lab: true,
-        }
-      : prev.activityLocks,
-    isTimerRunning: isLive,
-    isTimeUp: false,
-    currentActivity: isLive ? (prev.currentActivity || 'discovery') : prev.currentActivity,
-    broadcastMessage: isLive
-      ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${className || prev.activeClassName}! Các em hãy vào học ngay.`
-      : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp (Màn hình máy trạm chuyển về Bảng trắng thông báo).`,
-    broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-  }));
+  return updateClassroomState((prev) => {
+    const act = prev.currentActivity || 'discovery';
+    const durMinutes = prev.activityDurations[act] || 10;
+    const durSeconds = durMinutes * 60;
+    const endTimestamp = isLive ? Date.now() + durSeconds * 1000 : 0;
+
+    return {
+      ...prev,
+      isLive,
+      // KHI PHÁT LIVE: TỰ ĐỘNG MỞ KHÓA TẤT CẢ 3 HOẠT ĐỘNG TRỰC TIẾP
+      activityLocks: isLive
+        ? {
+            discovery: true,
+            practice: true,
+            lab: true,
+          }
+        : prev.activityLocks,
+      isTimerRunning: isLive,
+      isTimeUp: false,
+      timerRemainingSeconds: isLive ? durSeconds : prev.timerRemainingSeconds,
+      timerDurationSeconds: isLive ? durSeconds : prev.timerDurationSeconds,
+      timerEndTimestamp: endTimestamp,
+      currentActivity: act,
+      broadcastMessage: isLive
+        ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${className || prev.activeClassName}! Thời gian ấn định: ${durMinutes} phút. Mời các em vào học ngay.`
+        : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp (Màn hình máy trạm chuyển về Bảng trắng thông báo).`,
+      broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    };
+  });
 }
 
 /**
@@ -589,7 +652,10 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
                   cloud.activePeriod !== current.activePeriod ||
                   cloud.activeGrade !== current.activeGrade ||
                   cloud.activeClassId !== current.activeClassId ||
+                  cloud.isTimerRunning !== current.isTimerRunning ||
+                  cloud.timerEndTimestamp !== current.timerEndTimestamp ||
                   (cloud.activityLocks && JSON.stringify(cloud.activityLocks) !== JSON.stringify(current.activityLocks)) ||
+                  (cloud.activityDurations && JSON.stringify(cloud.activityDurations) !== JSON.stringify(current.activityDurations)) ||
                   (cloud.updatedAt && cloud.updatedAt > lastSyncedTimestamp);
 
                 if (isStateChanged) {
@@ -604,7 +670,13 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
                     activePeriod: cloud.activePeriod || current.activePeriod,
                     lessonTitle: cloud.lessonTitle || current.lessonTitle,
                     activityLocks: cloudLocks,
+                    activityDurations: cloud.activityDurations || current.activityDurations,
                     currentActivity: cloud.currentActivity || current.currentActivity,
+                    timerRemainingSeconds: typeof cloud.timerRemainingSeconds === 'number' ? cloud.timerRemainingSeconds : current.timerRemainingSeconds,
+                    timerDurationSeconds: typeof cloud.timerDurationSeconds === 'number' ? cloud.timerDurationSeconds : current.timerDurationSeconds,
+                    timerEndTimestamp: typeof cloud.timerEndTimestamp === 'number' ? cloud.timerEndTimestamp : current.timerEndTimestamp,
+                    isTimerRunning: typeof cloud.isTimerRunning === 'boolean' ? cloud.isTimerRunning : current.isTimerRunning,
+                    isTimeUp: typeof cloud.isTimeUp === 'boolean' ? cloud.isTimeUp : current.isTimeUp,
                     broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
                     broadcastTime: cloud.broadcastTime || current.broadcastTime,
                   };
@@ -647,7 +719,13 @@ export function subscribeToClassroomState(callback: (state: ClassroomControlStat
                 activePeriod: cloud.activePeriod || current.activePeriod,
                 lessonTitle: cloud.lessonTitle || current.lessonTitle,
                 activityLocks: cloudLocks,
+                activityDurations: cloud.activityDurations || current.activityDurations,
                 currentActivity: cloud.currentActivity || current.currentActivity,
+                timerRemainingSeconds: typeof cloud.timerRemainingSeconds === 'number' ? cloud.timerRemainingSeconds : current.timerRemainingSeconds,
+                timerDurationSeconds: typeof cloud.timerDurationSeconds === 'number' ? cloud.timerDurationSeconds : current.timerDurationSeconds,
+                timerEndTimestamp: typeof cloud.timerEndTimestamp === 'number' ? cloud.timerEndTimestamp : current.timerEndTimestamp,
+                isTimerRunning: typeof cloud.isTimerRunning === 'boolean' ? cloud.isTimerRunning : current.isTimerRunning,
+                isTimeUp: typeof cloud.isTimeUp === 'boolean' ? cloud.isTimeUp : current.isTimeUp,
                 broadcastMessage: cloud.broadcastMessage || current.broadcastMessage,
                 broadcastTime: cloud.broadcastTime || current.broadcastTime,
               };

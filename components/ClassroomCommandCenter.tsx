@@ -68,7 +68,9 @@ import {
   broadcastLesson,
   setLiveBroadcast,
   updateMachineScore,
-  selectPeriodForClassroom
+  selectPeriodForClassroom,
+  setActivityDuration,
+  exitClassroomAndLockAll
 } from '@/lib/classroom-control';
 import Virtual3DClassroom from './Virtual3DClassroom';
 
@@ -366,7 +368,65 @@ export default function ClassroomCommandCenter({
     confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
   };
 
-  // Bật/tắt khóa thủ công từng hoạt động (kèm kiểm tra tiết thực hành)
+  // Tự động thoát Lớp học số thì tự động KHÓA TOÀN BỘ các hoạt động
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      exitClassroomAndLockAll();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Khi giáo viên rời khỏi Lớp học số (chuyển sang phân hệ khác)
+      exitClassroomAndLockAll();
+    };
+  }, []);
+
+  // Ấn định thời gian (phút) cho hoạt động
+  const handleSetDuration = (act: ClassroomActivityKey, mins: number) => {
+    const next = setActivityDuration(act, mins);
+    setControlState(next);
+  };
+
+  // Gia hạn thêm thời gian (+1 phút, +2 phút, +5 phút)
+  const handleAddTimer = (extraMinutes: number) => {
+    const nextState = updateClassroomState((prev) => {
+      const extraSeconds = extraMinutes * 60;
+      const newRemaining = prev.timerRemainingSeconds + extraSeconds;
+      const newDuration = (prev.timerDurationSeconds || prev.timerRemainingSeconds) + extraSeconds;
+      const newEnd = (prev.timerEndTimestamp || Date.now()) + extraSeconds * 1000;
+      return {
+        ...prev,
+        timerRemainingSeconds: newRemaining,
+        timerDurationSeconds: newDuration,
+        timerEndTimestamp: newEnd,
+        isTimerRunning: true,
+        isTimeUp: false,
+        broadcastMessage: `⏱️ Thầy Đỗ Mạnh Trường: ĐÃ GIA HẠN THÊM ${extraMinutes} PHÚT làm bài cho cả lớp!`,
+        broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      };
+    });
+    setControlState(nextState);
+    confetti({ particleCount: 60, spread: 60, origin: { y: 0.5 } });
+  };
+
+  // Nút chủ động: Thoát Lớp học số và Khóa toàn bộ các hoạt động
+  const handleExitClassroom = () => {
+    if (confirm('Thầy có chắc chắn muốn kết thúc tiết học và thoát Lớp học số? Toàn bộ 3 hoạt động sẽ tự động được khóa lại và 24 máy học sinh chuyển về Bảng Trắng.')) {
+      const next = exitClassroomAndLockAll();
+      setControlState(next);
+      alert('Đã kết thúc tiết dạy! Toàn bộ các hoạt động đã được khóa an toàn.');
+    }
+  };
+
+  // Format thời gian hiển thị MM:SS
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(Math.max(0, seconds) / 60);
+    const s = Math.max(0, seconds) % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Bật/tắt khóa thủ công từng hoạt động (kèm kích hoạt đồng hồ đếm ngược đồng bộ)
   const handleToggleActivity = (act: ClassroomActivityKey) => {
     if (act === 'lab' && !isPracticalLesson) {
       alert('Tiết học hiện tại là bài lý thuyết thuần túy. Hoạt động thực hành trên máy không áp dụng cho tiết này!');
@@ -375,7 +435,9 @@ export default function ClassroomCommandCenter({
     const nextState = updateClassroomState((prev) => {
       const currentStatus = prev.activityLocks[act];
       const newStatus = !currentStatus;
-      const durMinutes = prev.activityDurations[act] || 10;
+      const durMinutes = prev.activityDurations[act] || (act === 'discovery' ? 10 : act === 'practice' ? 7 : 15);
+      const durSeconds = durMinutes * 60;
+      const endTimestamp = newStatus ? Date.now() + durSeconds * 1000 : 0;
       const willBeAnyUnlocked = newStatus || Object.entries(prev.activityLocks).some(([k, v]) => k !== act && v);
 
       return {
@@ -387,7 +449,9 @@ export default function ClassroomCommandCenter({
         activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
         activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
         currentActivity: act,
-        timerRemainingSeconds: durMinutes * 60,
+        timerRemainingSeconds: newStatus ? durSeconds : prev.timerRemainingSeconds,
+        timerDurationSeconds: newStatus ? durSeconds : prev.timerDurationSeconds,
+        timerEndTimestamp: endTimestamp,
         isTimerRunning: newStatus,
         isTimeUp: false,
         activityLocks: {
@@ -395,7 +459,7 @@ export default function ClassroomCommandCenter({
           [act]: newStatus,
         },
         broadcastMessage: newStatus
-          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ ${act === 'discovery' ? 'Hoạt động 1 (Khám phá)' : act === 'practice' ? 'Hoạt động 2 (Luyện tập)' : 'Hoạt động 3 (Thực hành)'}!`
+          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ ${act === 'discovery' ? 'Hoạt động 1 (Khám phá)' : act === 'practice' ? 'Hoạt động 2 (Luyện tập)' : 'Hoạt động 3 (Thực hành)'}! Thời gian ấn định: ${durMinutes} phút. Đồng hồ đã kích hoạt chạy trên 24 máy trạm!`
           : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM KHÓA ${act === 'discovery' ? 'Hoạt động 1' : act === 'practice' ? 'Hoạt động 2' : 'Hoạt động 3'}.`,
         broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       };
@@ -405,6 +469,11 @@ export default function ClassroomCommandCenter({
 
   // Bật/Tắt phát trực tiếp bài dạy ngay (Đồng bộ giữa Live và Bảng Trắng)
   const handleToggleLiveBroadcast = (live: boolean) => {
+    const act = controlState.currentActivity || 'discovery';
+    const durMinutes = controlState.activityDurations[act] || 10;
+    const durSeconds = durMinutes * 60;
+    const endTimestamp = live ? Date.now() + durSeconds * 1000 : 0;
+
     const nextState = updateClassroomState((prev) => ({
       ...prev,
       isLive: live,
@@ -413,6 +482,11 @@ export default function ClassroomCommandCenter({
       activeGrade: currentClass.grade || prev.activeGrade || 7,
       activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
       activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
+      timerRemainingSeconds: live ? durSeconds : prev.timerRemainingSeconds,
+      timerDurationSeconds: live ? durSeconds : prev.timerDurationSeconds,
+      timerEndTimestamp: endTimestamp,
+      isTimerRunning: live,
+      isTimeUp: false,
       activityLocks: live
         ? {
             discovery: true,
@@ -421,7 +495,7 @@ export default function ClassroomCommandCenter({
           }
         : prev.activityLocks,
       broadcastMessage: live
-        ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${currentClass.name || prev.activeClassName}! Mời các em vào học.`
+        ? `🔴 Thầy Đỗ Mạnh Trường: ĐANG PHÁT TRỰC TIẾP bài dạy cho ${currentClass.name || prev.activeClassName}! Thời gian ấn định: ${durMinutes} phút. Mời các em vào học.`
         : `⏸️ Thầy Đỗ Mạnh Trường: Đã tạm dừng phát trực tiếp. Các em chú ý lên bảng trắng.`,
       broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     }));
@@ -433,6 +507,11 @@ export default function ClassroomCommandCenter({
 
   // Mở hoặc Đóng tất cả hoạt động theo lệnh của Thầy (phân biệt tiết thực hành)
   const handleSetAllActivities = (isOpen: boolean) => {
+    const act = 'discovery';
+    const durMinutes = controlState.activityDurations[act] || 10;
+    const durSeconds = durMinutes * 60;
+    const endTimestamp = isOpen ? Date.now() + durSeconds * 1000 : 0;
+
     const nextState = updateClassroomState((prev) => ({
       ...prev,
       isLive: isOpen ? true : prev.isLive, // Khi mở hoạt động: tự động kích hoạt isLive = true!
@@ -441,6 +520,11 @@ export default function ClassroomCommandCenter({
       activeGrade: currentClass.grade || prev.activeGrade || 7,
       activeClassName: currentClass.name || prev.activeClassName || 'Lớp 7A12',
       activeClassId: currentClass.id || prev.activeClassId || 'c-7a12',
+      timerRemainingSeconds: isOpen ? durSeconds : prev.timerRemainingSeconds,
+      timerDurationSeconds: isOpen ? durSeconds : prev.timerDurationSeconds,
+      timerEndTimestamp: endTimestamp,
+      isTimerRunning: isOpen,
+      isTimeUp: false,
       activityLocks: {
         discovery: isOpen,
         practice: isOpen,
@@ -448,20 +532,25 @@ export default function ClassroomCommandCenter({
       },
       broadcastMessage: isOpen
         ? isPracticalLesson
-          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ TẤT CẢ 3 HOẠT ĐỘNG cho cả lớp làm bài!`
-          : `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ HĐ1 & HĐ2 cho cả lớp làm bài! (Tiết lý thuyết)`
+          ? `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ TẤT CẢ 3 HOẠT ĐỘNG cho cả lớp làm bài! Thời gian ấn định: ${durMinutes} phút.`
+          : `▶️ Thầy Đỗ Mạnh Trường: ĐÃ MỞ HĐ1 & HĐ2 cho cả lớp làm bài! (Tiết lý thuyết). Thời gian ấn định: ${durMinutes} phút.`
         : `⏸️ Thầy Đỗ Mạnh Trường: ĐÃ TẠM ĐÓNG CÁC HOẠT ĐỘNG.`,
       broadcastTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     }));
     setControlState(nextState);
   };
 
-  // Đếm ngược thời gian ấn định của hoạt động hiện tại
+  // Đếm ngược thời gian ấn định của hoạt động hiện tại (chuẩn xác theo timerEndTimestamp)
   useEffect(() => {
     if (!controlState.isTimerRunning) return;
     const interval = setInterval(() => {
       setControlState((prev) => {
-        if (prev.timerRemainingSeconds <= 1) {
+        let remaining = prev.timerRemainingSeconds - 1;
+        if (prev.timerEndTimestamp) {
+          remaining = Math.max(0, Math.floor((prev.timerEndTimestamp - Date.now()) / 1000));
+        }
+
+        if (remaining <= 0) {
           clearInterval(interval);
           const finished = {
             ...prev,
@@ -474,11 +563,11 @@ export default function ClassroomCommandCenter({
           updateClassroomState(() => finished);
           return finished;
         }
-        return { ...prev, timerRemainingSeconds: prev.timerRemainingSeconds - 1 };
+        return { ...prev, timerRemainingSeconds: remaining };
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [controlState.isTimerRunning]);
+  }, [controlState.isTimerRunning, controlState.timerEndTimestamp]);
 
   // Phát thông báo khẩn
   const handleSendBroadcast = (e: React.FormEvent) => {
@@ -756,6 +845,15 @@ export default function ClassroomCommandCenter({
               <Lock className="w-3.5 h-3.5" />
               <span>Đóng Tất Cả</span>
             </button>
+            <button
+              type="button"
+              onClick={handleExitClassroom}
+              className="px-3.5 py-2.5 rounded-2xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 font-bold text-xs border border-rose-800/80 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Thoát lớp học số và tự động khóa toàn bộ các hoạt động, chuyển học sinh về Bảng Trắng"
+            >
+              <X className="w-3.5 h-3.5 text-rose-400" />
+              <span>Thoát Tiết (Khóa HĐ)</span>
+            </button>
           </div>
         </div>
       ) : (
@@ -784,6 +882,21 @@ export default function ClassroomCommandCenter({
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* ĐỒNG HỒ ẤN ĐỊNH THỜI GIAN ĐỒNG BỘ TOÀN PHÒNG */}
+            {controlState.isTimerRunning && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-emerald-500/40 text-emerald-300 font-mono font-black text-xs sm:text-sm">
+                <Clock className="w-4 h-4 text-amber-400 animate-spin" />
+                <span>{formatTimer(controlState.timerRemainingSeconds)}</span>
+                <button
+                  type="button"
+                  onClick={() => handleAddTimer(2)}
+                  className="px-2 py-0.5 rounded-md bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold cursor-pointer transition-colors"
+                  title="Gia hạn thêm 2 phút làm bài"
+                >
+                  +2p
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => handleToggleLiveBroadcast(false)}
@@ -810,6 +923,15 @@ export default function ClassroomCommandCenter({
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Đóng Tất Cả</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExitClassroom}
+              className="px-3.5 py-2.5 rounded-2xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 font-bold text-xs border border-rose-800/80 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Thoát lớp học số và tự động khóa toàn bộ các hoạt động, chuyển học sinh về Bảng Trắng"
+            >
+              <X className="w-3.5 h-3.5 text-rose-400" />
+              <span>Thoát Tiết (Khóa HĐ)</span>
             </button>
           </div>
         </div>
@@ -885,6 +1007,15 @@ export default function ClassroomCommandCenter({
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Khóa HĐ</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExitClassroom}
+            className="px-3.5 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Thoát lớp học số và tự động khóa tất cả hoạt động"
+          >
+            <X className="w-3.5 h-3.5 text-rose-600" />
+            <span>Thoát Tiết</span>
           </button>
         </div>
       </div>
@@ -963,6 +1094,58 @@ export default function ClassroomCommandCenter({
                     Thời gian gợi ý: <strong>10 phút</strong>. Hai học sinh ngồi cùng máy phối hợp hoàn thành bài và chấm tự động.
                   </p>
                 </div>
+
+                {/* ẤN ĐỊNH THỜI GIAN HOẠT ĐỘNG 1 */}
+                <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Ấn định thời gian:</span>
+                    </span>
+                    <span className="font-black text-indigo-700 font-mono text-sm">
+                      {controlState.activityDurations.discovery || 10} phút
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[5, 7, 10, 15].map((mins) => {
+                      const isAct = (controlState.activityDurations.discovery || 10) === mins;
+                      return (
+                        <button
+                          key={mins}
+                          type="button"
+                          onClick={() => handleSetDuration('discovery', mins)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isAct
+                              ? 'bg-indigo-600 text-white shadow-2xs ring-1 ring-indigo-500'
+                              : 'bg-white hover:bg-indigo-50 text-slate-600 border border-slate-200'
+                          }`}
+                        >
+                          {mins}p
+                        </button>
+                      );
+                    })}
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={controlState.activityDurations.discovery || 10}
+                      onChange={(e) => handleSetDuration('discovery', Number(e.target.value) || 10)}
+                      className="w-14 px-2 py-0.5 text-xs text-center rounded-lg border border-slate-200 bg-white font-bold"
+                      title="Nhập số phút tùy chỉnh"
+                    />
+                  </div>
+                  {controlState.activityLocks.discovery && controlState.isTimerRunning && (
+                    <div className="flex items-center justify-between pt-1 text-[11px] font-bold text-emerald-700 border-t border-slate-200/60">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        Đang đếm giờ:
+                      </span>
+                      <span className="font-mono text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-md font-black">
+                        {formatTimer(controlState.timerRemainingSeconds)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pt-2 border-t border-slate-100 space-y-2">
@@ -1030,6 +1213,58 @@ export default function ClassroomCommandCenter({
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                     Thời gian gợi ý: <strong>7 phút</strong>. Học sinh làm trắc nghiệm thang điểm 10, nhận phản hồi kết quả ngay.
                   </p>
+                </div>
+
+                {/* ẤN ĐỊNH THỜI GIAN HOẠT ĐỘNG 2 */}
+                <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Ấn định thời gian:</span>
+                    </span>
+                    <span className="font-black text-emerald-700 font-mono text-sm">
+                      {controlState.activityDurations.practice || 7} phút
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[3, 5, 7, 10].map((mins) => {
+                      const isAct = (controlState.activityDurations.practice || 7) === mins;
+                      return (
+                        <button
+                          key={mins}
+                          type="button"
+                          onClick={() => handleSetDuration('practice', mins)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isAct
+                              ? 'bg-emerald-600 text-white shadow-2xs ring-1 ring-emerald-500'
+                              : 'bg-white hover:bg-emerald-50 text-slate-600 border border-slate-200'
+                          }`}
+                        >
+                          {mins}p
+                        </button>
+                      );
+                    })}
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={controlState.activityDurations.practice || 7}
+                      onChange={(e) => handleSetDuration('practice', Number(e.target.value) || 7)}
+                      className="w-14 px-2 py-0.5 text-xs text-center rounded-lg border border-slate-200 bg-white font-bold"
+                      title="Nhập số phút tùy chỉnh"
+                    />
+                  </div>
+                  {controlState.activityLocks.practice && controlState.isTimerRunning && (
+                    <div className="flex items-center justify-between pt-1 text-[11px] font-bold text-emerald-700 border-t border-slate-200/60">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        Đang đếm giờ:
+                      </span>
+                      <span className="font-mono text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-md font-black">
+                        {formatTimer(controlState.timerRemainingSeconds)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1111,6 +1346,60 @@ export default function ClassroomCommandCenter({
                       ? 'Tiết học này là bài lý thuyết thuần túy. Học sinh tập trung làm Phiếu khám phá (HĐ1) và Trắc nghiệm (HĐ2). Hoạt động thực hành chỉ mở ở các tiết thực hành.'
                       : 'Thời gian gợi ý: 15 phút. Thao tác trên phần mềm máy tính, nộp tệp bài làm trực tiếp lên hệ thống.'}
                   </p>
+                </div>
+
+                {/* ẤN ĐỊNH THỜI GIAN HOẠT ĐỘNG 3 */}
+                <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Ấn định thời gian:</span>
+                    </span>
+                    <span className="font-black text-purple-700 font-mono text-sm">
+                      {controlState.activityDurations.lab || 15} phút
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[10, 15, 20, 25].map((mins) => {
+                      const isAct = (controlState.activityDurations.lab || 15) === mins;
+                      return (
+                        <button
+                          key={mins}
+                          type="button"
+                          disabled={!isPracticalLesson}
+                          onClick={() => handleSetDuration('lab', mins)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isAct
+                              ? 'bg-purple-600 text-white shadow-2xs ring-1 ring-purple-500'
+                              : 'bg-white hover:bg-purple-50 text-slate-600 border border-slate-200 disabled:opacity-50'
+                          }`}
+                        >
+                          {mins}p
+                        </button>
+                      );
+                    })}
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      disabled={!isPracticalLesson}
+                      value={controlState.activityDurations.lab || 15}
+                      onChange={(e) => handleSetDuration('lab', Number(e.target.value) || 15)}
+                      className="w-14 px-2 py-0.5 text-xs text-center rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-50"
+                      title="Nhập số phút tùy chỉnh"
+                    />
+                  </div>
+                  {controlState.activityLocks.lab && controlState.isTimerRunning && (
+                    <div className="flex items-center justify-between pt-1 text-[11px] font-bold text-purple-700 border-t border-slate-200/60">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+                        Đang đếm giờ:
+                      </span>
+                      <span className="font-mono text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded-md font-black">
+                        {formatTimer(controlState.timerRemainingSeconds)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
